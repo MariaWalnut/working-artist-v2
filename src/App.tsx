@@ -8,6 +8,7 @@ import { TheMap } from './pages/TheMap'
 import { Studio } from './pages/Studio'
 import { Account } from './pages/Account'
 import { Onboarding } from './pages/Onboarding'
+import { ProjectDetail } from './pages/ProjectDetail'
 
 function AppRoutes() {
   const depts = useLiveQuery(() => db.departments.toArray())
@@ -18,6 +19,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/today" element={<Today />} />
       <Route path="/projects" element={<Projects />} />
+      <Route path="/projects/:id" element={<ProjectDetail />} />
       <Route path="/opportunities" element={<Opportunities />} />
       <Route path="/the-map" element={<TheMap />} />
       <Route path="/studio" element={<Studio />} />
