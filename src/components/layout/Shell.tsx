@@ -36,15 +36,14 @@ export function Shell({ children }: { children: ReactNode }) {
                 onClick={() => navigate(item.to)}
                 style={{
                   fontFamily: 'Recoleta, serif',
-                  fontSize: 14,
-                  color: '#111111',
-                  opacity: active ? 1 : 0.35,
+                  fontSize: 15,
+                  color: active ? '#111111' : '#C0C0C0',
                   background: 'none',
                   border: 'none',
-                  borderBottom: active ? '2px solid #111111' : '2px solid transparent',
-                  paddingBottom: 2,
+                  borderBottom: active ? '3px solid #F5E642' : '3px solid transparent',
+                  paddingBottom: active ? 3 : 0,
                   cursor: 'pointer',
-                  transition: 'opacity 0.12s',
+                  transition: 'color 0.12s',
                 }}
               >
                 {item.label}
