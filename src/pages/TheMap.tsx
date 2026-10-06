@@ -134,7 +134,7 @@ export function TheMap() {
                     let bg = 'transparent'
                     let border = '1.5px solid #E8E8E8'
                     if (isFuture) { bg = '#F6F6F6'; border = '1px solid #F0F0F0' }
-                    else if (isLogged) { bg = DAY_COLOR[log.dayType ?? log.mood] ?? '#EEEEEE'; border = 'none' }
+                    else if (isLogged) { bg = DAY_COLOR[log.dayType ?? log.mood ?? ''] ?? '#EEEEEE'; border = 'none' }
                     return (
                       <button key={d} onClick={() => !isFuture && setLogDate(ds)} title={ds}
                         style={{ width: 29, height: 29, borderRadius: '50%', flexShrink: 0, background: bg, border, outline: isToday ? '2.5px solid #111111' : 'none', outlineOffset: 2, cursor: isFuture ? 'default' : 'pointer' }} />
