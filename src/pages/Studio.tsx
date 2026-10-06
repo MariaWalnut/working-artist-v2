@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useNavigate } from 'react-router-dom'
 import { db, type Work } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
@@ -73,6 +74,7 @@ function FilterItem({ label, active, count, onClick }: { label: string; active: 
 
 export function Studio() {
   const dept = useActiveDept()
+  const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [mediumFilter, setMediumFilter] = useState<string | null>(null)
   const [editing, setEditing] = useState<Work | 'new' | null>(null)
@@ -122,6 +124,9 @@ export function Studio() {
           <button onClick={() => setEditing('new')} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
             + Add work
           </button>
+          <button onClick={() => navigate('/studio/boards')} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, color: '#AAAAAA', cursor: 'pointer' }}>
+            Vision boards
+          </button>
         </div>
 
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
@@ -144,7 +149,7 @@ export function Studio() {
                 <span style={{ fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{y || '—'}</span>
               </div>
               {byYear[y].map(w => (
-                <div key={w.id} onClick={() => setEditing(w)} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 120px 130px 150px 90px', padding: '12px 24px', borderBottom: '1px solid #F9F9F9', alignItems: 'center', cursor: 'pointer' }}>
+                <div key={w.id} onClick={() => navigate(`/studio/${w.id}`)} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 120px 130px 150px 90px', padding: '12px 24px', borderBottom: '1px solid #F9F9F9', alignItems: 'center', cursor: 'pointer' }}>
                   <div style={{ width: 32, height: 40, borderRadius: 6, background: 'linear-gradient(135deg, #EEEEEE 0%, #DDDDDD 100%)', flexShrink: 0 }} />
                   <div>
                     <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px' }}>{w.title}</p>

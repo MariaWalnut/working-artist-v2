@@ -42,6 +42,24 @@ export interface Work {
   studioStatus?: string
   collection?: string
   notes?: string
+  press?: PressItem[]
+  rights?: RightItem[]
+}
+
+export interface PressItem {
+  id: string
+  outlet: string
+  title: string
+  date?: string
+  url?: string
+}
+
+export interface RightItem {
+  id: string
+  language: string
+  publisher?: string
+  year?: number
+  status: 'live' | 'sold' | 'pending'
 }
 
 export interface DayLog {
@@ -53,12 +71,35 @@ export interface DayLog {
   dayType?: string
 }
 
+export interface Board {
+  id?: number
+  departmentId?: number
+  name: string
+  boardType?: string
+  createdAt: number
+}
+
+export interface BoardItem {
+  id?: number
+  boardId: number
+  itemType: 'text' | 'note' | 'color' | 'quote' | 'tag'
+  content: string
+  x: number
+  y: number
+  w: number
+  h: number
+  color?: string
+  createdAt: number
+}
+
 class AppDB extends Dexie {
   departments!: Table<Department>
   projects!: Table<Project>
   opportunities!: Table<Opportunity>
   works!: Table<Work>
   dayLogs!: Table<DayLog>
+  boards!: Table<Board>
+  boardItems!: Table<BoardItem>
 
   constructor() {
     super('WorkingArtistV2')
@@ -68,6 +109,15 @@ class AppDB extends Dexie {
       opportunities: '++id, departmentId',
       works: '++id, departmentId',
       dayLogs: '++id, departmentId, date',
+    })
+    this.version(2).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
     })
   }
 }

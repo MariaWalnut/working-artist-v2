@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useNavigate } from 'react-router-dom'
 import { db, type DayLog } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
@@ -70,6 +71,7 @@ function LogModal({ date, existing, onDone }: { date: string; existing: DayLog |
 
 export function TheMap() {
   const dept = useActiveDept()
+  const navigate = useNavigate()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [logDate, setLogDate] = useState<string | null>(null)
@@ -101,6 +103,7 @@ export function TheMap() {
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '22px 28px 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
           <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, margin: 0 }}>The Map</p>
+          <button onClick={() => navigate('/the-map/world')} style={{ marginLeft: 12, background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>World</button>
           <div style={{ marginLeft: 16, display: 'flex', gap: 6 }}>
             {years.map(y => (
               <button key={y} onClick={() => setYear(y)} style={{ padding: '5px 12px', borderRadius: 20, border: 'none', background: year === y ? '#FFFFFF' : '#EBEBEB', boxShadow: year === y ? '0 1px 6px rgba(0,0,0,.12)' : 'none', fontSize: 12, fontWeight: year === y ? 600 : 400, color: '#111111', cursor: 'pointer' }}>{y}</button>
