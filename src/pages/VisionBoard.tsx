@@ -226,6 +226,8 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   const [drag, setDrag]             = useState<DragState | null>(null)
   const [editingId, setEditingId]   = useState<number | null>(null)
   const [dropOver, setDropOver]     = useState(false)
+  const [addingImage, setAddingImage]       = useState(false)
+  const [imageDropActive, setImageDropActive] = useState(false)
 
   const canvasRef      = useRef<HTMLDivElement>(null)
   const movedRef       = useRef(false)
@@ -338,7 +340,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   // Escape key
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') { setEditingId(null); setMode('select'); setArrowSrc(null); setAdding(null) }
+      if (e.key === 'Escape') { setEditingId(null); setMode('select'); setArrowSrc(null); setAdding(null); setAddingImage(false) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -384,8 +386,8 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
             </button>
           ))}
           <div style={{ width: 1, height: 14, background: '#EEEEEE', margin: '0 3px' }} />
-          <button onClick={() => { setAdding(null); fileRef.current?.click() }}
-            style={{ padding: '5px 11px', borderRadius: 999, border: 'none', background: 'none', fontSize: 10, fontWeight: 500, color: '#888', cursor: 'pointer' }}>
+          <button onClick={() => { setAdding(null); setMode('select'); setAddingImage(true) }}
+            style={{ padding: '5px 11px', borderRadius: 999, border: 'none', background: addingImage ? '#F5F5F5' : 'none', fontSize: 10, fontWeight: 500, color: addingImage ? '#444' : '#888', cursor: 'pointer' }}>
             Image
           </button>
           <button onClick={() => { setAdding(null); setEditingId(null); setMode(m => m === 'arrow' ? 'select' : 'arrow'); setArrowSrc(null) }}
@@ -435,7 +437,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
 
       {/* Canvas */}
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
-        onChange={e => void addImages(e.target.files)} />
+        onChange={e => { void addImages(e.target.files); setAddingImage(false) }} />
 
       <div ref={canvasRef}
         onMouseMove={onCanvasMouseMove}
@@ -557,6 +559,49 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
             liveItem={editingItem}
             canvasEl={canvasRef.current}
             onClose={() => setEditingId(null)} />
+        )}
+
+        {/* Image drop overlay */}
+        {addingImage && (
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
+            onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setImageDropActive(true) }}
+            onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
+            onDragLeave={e => { e.stopPropagation(); setImageDropActive(false) }}
+            onDrop={async e => {
+              e.preventDefault(); e.stopPropagation()
+              setImageDropActive(false); setAddingImage(false)
+              await addImages(e.dataTransfer.files)
+            }}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 300,
+              background: 'rgba(250,250,250,0.94)',
+              borderRadius: 20,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
+            }}>
+            <div style={{
+              width: 300,
+              border: `2px dashed ${imageDropActive ? '#78AECB' : '#CCCCCC'}`,
+              borderRadius: 20, padding: '36px 28px', textAlign: 'center',
+              background: imageDropActive ? '#EFF7FF' : '#FFFFFF',
+              boxShadow: '0 4px 20px rgba(0,0,0,.08)',
+              transition: 'background 0.1s, border-color 0.1s',
+            }}>
+              <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, margin: '0 0 6px', color: '#111111' }}>
+                Drop image here
+              </p>
+              <p style={{ fontSize: 12, color: '#AAAAAA', margin: '0 0 20px' }}>JPEG · PNG · GIF · WEBP</p>
+              <button onClick={() => fileRef.current?.click()}
+                style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 11, color: '#666666', cursor: 'pointer' }}>
+                or choose a file
+              </button>
+            </div>
+            <button onClick={() => setAddingImage(false)}
+              style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
         )}
       </div>
     </div>
