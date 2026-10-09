@@ -49,6 +49,14 @@ function WorkForm({ work, onDone }: { work: Work | null; onDone: () => void }) {
   )
 }
 
+const ISO_LANG: Record<string, string> = {
+  en: 'English', de: 'German', fr: 'French', es: 'Spanish', it: 'Italian',
+  pt: 'Portuguese', nl: 'Dutch', ja: 'Japanese', zh: 'Chinese', ko: 'Korean',
+  ru: 'Russian', pl: 'Polish', sv: 'Swedish', da: 'Danish', fi: 'Finnish',
+  nb: 'Norwegian', tr: 'Turkish', ar: 'Arabic', he: 'Hebrew', cs: 'Czech',
+  ca: 'Catalan', hr: 'Croatian', hu: 'Hungarian', ro: 'Romanian', sk: 'Slovak',
+}
+
 function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
   const dept = useActiveDept()
   const [title, setTitle] = useState(book?.title ?? '')
@@ -57,6 +65,27 @@ function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
   const [isbn, setIsbn] = useState(book?.isbn ?? '')
   const [language, setLanguage] = useState(book?.language ?? '')
   const [credits, setCredits] = useState(book?.credits ?? '')
+  const [lookup, setLookup] = useState<'idle' | 'loading' | 'done' | 'notfound' | 'error'>('idle')
+
+  async function lookupISBN() {
+    const q = isbn.trim().replace(/[^0-9Xx]/g, '')
+    if (q.length < 10) return
+    setLookup('loading')
+    try {
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${q}`)
+      const data = await res.json() as { items?: Array<{ volumeInfo: Record<string, unknown> }> }
+      const info = data?.items?.[0]?.volumeInfo
+      if (!info) { setLookup('notfound'); return }
+      if (typeof info.title === 'string') setTitle(info.title)
+      if (typeof info.publisher === 'string') setPublisher(info.publisher)
+      if (typeof info.publishedDate === 'string') setPublishedDate(info.publishedDate.slice(0, 7))
+      if (typeof info.language === 'string') setLanguage(ISO_LANG[info.language] ?? info.language)
+      if (Array.isArray(info.authors) && info.authors.length) setCredits((info.authors as string[]).join(', '))
+      setLookup('done')
+    } catch {
+      setLookup('error')
+    }
+  }
 
   async function save() {
     if (!title.trim()) return
@@ -68,21 +97,36 @@ function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
 
+  const isbnReady = isbn.trim().replace(/[^0-9Xx]/g, '').length >= 10
+  const lookupBg = lookup === 'done' ? '#B8E0A4' : lookup === 'notfound' || lookup === 'error' ? '#E8C4B4' : '#F5F5F5'
+  const lookupLabel = lookup === 'loading' ? '…' : lookup === 'done' ? '✓ Found' : lookup === 'notfound' ? 'Not found' : lookup === 'error' ? 'Error' : 'Look up'
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>{book ? 'Edit book' : 'Add book'}</p>
-        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
+
+        {/* ISBN first — with Look up button */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <input value={isbn} onChange={e => { setIsbn(e.target.value); setLookup('idle') }}
+            placeholder="ISBN" style={{ ...inp, flex: 1 }}
+            onKeyDown={e => { if (e.key === 'Enter' && isbnReady) void lookupISBN() }} />
+          <button onClick={() => void lookupISBN()} disabled={!isbnReady || lookup === 'loading'}
+            style={{ background: lookupBg, border: 'none', borderRadius: 8, padding: '0 14px', fontSize: 10, fontWeight: 600, color: '#444444', cursor: isbnReady ? 'pointer' : 'default', opacity: isbnReady ? 1 : 0.4, flexShrink: 0, whiteSpace: 'nowrap', transition: 'background 0.15s' }}>
+            {lookupLabel}
+          </button>
+        </div>
+
+        <input autoFocus={!isbnReady} value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <input value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="Publisher" style={{ ...inp, flex: 2 }} />
           <input value={publishedDate} onChange={e => setPublishedDate(e.target.value)} placeholder="2025-10" style={{ ...inp, flex: 1 }} />
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Language" style={{ ...inp, flex: 1 }} />
-          <input value={isbn} onChange={e => setIsbn(e.target.value)} placeholder="ISBN" style={{ ...inp, flex: 2 }} />
+          <input value={credits} onChange={e => setCredits(e.target.value)} placeholder="Credits / Authors" style={{ ...inp, flex: 2 }} />
         </div>
-        <input value={credits} onChange={e => setCredits(e.target.value)} placeholder="Credits" style={{ ...inp, marginBottom: 16 }} />
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
           <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{book ? 'Save' : 'Add'}</button>
           <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
           {book && <button onClick={async () => { if (book.id) await db.books.delete(book.id); onDone() }}
