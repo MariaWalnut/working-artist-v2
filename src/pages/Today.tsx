@@ -1,13 +1,14 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useActiveDept } from '../lib/useDept'
 
-const MOODS = [
-  { key: 'flow',  label: 'Flow',  color: '#F5E642' },
-  { key: 'good',  label: 'Good',  color: '#B8E0A4' },
-  { key: 'tired', label: 'Tired', color: '#F8D898' },
-  { key: 'busy',  label: 'Busy',  color: '#A8C8E0' },
-  { key: 'hard',  label: 'Hard',  color: '#E8C4B4' },
+const DAILY = [
+  'Rest is part of the work.',    // Sunday
+  'New week. New work.',          // Monday
+  'One thing at a time.',         // Tuesday
+  'You\'re in it.',               // Wednesday
+  'Keep the momentum.',           // Thursday
+  'Finish strong.',               // Friday
+  'The studio is always open.',   // Saturday
 ]
 
 const NAV = [
@@ -24,17 +25,13 @@ function todayLabel() {
 }
 
 export function Today() {
-  const [mood, setMood] = useState('flow')
   const navigate = useNavigate()
   const dept = useActiveDept()
   const wordmark = dept?.name?.trim() || 'Working Artist'
-  const bg = MOODS.find((m) => m.key === mood)?.color ?? '#F5E642'
+  const phrase = DAILY[new Date().getDay()]
 
   return (
-    <div
-      className="flex min-h-svh flex-col px-8 py-7 transition-colors duration-500"
-      style={{ background: bg }}
-    >
+    <div className="flex min-h-svh flex-col px-8 py-7" style={{ background: '#F5E642' }}>
       {/* Date */}
       <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#111111', opacity: 0.4 }}>
         {todayLabel()}
@@ -74,28 +71,11 @@ export function Today() {
         </nav>
       </div>
 
-      {/* Mood picker */}
-      <div className="flex flex-col items-center gap-4">
-        <p style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#111111', opacity: 0.4, margin: 0 }}>
-          How are you today?
+      {/* Daily phrase */}
+      <div className="flex justify-center">
+        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', opacity: 0.45, margin: 0, textAlign: 'center' }}>
+          {phrase}
         </p>
-        <div className="flex items-start gap-4">
-          {MOODS.map((m) => (
-            <button key={m.key} onClick={() => setMood(m.key)}
-              className="flex flex-col items-center gap-1"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%', background: m.color, flexShrink: 0,
-                outline: mood === m.key ? '2px solid #111111' : '2px solid transparent',
-                outlineOffset: 3,
-                transition: 'transform 0.15s',
-              }} />
-              <span style={{ fontSize: 9, fontWeight: 500, color: '#111111', opacity: mood === m.key ? 0.7 : 0.45, whiteSpace: 'nowrap' }}>
-                {m.label}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   )
