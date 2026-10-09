@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PressItem, type RightItem } from '../db/db'
@@ -24,6 +24,7 @@ export function BookDetail() {
   const bid = Number(id)
 
   const book = useLiveQuery(() => db.books.get(bid), [bid])
+  const coverInputRef = useRef<HTMLInputElement>(null)
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
@@ -48,6 +49,21 @@ export function BookDetail() {
   const bk = book
   const press = bk.press ?? []
   const rights = bk.rights ?? []
+
+  async function handleCoverFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async () => {
+      await db.books.update(bid, { coverImage: reader.result as string })
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  async function removeCover() {
+    await db.books.update(bid, { coverImage: undefined })
+  }
 
   function startEdit() {
     setTitle(bk.title)
@@ -123,8 +139,19 @@ export function BookDetail() {
 
           {/* LEFT: cover + details */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ ...card, display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: 100, height: 140, borderRadius: 8, background: 'linear-gradient(160deg, #E8D8C0 0%, #C8B090 100%)' }} />
+            <div style={{ ...card, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => void handleCoverFile(e)} />
+              <div
+                onClick={() => coverInputRef.current?.click()}
+                title="Click to change cover"
+                style={{ width: 100, height: 140, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, background: 'linear-gradient(160deg, #E8D8C0 0%, #C8B090 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {bk.coverImage
+                  ? <img src={bk.coverImage} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Add cover</span>}
+              </div>
+              {bk.coverImage && (
+                <button onClick={() => void removeCover()} style={{ background: 'none', border: 'none', fontSize: 10, color: '#CCCCCC', cursor: 'pointer', padding: 0 }}>Remove</button>
+              )}
             </div>
             <div style={{ ...card }}>
               {sectionLabel('Details')}

@@ -63,6 +63,7 @@ export interface Book {
   pages?: number
   technique?: string
   notes?: string
+  coverImage?: string
   press?: PressItem[]
   rights?: RightItem[]
 }

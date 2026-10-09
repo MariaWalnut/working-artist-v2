@@ -50,11 +50,11 @@ function WorkForm({ work, onDone }: { work: Work | null; onDone: () => void }) {
 }
 
 const ISO_LANG: Record<string, string> = {
-  en: 'English', de: 'German', fr: 'French', es: 'Spanish', it: 'Italian',
-  pt: 'Portuguese', nl: 'Dutch', ja: 'Japanese', zh: 'Chinese', ko: 'Korean',
-  ru: 'Russian', pl: 'Polish', sv: 'Swedish', da: 'Danish', fi: 'Finnish',
-  nb: 'Norwegian', tr: 'Turkish', ar: 'Arabic', he: 'Hebrew', cs: 'Czech',
-  ca: 'Catalan', hr: 'Croatian', hu: 'Hungarian', ro: 'Romanian', sk: 'Slovak',
+  eng: 'English', ger: 'German', fre: 'French', spa: 'Spanish', ita: 'Italian',
+  por: 'Portuguese', dut: 'Dutch', jpn: 'Japanese', chi: 'Chinese', kor: 'Korean',
+  rus: 'Russian', pol: 'Polish', swe: 'Swedish', dan: 'Danish', fin: 'Finnish',
+  nor: 'Norwegian', tur: 'Turkish', ara: 'Arabic', heb: 'Hebrew', cze: 'Czech',
+  cat: 'Catalan', hrv: 'Croatian', hun: 'Hungarian', rum: 'Romanian', slo: 'Slovak',
 }
 
 function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
@@ -65,6 +65,7 @@ function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
   const [isbn, setIsbn] = useState(book?.isbn ?? '')
   const [language, setLanguage] = useState(book?.language ?? '')
   const [credits, setCredits] = useState(book?.credits ?? '')
+  const [coverImage, setCoverImage] = useState(book?.coverImage ?? '')
   const [lookup, setLookup] = useState<'idle' | 'loading' | 'done' | 'notfound' | 'error'>('idle')
 
   async function lookupISBN() {
@@ -72,15 +73,19 @@ function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
     if (q.length < 10) return
     setLookup('loading')
     try {
-      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${q}`)
-      const data = await res.json() as { items?: Array<{ volumeInfo: Record<string, unknown> }> }
-      const info = data?.items?.[0]?.volumeInfo
-      if (!info) { setLookup('notfound'); return }
-      if (typeof info.title === 'string') setTitle(info.title)
-      if (typeof info.publisher === 'string') setPublisher(info.publisher)
-      if (typeof info.publishedDate === 'string') setPublishedDate(info.publishedDate.slice(0, 7))
-      if (typeof info.language === 'string') setLanguage(ISO_LANG[info.language] ?? info.language)
-      if (Array.isArray(info.authors) && info.authors.length) setCredits((info.authors as string[]).join(', '))
+      const res = await fetch(`https://openlibrary.org/search.json?isbn=${q}&fields=title,publisher,publish_date,language,author_name,cover_i`)
+      const data = await res.json() as { docs?: Array<Record<string, unknown>> }
+      const doc = data?.docs?.[0]
+      if (!doc) { setLookup('notfound'); return }
+      if (typeof doc.title === 'string') setTitle(doc.title)
+      const pub = Array.isArray(doc.publisher) ? doc.publisher[0] : null
+      if (typeof pub === 'string') setPublisher(pub)
+      const date = Array.isArray(doc.publish_date) ? doc.publish_date[0] : null
+      if (typeof date === 'string') setPublishedDate((date as string).slice(0, 7))
+      const lang = Array.isArray(doc.language) ? doc.language[0] : null
+      if (typeof lang === 'string') setLanguage(ISO_LANG[lang as string] ?? (lang as string))
+      if (Array.isArray(doc.author_name) && doc.author_name.length) setCredits((doc.author_name as string[]).join(', '))
+      if (typeof doc.cover_i === 'number') setCoverImage(`https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`)
       setLookup('done')
     } catch {
       setLookup('error')
@@ -89,7 +94,7 @@ function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
 
   async function save() {
     if (!title.trim()) return
-    const data = { departmentId: dept?.id, title: title.trim(), publisher, publishedDate, isbn, language, credits }
+    const data = { departmentId: dept?.id, title: title.trim(), publisher, publishedDate, isbn, language, credits, coverImage: coverImage || undefined }
     if (book?.id != null) await db.books.update(book.id, data)
     else await db.books.add(data)
     onDone()
