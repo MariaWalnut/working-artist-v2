@@ -19,12 +19,21 @@ const PRESETS = [
 ]
 
 const DEFAULTS: Record<string, { w: number; h: number }> = {
-  text:  { w: 180, h: 72 },
+  title: { w: 280, h: 90 },
   quote: { w: 260, h: 116 },
+  text:  { w: 180, h: 72 },
   note:  { w: 200, h: 110 },
   tag:   { w: 130, h: 44 },
   image: { w: 200, h: 160 },
 }
+
+const TEXT_STYLES: Array<{ type: BoardItem['itemType']; label: string; size: string }> = [
+  { type: 'title', label: 'Title',  size: '28px' },
+  { type: 'quote', label: 'Quote',  size: '18px' },
+  { type: 'text',  label: 'Text',   size: '13px' },
+  { type: 'note',  label: 'Note',   size: '11px' },
+  { type: 'tag',   label: 'Tag',    size: '10px' },
+]
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -93,14 +102,18 @@ function EditPopup({
   onClose: () => void
 }) {
   const isImage = capturedItem.itemType === 'image'
-  const isQuote = capturedItem.itemType === 'quote'
+  const isTextItem = !isImage && capturedItem.itemType !== 'arrow'
 
-  const [text, setText] = useState(capturedItem.content)
-  const [color, setColor] = useState(capturedItem.color ?? '#FFFFFF')
+  const [text, setText]           = useState(capturedItem.content)
+  const [color, setColor]         = useState(capturedItem.color ?? '#FFFFFF')
+  const [editedType, setEditedType] = useState(capturedItem.itemType)
+
+  const currentStyle = TEXT_STYLES.find(s => s.type === editedType)
+  const isQuoteStyle = editedType === 'quote'
 
   // position below item, clamped inside canvas
   const W = 272
-  const approxH = isImage ? 140 : 230
+  const approxH = isImage ? 140 : 290
   const cW = canvasEl?.clientWidth ?? 800
   const cH = canvasEl?.clientHeight ?? 600
   let left = liveItem.x
@@ -112,7 +125,7 @@ function EditPopup({
 
   async function save() {
     const upd: Partial<BoardItem> = { color }
-    if (!isImage) upd.content = text.trim() || capturedItem.content
+    if (isTextItem) { upd.content = text.trim() || capturedItem.content; upd.itemType = editedType }
     await db.boardItems.update(capturedItem.id!, upd)
     onClose()
   }
@@ -144,14 +157,32 @@ function EditPopup({
         boxShadow: '0 8px 36px rgba(0,0,0,.18)',
         border: '1px solid #EBEBEB',
       }}>
-      {!isImage && (
-        isQuote ? (
-          <textarea autoFocus value={text} onChange={e => setText(e.target.value)} rows={3}
-            style={{ width: '100%', borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '8px 10px', fontSize: 13, outline: 'none', resize: 'none', marginBottom: 12, boxSizing: 'border-box', fontFamily: 'Recoleta, serif' }} />
+      {/* Style picker (text items only) */}
+      {isTextItem && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+          {TEXT_STYLES.map(s => (
+            <button key={s.type} onClick={() => setEditedType(s.type)}
+              style={{
+                flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: editedType === s.type ? '#F5E642' : '#F5F5F5',
+                color: editedType === s.type ? '#111111' : '#888888',
+                fontSize: 10, fontWeight: editedType === s.type ? 600 : 400,
+              }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Text editor */}
+      {isTextItem && (
+        isQuoteStyle || editedType === 'title' ? (
+          <textarea autoFocus value={text} onChange={e => setText(e.target.value)} rows={editedType === 'title' ? 2 : 3}
+            style={{ width: '100%', borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '8px 10px', fontSize: currentStyle?.size ?? 13, outline: 'none', resize: 'none', marginBottom: 12, boxSizing: 'border-box', fontFamily: editedType === 'title' || isQuoteStyle ? 'Recoleta, serif' : 'inherit' }} />
         ) : (
           <input autoFocus value={text} onChange={e => setText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') void save(); if (e.key === 'Escape') onClose() }}
-            style={{ width: '100%', borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '8px 10px', fontSize: 13, outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
+            style={{ width: '100%', borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '8px 10px', fontSize: currentStyle?.size ?? 13, outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
         )
       )}
 
@@ -196,9 +227,10 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   const [editingId, setEditingId]   = useState<number | null>(null)
   const [dropOver, setDropOver]     = useState(false)
 
-  const canvasRef   = useRef<HTMLDivElement>(null)
-  const movedRef    = useRef(false)
-  const fileRef     = useRef<HTMLInputElement>(null)
+  const canvasRef      = useRef<HTMLDivElement>(null)
+  const movedRef       = useRef(false)
+  const fileRef        = useRef<HTMLInputElement>(null)
+  const dragCountRef   = useRef(0)
   const markerId    = `ah-${board.id}`
 
   const editingItem     = editingId != null ? allItems.find(i => i.id === editingId) : undefined
@@ -281,16 +313,26 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   }, [mode, arrowSrc])
 
   // ── image drop ─────────────────────────────────────────────────────────────
-  const onDragOver = useCallback((e: React.DragEvent) => {
-    if ([...e.dataTransfer.types].includes('Files')) { e.preventDefault(); setDropOver(true) }
+  // Use a counter so nested child elements don't flicker the drop zone
+  const onDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCountRef.current++
+    setDropOver(true)
   }, [])
-  const onDragLeave = useCallback(() => setDropOver(false), [])
+  const onDragOver = useCallback((e: React.DragEvent) => { e.preventDefault() }, [])
+  const onDragLeave = useCallback(() => {
+    dragCountRef.current--
+    if (dragCountRef.current <= 0) { dragCountRef.current = 0; setDropOver(false) }
+  }, [])
   const onDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault(); setDropOver(false)
+    e.preventDefault()
+    dragCountRef.current = 0; setDropOver(false)
     const el = canvasRef.current; if (!el) return
     const rect = el.getBoundingClientRect()
     const { w, h } = DEFAULTS.image
-    await addImages(e.dataTransfer.files, e.clientX - rect.left - w / 2, e.clientY - rect.top - h / 2)
+    const files = e.dataTransfer.files
+    if (!files.length) return
+    await addImages(files, e.clientX - rect.left - w / 2, e.clientY - rect.top - h / 2)
   }, [board.id])
 
   // Escape key
@@ -400,6 +442,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
         onMouseUp={onCanvasMouseUp}
         onMouseLeave={() => setDrag(null)}
         onMouseDown={onCanvasBgMouseDown}
+        onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
@@ -486,12 +529,20 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
                 <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: tc, padding: '0 18px', textAlign: 'center' }}>
                   {item.content}
                 </span>
+              ) : item.itemType === 'title' ? (
+                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, fontWeight: 400, lineHeight: 1.15, margin: 0, color: tc, textAlign: 'center', padding: '14px 20px', wordBreak: 'break-word' }}>
+                  {item.content}
+                </p>
               ) : isQ ? (
                 <p style={{ fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.35, margin: 0, color: tc, textAlign: 'center', padding: '20px 22px', wordBreak: 'break-word' }}>
                   {item.content}
                 </p>
+              ) : item.itemType === 'note' ? (
+                <p style={{ fontSize: 11, lineHeight: 1.6, margin: 0, color: tc, opacity: 0.75, textAlign: 'center', padding: '12px 14px', wordBreak: 'break-word' }}>
+                  {item.content}
+                </p>
               ) : (
-                <p style={{ fontSize: 12, lineHeight: 1.6, margin: 0, color: tc, textAlign: 'center', padding: '12px 14px', wordBreak: 'break-word' }}>
+                <p style={{ fontSize: 13, lineHeight: 1.6, margin: 0, color: tc, textAlign: 'center', padding: '12px 14px', wordBreak: 'break-word' }}>
                   {item.content}
                 </p>
               )}
