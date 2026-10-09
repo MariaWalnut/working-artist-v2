@@ -107,36 +107,31 @@ export function TheMap() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {MONTHS.map((m, mi) => {
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center' }}>
+          {MONTHS.flatMap((m, mi) => {
             const count = daysInMonth(year, mi)
-            const firstDow = new Date(year, mi, 1).getDay()
-            return (
-              <div key={m} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.06em', textTransform: 'uppercase', height: 29, display: 'flex', alignItems: 'center' }}>{m}</span>
-                <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                  {Array.from({ length: firstDow }, (_, i) => (
-                    <div key={`e${i}`} style={{ width: 29, height: 29, flexShrink: 0 }} />
-                  ))}
-                  {Array.from({ length: count }, (_, i) => {
-                    const d = i + 1
-                    const ds = dateStr(year, mi, d)
-                    const log = byDate[ds]
-                    const isToday = ds === todayStr
-                    const isFuture = ds > todayStr
-                    const isLogged = !!log
-                    let bg = 'transparent'
-                    let border = '1.5px solid #E8E8E8'
-                    if (isFuture) { bg = '#F6F6F6'; border = '1px solid #F0F0F0' }
-                    else if (isLogged) { bg = DAY_COLOR[log.dayType ?? log.mood ?? ''] ?? '#EEEEEE'; border = 'none' }
-                    return (
-                      <button key={d} onClick={() => !isFuture && setLogDate(ds)} title={ds}
-                        style={{ width: 29, height: 29, borderRadius: '50%', flexShrink: 0, background: bg, border, outline: isToday ? '2.5px solid #111111' : 'none', outlineOffset: 2, cursor: isFuture ? 'default' : 'pointer' }} />
-                    )
-                  })}
-                </div>
-              </div>
+            const label = (
+              <span key={`lbl-${m}`}
+                style={{ fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '0 5px', height: 29, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                {m}
+              </span>
             )
+            const days = Array.from({ length: count }, (_, i) => {
+              const d = i + 1
+              const ds = dateStr(year, mi, d)
+              const log = byDate[ds]
+              const isToday = ds === todayStr
+              const isFuture = ds > todayStr
+              let bg = 'transparent'
+              let border = '1.5px solid #E8E8E8'
+              if (isFuture) { bg = '#F6F6F6'; border = '1px solid #F0F0F0' }
+              else if (log) { bg = DAY_COLOR[log.dayType ?? log.mood ?? ''] ?? '#EEEEEE'; border = 'none' }
+              return (
+                <button key={ds} onClick={() => !isFuture && setLogDate(ds)} title={ds}
+                  style={{ width: 29, height: 29, borderRadius: '50%', flexShrink: 0, background: bg, border, outline: isToday ? '2.5px solid #111111' : 'none', outlineOffset: 2, cursor: isFuture ? 'default' : 'pointer' }} />
+              )
+            })
+            return [label, ...days]
           })}
         </div>
 
