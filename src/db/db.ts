@@ -113,13 +113,14 @@ export interface Board {
 export interface BoardItem {
   id?: number
   boardId: number
-  itemType: 'text' | 'note' | 'color' | 'quote' | 'tag'
+  itemType: 'text' | 'note' | 'color' | 'quote' | 'tag' | 'image' | 'arrow'
   content: string
   x: number
   y: number
   w: number
   h: number
   color?: string
+  imageData?: string
   createdAt: number
 }
 
