@@ -229,10 +229,11 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   const [addingImage, setAddingImage]       = useState(false)
   const [imageDropActive, setImageDropActive] = useState(false)
 
-  const canvasRef      = useRef<HTMLDivElement>(null)
-  const movedRef       = useRef(false)
-  const fileRef        = useRef<HTMLInputElement>(null)
-  const dragCountRef   = useRef(0)
+  const canvasRef           = useRef<HTMLDivElement>(null)
+  const movedRef            = useRef(false)
+  const fileRef             = useRef<HTMLInputElement>(null)
+  const dragCountRef        = useRef(0)
+  const overlayDragCountRef = useRef(0)
   const markerId    = `ah-${board.id}`
 
   const editingItem     = editingId != null ? allItems.find(i => i.id === editingId) : undefined
@@ -566,12 +567,12 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
           <div
             onMouseDown={e => e.stopPropagation()}
             onClick={e => e.stopPropagation()}
-            onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setImageDropActive(true) }}
+            onDragEnter={e => { e.preventDefault(); e.stopPropagation(); overlayDragCountRef.current++; setImageDropActive(true) }}
             onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
-            onDragLeave={e => { e.stopPropagation(); setImageDropActive(false) }}
+            onDragLeave={e => { e.stopPropagation(); overlayDragCountRef.current--; if (overlayDragCountRef.current <= 0) { overlayDragCountRef.current = 0; setImageDropActive(false) } }}
             onDrop={async e => {
               e.preventDefault(); e.stopPropagation()
-              setImageDropActive(false); setAddingImage(false)
+              overlayDragCountRef.current = 0; setImageDropActive(false); setAddingImage(false)
               await addImages(e.dataTransfer.files)
             }}
             style={{
@@ -587,13 +588,14 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
               background: imageDropActive ? '#EFF7FF' : '#FFFFFF',
               boxShadow: '0 4px 20px rgba(0,0,0,.08)',
               transition: 'background 0.1s, border-color 0.1s',
+              pointerEvents: 'none',
             }}>
               <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, margin: '0 0 6px', color: '#111111' }}>
                 Drop image here
               </p>
               <p style={{ fontSize: 12, color: '#AAAAAA', margin: '0 0 20px' }}>JPEG · PNG · GIF · WEBP</p>
               <button onClick={() => fileRef.current?.click()}
-                style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 11, color: '#666666', cursor: 'pointer' }}>
+                style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 11, color: '#666666', cursor: 'pointer', pointerEvents: 'auto' }}>
                 or choose a file
               </button>
             </div>
