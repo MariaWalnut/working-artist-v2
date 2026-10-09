@@ -251,22 +251,40 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   }
 
   // ── add images ─────────────────────────────────────────────────────────────
-  async function addImages(files: FileList | null, dropX?: number, dropY?: number) {
-    if (!files?.length) return
+  async function addImages(source: FileList | DataTransfer | null, dropX?: number, dropY?: number) {
+    if (!source) return
     const el = canvasRef.current
     const { w, h } = DEFAULTS.image
     const cx = dropX ?? (el ? el.clientWidth / 2 - w / 2 : 200)
     const cy = dropY ?? (el ? el.clientHeight / 2 - h / 2 : 100)
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) continue
-      const imageData = await fileToBase64(file)
+
+    const addItem = async (name: string, imageData: string) => {
       await db.boardItems.add({
-        boardId: board.id!, itemType: 'image', content: file.name, imageData,
+        boardId: board.id!, itemType: 'image', content: name, imageData,
         x: cx + (Math.random() - 0.5) * 30, y: cy + (Math.random() - 0.5) * 20,
         w, h, createdAt: Date.now(),
       })
     }
-    if (fileRef.current) fileRef.current.value = ''
+
+    // File drops (Finder drag or file picker)
+    const files = source instanceof DataTransfer ? source.files : source
+    if (files.length > 0) {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) continue
+        await addItem(file.name, await fileToBase64(file))
+      }
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
+    // URL drops (image dragged from a website)
+    if (source instanceof DataTransfer) {
+      const raw = source.getData('text/uri-list') || source.getData('URL') || ''
+      const url = raw.split('\n').map(u => u.trim()).find(u => u && !u.startsWith('#')) ?? ''
+      if (url.startsWith('http') || url.startsWith('data:')) {
+        await addItem(url.split('/').pop()?.split('?')[0] ?? 'image', url)
+      }
+    }
   }
 
   // ── arrow click ─────────────────────────────────────────────────────────────
@@ -333,9 +351,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
     const el = canvasRef.current; if (!el) return
     const rect = el.getBoundingClientRect()
     const { w, h } = DEFAULTS.image
-    const files = e.dataTransfer.files
-    if (!files.length) return
-    await addImages(files, e.clientX - rect.left - w / 2, e.clientY - rect.top - h / 2)
+    await addImages(e.dataTransfer, e.clientX - rect.left - w / 2, e.clientY - rect.top - h / 2)
   }, [board.id])
 
   // Escape key
@@ -438,7 +454,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
 
       {/* Canvas */}
       <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
-        onChange={e => { void addImages(e.target.files); setAddingImage(false) }} />
+        onChange={e => { void addImages(e.target.files ?? null); setAddingImage(false) }} />
 
       <div ref={canvasRef}
         onMouseMove={onCanvasMouseMove}
@@ -573,7 +589,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
             onDrop={async e => {
               e.preventDefault(); e.stopPropagation()
               overlayDragCountRef.current = 0; setImageDropActive(false); setAddingImage(false)
-              await addImages(e.dataTransfer.files)
+              await addImages(e.dataTransfer)
             }}
             style={{
               position: 'absolute', inset: 0, zIndex: 300,
