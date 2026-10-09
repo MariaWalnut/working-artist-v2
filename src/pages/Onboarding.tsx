@@ -1,29 +1,28 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../db/db'
-
-const PRACTICES = [
-  { key: 'painter',       label: 'Visual artist' },
-  { key: 'picture_books', label: 'Picture books' },
-  { key: 'music',         label: 'Musician' },
-  { key: 'painter',       label: 'Writer' },
-  { key: 'painter',       label: 'Photographer' },
-  { key: 'painter',       label: 'Performer' },
-  { key: 'painter',       label: 'Other' },
-]
+import { db, type Activity } from '../db/db'
+import { PRACTICE_OPTIONS } from '../lib/activities'
 
 export function Onboarding() {
-  const [selected, setSelected] = useState(0)
+  const [selected, setSelected] = useState<Activity[]>(['visual_artist'])
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
 
+  function toggle(key: Activity) {
+    setSelected(prev =>
+      prev.includes(key)
+        ? prev.length > 1 ? prev.filter(k => k !== key) : prev
+        : [...prev, key]
+    )
+  }
+
   async function start() {
     setSaving(true)
-    const p = PRACTICES[selected]
     await db.departments.add({
       name: name.trim() || 'Working Artist',
-      discipline: p.key as 'painter' | 'picture_books' | 'music',
+      discipline: 'painter',
+      activities: selected,
       createdAt: Date.now(),
     })
     navigate('/today')
@@ -36,16 +35,16 @@ export function Onboarding() {
         <h1 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 28, color: '#111111', textAlign: 'center', margin: '0 0 8px' }}>
           What is your practice?
         </h1>
-        <p style={{ fontSize: 13, color: '#AAAAAA', textAlign: 'center', marginBottom: 28 }}>You can change this at any time.</p>
+        <p style={{ fontSize: 13, color: '#AAAAAA', textAlign: 'center', marginBottom: 28 }}>Select all that apply. You can change this later.</p>
 
         <div className="mb-5 grid grid-cols-3 gap-2">
-          {PRACTICES.map((p, i) => (
-            <button key={p.label} onClick={() => setSelected(i)}
+          {PRACTICE_OPTIONS.map(p => (
+            <button key={p.key} onClick={() => toggle(p.key)}
               style={{
                 borderRadius: 12, padding: '10px 12px', fontSize: 13, textAlign: 'left', border: 'none', cursor: 'pointer',
-                background: selected === i ? '#F5E642' : '#F5F5F5',
-                color: selected === i ? '#111111' : '#888888',
-                fontWeight: selected === i ? 600 : 400,
+                background: selected.includes(p.key) ? '#F5E642' : '#F5F5F5',
+                color: selected.includes(p.key) ? '#111111' : '#888888',
+                fontWeight: selected.includes(p.key) ? 600 : 400,
               }}>
               {p.label}
             </button>

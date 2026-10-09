@@ -7,23 +7,14 @@ import { Shell } from '../components/layout/Shell'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const DAY_TYPES = [
-  { key: 'flow',        label: 'Flow',        color: '#F5E642' },
-  { key: 'achievement', label: 'Achievement', color: '#8BC87A' },
-  { key: 'star',        label: 'Star',        color: '#F0A840' },
-  { key: 'collab',      label: 'Collab',      color: '#78AECB' },
-  { key: 'connection',  label: 'Connection',  color: '#B898D8' },
-  { key: 'stressful',   label: 'Stressful',   color: '#D4907A' },
+const MOODS = [
+  { key: 'flow',   label: 'Flow',   color: '#F5E642' },
+  { key: 'good',   label: 'Good',   color: '#B8E0A4' },
+  { key: 'hard',   label: 'Hard',   color: '#E8C4B4' },
+  { key: 'collab', label: 'Social', color: '#78AECB' },
 ]
 
-const DAY_COLOR: Record<string, string> = Object.fromEntries(DAY_TYPES.map(d => [d.key, d.color]))
-
-const LOG_MOODS = [
-  { key: 'flow',    label: 'Flow',   color: '#F5E642' },
-  { key: 'good',    label: 'Good',   color: '#B8E0A4' },
-  { key: 'hard',    label: 'Hard',   color: '#E8C4B4' },
-  { key: 'collab',  label: 'Social', color: '#78AECB' },
-]
+const DAY_COLOR: Record<string, string> = Object.fromEntries(MOODS.map(m => [m.key, m.color]))
 
 function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
@@ -56,7 +47,7 @@ function LogModal({ date, existing, onDone }: { date: string; existing: DayLog |
           {new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20 }}>
-          {LOG_MOODS.map(m => (
+          {MOODS.map(m => (
             <button key={m.key} onClick={() => setMood(m.key)} style={{ width: 34, height: 34, borderRadius: '50%', border: mood === m.key ? '2.5px solid #111111' : '2px solid transparent', background: m.color, cursor: 'pointer', outline: 'none' }} title={m.label} />
           ))}
         </div>
@@ -150,23 +141,23 @@ export function TheMap() {
         </div>
 
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 24, paddingTop: 18, borderTop: '1px solid #F5F5F5', alignItems: 'center' }}>
-          {DAY_TYPES.map(t => (
-            <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: t.color }} />
-              <span style={{ fontSize: 10, color: '#888888' }}>{t.label}</span>
+          {MOODS.map(m => (
+            <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.color }} />
+              <span style={{ fontSize: 10, color: '#888888' }}>{m.label}</span>
             </div>
           ))}
         </div>
 
         {logs.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 16 }}>
-            {DAY_TYPES.slice(0, 3).map(t => {
-              const c = logs.filter(l => (l.dayType ?? l.mood) === t.key).length
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 16 }}>
+            {MOODS.map(m => {
+              const c = logs.filter(l => (l.dayType ?? l.mood) === m.key).length
               return (
-                <div key={t.key} style={{ background: '#FAFAFA', borderRadius: 14, padding: '14px 16px' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, marginBottom: 8 }} />
+                <div key={m.key} style={{ background: '#FAFAFA', borderRadius: 14, padding: '14px 16px' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.color, marginBottom: 8 }} />
                   <p style={{ fontFamily: 'Recoleta, serif', fontSize: 22, margin: '0 0 2px', color: '#111111' }}>{c}</p>
-                  <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{t.label} days</p>
+                  <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{m.label} days</p>
                 </div>
               )
             })}

@@ -18,16 +18,20 @@ function sectionLabel(text: string) {
   return <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 12px' }}>{text}</p>
 }
 
-export function WorkDetail() {
+export function BookDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const wid = Number(id)
+  const bid = Number(id)
 
-  const work = useLiveQuery(() => db.works.get(wid), [wid])
+  const book = useLiveQuery(() => db.books.get(bid), [bid])
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
-  const [location, setLocation] = useState('')
+  const [publisher, setPublisher] = useState('')
+  const [publishedDate, setPublishedDate] = useState('')
+  const [isbn, setIsbn] = useState('')
+  const [language, setLanguage] = useState('')
+  const [credits, setCredits] = useState('')
   const [addingPress, setAddingPress] = useState(false)
   const [pressOutlet, setPressOutlet] = useState('')
   const [pressTitle, setPressTitle] = useState('')
@@ -38,45 +42,49 @@ export function WorkDetail() {
   const [rightYear, setRightYear] = useState('')
   const [rightStatus, setRightStatus] = useState<RightItem['status']>('live')
 
-  if (work === undefined) return null
-  if (!work) { navigate('/studio', { replace: true }); return null }
+  if (book === undefined) return null
+  if (!book) { navigate('/studio', { replace: true }); return null }
 
-  const w = work
-  const press = w.press ?? []
-  const rights = w.rights ?? []
+  const bk = book
+  const press = bk.press ?? []
+  const rights = bk.rights ?? []
 
   function startEdit() {
-    setTitle(w.title)
-    setNotes(w.notes ?? '')
-    setLocation(w.location ?? '')
+    setTitle(bk.title)
+    setNotes(bk.notes ?? '')
+    setPublisher(bk.publisher ?? '')
+    setPublishedDate(bk.publishedDate ?? '')
+    setIsbn(bk.isbn ?? '')
+    setLanguage(bk.language ?? '')
+    setCredits(bk.credits ?? '')
     setEditing(true)
   }
 
   async function saveEdit() {
-    await db.works.update(wid, { title: title.trim() || w.title, notes, location })
+    await db.books.update(bid, { title: title.trim() || bk.title, notes, publisher, publishedDate, isbn, language, credits })
     setEditing(false)
   }
 
   async function addPress() {
     if (!pressTitle.trim()) return
     const item: PressItem = { id: uid(), outlet: pressOutlet.trim(), title: pressTitle.trim(), date: pressDate || undefined }
-    await db.works.update(wid, { press: [...press, item] })
+    await db.books.update(bid, { press: [...press, item] })
     setPressOutlet(''); setPressTitle(''); setPressDate(''); setAddingPress(false)
   }
 
   async function removePress(pid: string) {
-    await db.works.update(wid, { press: press.filter(p => p.id !== pid) })
+    await db.books.update(bid, { press: press.filter(p => p.id !== pid) })
   }
 
   async function addRight() {
     if (!rightLang.trim()) return
     const item: RightItem = { id: uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined, status: rightStatus }
-    await db.works.update(wid, { rights: [...rights, item] })
+    await db.books.update(bid, { rights: [...rights, item] })
     setRightLang(''); setRightPub(''); setRightYear(''); setRightStatus('live'); setAddingRight(false)
   }
 
-  async function deleteWork() {
-    await db.works.delete(wid)
+  async function deleteBook() {
+    await db.books.delete(bid)
     navigate('/studio', { replace: true })
   }
 
@@ -86,7 +94,6 @@ export function WorkDetail() {
   return (
     <Shell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {/* Back + title row */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
           <button onClick={() => navigate('/studio')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}>
             ← Studio
@@ -96,9 +103,9 @@ export function WorkDetail() {
               <input autoFocus value={title} onChange={e => setTitle(e.target.value)}
                 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, border: 'none', borderBottom: '2px solid #F5E642', outline: 'none', background: 'none', color: '#111111', padding: '0 0 2px', flex: 1 }} />
             ) : (
-              <span style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: '#111111' }}>{w.title}</span>
+              <span style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: '#111111' }}>{bk.title}</span>
             )}
-            {w.medium && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#666666', padding: '4px 10px', borderRadius: 6 }}>{w.medium}</span>}
+            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#666666', padding: '4px 10px', borderRadius: 6 }}>Book</span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
               {editing ? (
                 <>
@@ -110,33 +117,39 @@ export function WorkDetail() {
               )}
             </div>
           </div>
-          {editing && (
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, maxWidth: 260, marginTop: 4 }} />
-          )}
         </div>
 
-        {/* 3-col grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 280px', gap: 10, alignItems: 'start' }}>
 
-          {/* LEFT: thumbnail + details */}
+          {/* LEFT: cover + details */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ ...card, display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: 120, height: 150, borderRadius: 8, background: 'linear-gradient(160deg,#E8E8E8 0%,#D0D0D0 100%)' }} />
+              <div style={{ width: 100, height: 140, borderRadius: 8, background: 'linear-gradient(160deg, #E8D8C0 0%, #C8B090 100%)' }} />
             </div>
             <div style={{ ...card }}>
               {sectionLabel('Details')}
-              {[
-                { label: 'Year', value: w.year },
-                { label: 'Medium', value: w.medium },
-                { label: 'Dimensions', value: w.dimensions },
-                { label: 'Location', value: w.location },
-                { label: 'Collection', value: w.collection },
-              ].map(f => f.value ? (
-                <div key={f.label} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
-                  <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{String(f.value)}</div>
+              {editing ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <input value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="Publisher" style={inp} />
+                  <input value={publishedDate} onChange={e => setPublishedDate(e.target.value)} placeholder="Published (2025-10)" style={inp} />
+                  <input value={isbn} onChange={e => setIsbn(e.target.value)} placeholder="ISBN" style={inp} />
+                  <input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Language" style={inp} />
+                  <input value={credits} onChange={e => setCredits(e.target.value)} placeholder="Credits" style={inp} />
                 </div>
-              ) : null)}
+              ) : (
+                [
+                  { label: 'Published', value: bk.publishedDate },
+                  { label: 'Publisher', value: bk.publisher },
+                  { label: 'ISBN', value: bk.isbn },
+                  { label: 'Credits', value: bk.credits },
+                  { label: 'Language', value: bk.language },
+                ].map(f => f.value ? (
+                  <div key={f.label} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
+                    <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{f.value}</div>
+                  </div>
+                ) : null)
+              )}
             </div>
           </div>
 
@@ -182,7 +195,7 @@ export function WorkDetail() {
                   style={{ ...inp, resize: 'vertical' }} />
               ) : (
                 <p style={{ fontSize: 12.5, color: '#666666', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
-                  {w.notes || <span style={{ color: '#CCCCCC', fontStyle: 'italic' }}>No notes yet.</span>}
+                  {bk.notes || <span style={{ color: '#CCCCCC', fontStyle: 'italic' }}>No notes yet.</span>}
                 </p>
               )}
             </div>
@@ -197,7 +210,7 @@ export function WorkDetail() {
               </div>
               {addingRight && (
                 <div style={{ background: '#F9F9F9', borderRadius: 10, padding: 12, marginBottom: 12 }}>
-                  <input value={rightLang} onChange={e => setRightLang(e.target.value)} placeholder="Language / edition" style={{ ...inp, marginBottom: 6 }} />
+                  <input value={rightLang} onChange={e => setRightLang(e.target.value)} placeholder="Language / territory" style={{ ...inp, marginBottom: 6 }} />
                   <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                     <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder="Publisher" style={{ ...inp, flex: 2 }} />
                     <input type="number" value={rightYear} onChange={e => setRightYear(e.target.value)} placeholder="Year" style={{ ...inp, flex: 1 }} />
@@ -227,11 +240,12 @@ export function WorkDetail() {
 
             <div style={{ ...card }}>
               {sectionLabel('Danger zone')}
-              <button onClick={() => void deleteWork()} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '8px 14px', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>
-                Delete work…
+              <button onClick={() => void deleteBook()} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '8px 14px', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>
+                Delete book…
               </button>
             </div>
           </div>
+
         </div>
       </div>
     </Shell>

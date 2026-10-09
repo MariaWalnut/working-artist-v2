@@ -1,9 +1,12 @@
 import Dexie, { type Table } from 'dexie'
 
+export type Activity = 'visual_artist' | 'musician' | 'writer' | 'photographer' | 'performer' | 'other'
+
 export interface Department {
   id?: number
   name: string
   discipline: 'painter' | 'picture_books' | 'music'
+  activities?: Activity[]
   office?: string
   establishedYear?: number
   createdAt: number
@@ -39,11 +42,39 @@ export interface Work {
   medium?: string
   dimensions?: string
   year?: number
-  studioStatus?: string
+  location?: string
   collection?: string
   notes?: string
   press?: PressItem[]
   rights?: RightItem[]
+}
+
+export interface Book {
+  id?: number
+  departmentId?: number
+  title: string
+  subtitle?: string
+  publisher?: string
+  publishedDate?: string
+  isbn?: string
+  language?: string
+  credits?: string
+  dimensions?: string
+  pages?: number
+  technique?: string
+  notes?: string
+  press?: PressItem[]
+  rights?: RightItem[]
+}
+
+export interface Release {
+  id?: number
+  departmentId?: number
+  title: string
+  format?: string
+  year?: number
+  label?: string
+  notes?: string
 }
 
 export interface PressItem {
@@ -100,6 +131,8 @@ class AppDB extends Dexie {
   dayLogs!: Table<DayLog>
   boards!: Table<Board>
   boardItems!: Table<BoardItem>
+  books!: Table<Book>
+  releases!: Table<Release>
 
   constructor() {
     super('WorkingArtistV2')
@@ -118,6 +151,17 @@ class AppDB extends Dexie {
       dayLogs: '++id, departmentId, date',
       boards: '++id, departmentId',
       boardItems: '++id, boardId',
+    })
+    this.version(3).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
     })
   }
 }
