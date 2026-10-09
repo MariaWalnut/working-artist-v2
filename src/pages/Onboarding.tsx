@@ -37,7 +37,7 @@ export function Onboarding() {
         </h1>
         <p style={{ fontSize: 13, color: '#AAAAAA', textAlign: 'center', marginBottom: 28 }}>Select all that apply. You can change this later.</p>
 
-        <div className="mb-5 grid grid-cols-3 gap-2">
+        <div className="mb-5 grid grid-cols-4 gap-2">
           {PRACTICE_OPTIONS.map(p => (
             <button key={p.key} onClick={() => toggle(p.key)}
               style={{

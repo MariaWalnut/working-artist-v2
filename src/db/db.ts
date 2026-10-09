@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 
-export type Activity = 'visual_artist' | 'musician' | 'writer' | 'photographer' | 'performer' | 'other'
+export type Activity = 'visual_artist' | 'musician' | 'writer' | 'picture_book' | 'photographer' | 'designer' | 'performer' | 'other'
 
 export interface Department {
   id?: number

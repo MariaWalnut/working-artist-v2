@@ -136,8 +136,8 @@ export function Studio() {
   const navigate = useNavigate()
   const activities = getActivities(dept)
 
-  const hasFineArts = activities.includes('visual_artist') || activities.includes('photographer')
-  const hasBooks = activities.includes('writer')
+  const hasFineArts = activities.includes('visual_artist') || activities.includes('photographer') || activities.includes('picture_book') || activities.includes('designer')
+  const hasBooks = activities.includes('writer') || activities.includes('picture_book')
   const hasMusic = activities.includes('musician')
 
   const [editWork, setEditWork] = useState<Work | 'new' | null>(null)
