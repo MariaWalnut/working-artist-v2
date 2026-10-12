@@ -143,7 +143,7 @@ export function TheMap() {
                     </div>
                   )}
                   <button onClick={() => !isFuture && setLogDate(ds)}
-                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, outline: isToday ? '2.5px solid #111111' : 'none', outlineOffset: 2, cursor: isFuture ? 'default' : 'pointer', display: 'block' }} />
+                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, boxShadow: isToday ? '0 0 0 2px #111111' : 'none', cursor: isFuture ? 'default' : 'pointer', display: 'block' }} />
                 </div>
               )
             })
