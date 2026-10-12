@@ -5,7 +5,7 @@ import { db, type Project } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 
-const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Award', 'Commission', 'Other']
+const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Award', 'Commission', 'Books', 'Publications', 'Other']
 
 function isActive(p: Project) {
   if (!p.dateEnd) return true
@@ -27,13 +27,15 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
   const dept = useActiveDept()
   const [title, setTitle] = useState('')
   const [type, setType] = useState('Exhibition')
+  const [customType, setCustomType] = useState('')
   const [location, setLocation] = useState('')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
 
   async function save() {
     if (!title.trim()) return
-    await db.projects.add({ departmentId: dept?.id, title: title.trim(), projectType: type, location, dateStart: dateStart || undefined, dateEnd: dateEnd || undefined, status: 'Active' })
+    const projectType = type === 'Other' ? (customType.trim() || 'Other') : type
+    await db.projects.add({ departmentId: dept?.id, title: title.trim(), projectType, location, dateStart: dateStart || undefined, dateEnd: dateEnd || undefined, status: 'Active' })
     onDone()
   }
 
@@ -45,12 +47,22 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
       <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Project title"
         style={{ ...inputStyle, marginBottom: 10, fontSize: 14 }} onKeyDown={e => { if (e.key === 'Enter') void save() }} />
       <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-        <select value={type} onChange={e => setType(e.target.value)} style={{ ...inputStyle, flex: 1 }}>
+        <select value={type} onChange={e => { setType(e.target.value); setCustomType('') }} style={{ ...inputStyle, flex: 1 }}>
           {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
         </select>
-        <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
-          style={{ ...inputStyle, flex: 1 }} />
+        {type === 'Other'
+          ? <input autoFocus value={customType} onChange={e => setCustomType(e.target.value)} placeholder="Category name"
+              style={{ ...inputStyle, flex: 1 }} onKeyDown={e => { if (e.key === 'Enter') void save() }} />
+          : <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
+              style={{ ...inputStyle, flex: 1 }} />
+        }
       </div>
+      {type === 'Other' && (
+        <div style={{ marginBottom: 10 }}>
+          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
+            style={{ ...inputStyle }} />
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
         <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
