@@ -88,8 +88,14 @@ export function ProjectDetail() {
                 style={{ ...inp, marginBottom: 12 }} />
             )}
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inp, flex: 1 }} />
-              <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inp, flex: 1 }} />
+              <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }}>Start</span>
+                <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inp }} />
+              </label>
+              <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }}>End</span>
+                <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inp }} />
+              </label>
             </div>
             <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, marginBottom: 12, maxWidth: 200 }}>
               {['Active', 'Completed', 'On hold', 'Cancelled'].map(s => <option key={s}>{s}</option>)}

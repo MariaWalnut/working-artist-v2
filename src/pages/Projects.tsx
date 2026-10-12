@@ -64,8 +64,14 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-        <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+        <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }}>Start</span>
+          <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inputStyle }} />
+        </label>
+        <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }}>End</span>
+          <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inputStyle }} />
+        </label>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer' }}>Add</button>
