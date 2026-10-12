@@ -144,7 +144,7 @@ export function Today() {
                   width: 26, height: 26, borderRadius: '50%',
                   background: m.color,
                   outline: selected ? `2px solid ${fg}` : 'none',
-                  outlineOffset: 2,
+                  outlineOffset: 5,
                   boxShadow: hasCover
                     ? '0 0 0 1px rgba(255,255,255,0.18)'
                     : (m.color === '#F5E642' ? '0 0 0 1.5px rgba(0,0,0,0.18)' : 'none'),
