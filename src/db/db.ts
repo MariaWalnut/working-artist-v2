@@ -18,11 +18,30 @@ export interface Project {
   departmentId?: number
   title: string
   projectType?: string
+  status?: string
+  notes?: string
+  // Exhibition / Residency / Commission
   location?: string
   dateStart?: string
   dateEnd?: string
-  status?: string
-  notes?: string
+  institution?: string
+  curator?: string
+  // Books / Publications
+  publisher?: string
+  author?: string
+  illustrator?: string
+  designer?: string
+  publishedDate?: string
+  isbn?: string
+  // Music release
+  label?: string
+  releaseFormat?: string
+  releaseDate?: string
+  // Award
+  organisation?: string
+  awardYear?: string
+  // Commission
+  client?: string
 }
 
 export interface Opportunity {

@@ -1,10 +1,154 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/db'
+import { db, type Project } from '../db/db'
 import { Shell } from '../components/layout/Shell'
+import { PROJECT_TYPES } from './Projects'
 
-const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Award', 'Commission', 'Books', 'Publications', 'Other']
+const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
+const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }
+function Row({ children }: { children: React.ReactNode }) {
+  return <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>{children}</div>
+}
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}><span style={lbl}>{label}</span>{children}</label>
+}
+
+function EditTypeFields({ type, state, set }: {
+  type: string
+  state: Record<string, string>
+  set: (k: string, v: string) => void
+}) {
+  const s = (k: string) => state[k] ?? ''
+  const field = (k: string, placeholder: string, label?: string) => (
+    <Field label={label ?? placeholder}>
+      <input value={s(k)} onChange={e => set(k, e.target.value)} placeholder={placeholder} style={inp} />
+    </Field>
+  )
+  const monthField = (k: string, label: string) => (
+    <Field label={label}>
+      <input type="month" value={s(k)} onChange={e => set(k, e.target.value)} style={inp} />
+    </Field>
+  )
+
+  if (type === 'Exhibition') return (
+    <>
+      <Row>{field('institution', 'Gallery / Institution')}{field('location', 'City')}</Row>
+      <Row>{field('curator', 'Curator')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+
+  if (type === 'Books' || type === 'Publications') return (
+    <>
+      <Row>{field('author', 'Author')}{field('illustrator', 'Illustrator')}</Row>
+      <Row>{field('publisher', 'Publisher')}{field('designer', 'Designer')}</Row>
+      <Row>{monthField('publishedDate', 'Published')}{field('isbn', 'ISBN')}</Row>
+    </>
+  )
+
+  if (type === 'Residency') return (
+    <>
+      <Row>{field('institution', 'Institution / Programme')}{field('location', 'City / Country')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+
+  if (type === 'Release') return (
+    <>
+      <Row>{field('label', 'Label')}{field('releaseFormat', 'Format', 'Format (LP / EP / Single)')}</Row>
+      <Row>{monthField('releaseDate', 'Release date')}</Row>
+    </>
+  )
+
+  if (type === 'Award') return (
+    <>
+      <Row>{field('organisation', 'Organisation / Prize')}{field('awardYear', 'Year')}</Row>
+    </>
+  )
+
+  if (type === 'Commission') return (
+    <>
+      <Row>{field('client', 'Client')}{field('location', 'City / Venue')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+
+  return (
+    <>
+      <Row>{field('location', 'City / Venue')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+}
+
+function MetaItem({ label, value }: { label: string; value?: string | number | null }) {
+  if (!value) return null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CCCCCC' }}>{label}</span>
+      <span style={{ fontSize: 13, color: '#444444' }}>{value}</span>
+    </div>
+  )
+}
+
+function ProjectMeta({ p }: { p: Project }) {
+  const t = p.projectType
+  const fmt = (s: string) => {
+    const [y, m] = s.split('-')
+    return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  }
+  const dateRange = p.dateStart && p.dateEnd
+    ? `${fmt(p.dateStart)} – ${fmt(p.dateEnd)}`
+    : p.dateStart ? fmt(p.dateStart)
+    : p.dateEnd ? fmt(p.dateEnd)
+    : null
+
+  const items: [string, string | number | null | undefined][] = []
+
+  if (t === 'Books' || t === 'Publications') {
+    items.push(['Author', p.author], ['Illustrator', p.illustrator], ['Designer', p.designer], ['Publisher', p.publisher], ['Published', p.publishedDate ? fmt(p.publishedDate) : null], ['ISBN', p.isbn])
+  } else if (t === 'Release') {
+    items.push(['Label', p.label], ['Format', p.releaseFormat], ['Released', p.releaseDate ? fmt(p.releaseDate) : null])
+  } else if (t === 'Award') {
+    items.push(['Organisation', p.organisation], ['Year', p.awardYear])
+  } else if (t === 'Commission') {
+    items.push(['Client', p.client], ['Location', p.location], ['Dates', dateRange])
+  } else {
+    items.push(['Institution', p.institution], ['Curator', p.curator], ['Location', p.location], ['Dates', dateRange])
+  }
+
+  const filled = items.filter(([, v]) => v)
+  if (!filled.length) return null
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px 24px', marginBottom: 28, padding: '16px 0', borderBottom: '1px solid #F5F5F5' }}>
+      {filled.map(([label, value]) => <MetaItem key={label} label={label} value={value} />)}
+    </div>
+  )
+}
+
+function projectFieldsFromRecord(p: Project): Record<string, string> {
+  return {
+    location: p.location ?? '',
+    institution: p.institution ?? '',
+    curator: p.curator ?? '',
+    dateStart: p.dateStart ?? '',
+    dateEnd: p.dateEnd ?? '',
+    author: p.author ?? '',
+    illustrator: p.illustrator ?? '',
+    publisher: p.publisher ?? '',
+    designer: p.designer ?? '',
+    publishedDate: p.publishedDate ?? '',
+    isbn: p.isbn ?? '',
+    label: p.label ?? '',
+    releaseFormat: p.releaseFormat ?? '',
+    releaseDate: p.releaseDate ?? '',
+    organisation: p.organisation ?? '',
+    awardYear: p.awardYear ?? '',
+    client: p.client ?? '',
+  }
+}
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
@@ -16,15 +160,15 @@ export function ProjectDetail() {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('')
   const [customType, setCustomType] = useState('')
-  const [location, setLocation] = useState('')
-  const [dateStart, setDateStart] = useState('')
-  const [dateEnd, setDateEnd] = useState('')
   const [status, setStatus] = useState('')
   const [notes, setNotes] = useState('')
+  const [fields, setFields] = useState<Record<string, string>>({})
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (project === undefined) return null
   if (project === null) { navigate('/projects', { replace: true }); return null }
+
+  function setField(k: string, v: string) { setFields(f => ({ ...f, [k]: v })) }
 
   function startEdit() {
     const pt = project!.projectType ?? 'Exhibition'
@@ -32,24 +176,35 @@ export function ProjectDetail() {
     setTitle(project!.title)
     setType(knownType)
     setCustomType(knownType === 'Other' ? pt : '')
-    setLocation(project!.location ?? '')
-    setDateStart(project!.dateStart ?? '')
-    setDateEnd(project!.dateEnd ?? '')
     setStatus(project!.status ?? 'Active')
     setNotes(project!.notes ?? '')
+    setFields(projectFieldsFromRecord(project!))
     setEditing(true)
   }
 
   async function saveEdit() {
     const projectType = type === 'Other' ? (customType.trim() || 'Other') : type
+    const f = fields
     await db.projects.update(pid, {
       title: title.trim() || project!.title,
-      projectType,
-      location: location || undefined,
-      dateStart: dateStart || undefined,
-      dateEnd: dateEnd || undefined,
-      status,
-      notes,
+      projectType, status, notes,
+      location: f.location || undefined,
+      institution: f.institution || undefined,
+      curator: f.curator || undefined,
+      dateStart: f.dateStart || undefined,
+      dateEnd: f.dateEnd || undefined,
+      author: f.author || undefined,
+      illustrator: f.illustrator || undefined,
+      publisher: f.publisher || undefined,
+      designer: f.designer || undefined,
+      publishedDate: f.publishedDate || undefined,
+      isbn: f.isbn || undefined,
+      label: f.label || undefined,
+      releaseFormat: f.releaseFormat || undefined,
+      releaseDate: f.releaseDate || undefined,
+      organisation: f.organisation || undefined,
+      awardYear: f.awardYear || undefined,
+      client: f.client || undefined,
     })
     setEditing(false)
   }
@@ -58,8 +213,6 @@ export function ProjectDetail() {
     await db.projects.delete(pid)
     navigate('/projects', { replace: true })
   }
-
-  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
 
   return (
     <Shell>
@@ -70,38 +223,34 @@ export function ProjectDetail() {
 
         {editing ? (
           <div>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Project title"
-              style={{ ...inp, fontSize: 22, fontFamily: 'Recoleta, serif', marginBottom: 12 }} />
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <select value={type} onChange={e => { setType(e.target.value); setCustomType('') }} style={{ ...inp, flex: 1 }}>
-                {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
-              </select>
-              {type === 'Other'
-                ? <input value={customType} onChange={e => setCustomType(e.target.value)} placeholder="Category name"
-                    style={{ ...inp, flex: 1 }} />
-                : <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
-                    style={{ ...inp, flex: 1 }} />
-              }
+            <div style={{ marginBottom: 10 }}>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Project title"
+                style={{ ...inp, fontSize: 22, fontFamily: 'Recoleta, serif' }} />
             </div>
-            {type === 'Other' && (
-              <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
-                style={{ ...inp, marginBottom: 12 }} />
-            )}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }}>Start</span>
-                <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inp }} />
-              </label>
-              <label style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }}>End</span>
-                <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inp }} />
-              </label>
+            <Row>
+              <Field label="Type">
+                <select value={type} onChange={e => { setType(e.target.value); setCustomType('') }} style={inp}>
+                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
+              </Field>
+              {type === 'Other' && (
+                <Field label="Category name">
+                  <input value={customType} onChange={e => setCustomType(e.target.value)} placeholder="e.g. Installation" style={inp} />
+                </Field>
+              )}
+            </Row>
+            <EditTypeFields type={type} state={fields} set={setField} />
+            <div style={{ marginBottom: 10 }}>
+              <Field label="Status">
+                <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, maxWidth: 200 }}>
+                  {['Active', 'Completed', 'On hold', 'Cancelled'].map(s => <option key={s}>{s}</option>)}
+                </select>
+              </Field>
             </div>
-            <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, marginBottom: 12, maxWidth: 200 }}>
-              {['Active', 'Completed', 'On hold', 'Cancelled'].map(s => <option key={s}>{s}</option>)}
-            </select>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes…" rows={5}
-              style={{ ...inp, resize: 'vertical', marginBottom: 16 }} />
+            <div style={{ marginBottom: 16 }}>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes…" rows={5}
+                style={{ ...inp, resize: 'vertical' }} />
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => void saveEdit()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
               <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
@@ -109,22 +258,18 @@ export function ProjectDetail() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-              <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 28, fontWeight: 400, margin: 0, color: '#111111' }}>{project.title}</h1>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div>
+                <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 28, fontWeight: 400, margin: '0 0 4px', color: '#111111' }}>{project.title}</h1>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  {project.projectType && <span style={{ fontSize: 11, color: '#AAAAAA' }}>{project.projectType}</span>}
+                  {project.status && <span style={{ fontSize: 11, background: '#F5F5F5', borderRadius: 999, padding: '2px 10px', color: '#666666' }}>{project.status}</span>}
+                </div>
+              </div>
               <button onClick={startEdit} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: '#888888', cursor: 'pointer', flexShrink: 0, marginLeft: 16 }}>Edit</button>
             </div>
-            <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
-              {project.projectType && <span style={{ fontSize: 11, color: '#AAAAAA' }}>{project.projectType}</span>}
-              {project.location && <span style={{ fontSize: 11, color: '#AAAAAA' }}>{project.location}</span>}
-              {(project.dateStart || project.dateEnd) && (
-                <span style={{ fontSize: 11, color: '#AAAAAA' }}>
-                  {[project.dateStart, project.dateEnd].filter(Boolean).join(' – ')}
-                </span>
-              )}
-              {project.status && (
-                <span style={{ fontSize: 11, background: '#F5F5F5', borderRadius: 999, padding: '3px 10px', color: '#666666' }}>{project.status}</span>
-              )}
-            </div>
+
+            <ProjectMeta p={project} />
 
             {project.notes ? (
               <p style={{ fontSize: 14, color: '#444444', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: '0 0 32px' }}>{project.notes}</p>
