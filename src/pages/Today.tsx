@@ -62,9 +62,7 @@ export function Today() {
     }
   }
 
-  // colour tokens that flip with the cover state
-  const fg    = hasCover ? '#FFFFFF' : '#111111'
-  const fgRgb = hasCover ? '255,255,255' : '17,17,17'
+  const fg = hasCover ? '#FFFFFF' : '#111111'
 
   return (
     <div
