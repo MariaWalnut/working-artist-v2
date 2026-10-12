@@ -4,6 +4,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 
+const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Award', 'Commission', 'Books', 'Publications', 'Other']
+
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -12,22 +14,43 @@ export function ProjectDetail() {
   const project = useLiveQuery(() => db.projects.get(pid), [pid])
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
-  const [notes, setNotes] = useState('')
+  const [type, setType] = useState('')
+  const [customType, setCustomType] = useState('')
+  const [location, setLocation] = useState('')
+  const [dateStart, setDateStart] = useState('')
+  const [dateEnd, setDateEnd] = useState('')
   const [status, setStatus] = useState('')
+  const [notes, setNotes] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (project === undefined) return null
   if (project === null) { navigate('/projects', { replace: true }); return null }
 
   function startEdit() {
+    const pt = project!.projectType ?? 'Exhibition'
+    const knownType = PROJECT_TYPES.includes(pt) ? pt : 'Other'
     setTitle(project!.title)
-    setNotes(project!.notes ?? '')
+    setType(knownType)
+    setCustomType(knownType === 'Other' ? pt : '')
+    setLocation(project!.location ?? '')
+    setDateStart(project!.dateStart ?? '')
+    setDateEnd(project!.dateEnd ?? '')
     setStatus(project!.status ?? 'Active')
+    setNotes(project!.notes ?? '')
     setEditing(true)
   }
 
   async function saveEdit() {
-    await db.projects.update(pid, { title: title.trim() || project!.title, notes, status })
+    const projectType = type === 'Other' ? (customType.trim() || 'Other') : type
+    await db.projects.update(pid, {
+      title: title.trim() || project!.title,
+      projectType,
+      location: location || undefined,
+      dateStart: dateStart || undefined,
+      dateEnd: dateEnd || undefined,
+      status,
+      notes,
+    })
     setEditing(false)
   }
 
@@ -41,18 +64,37 @@ export function ProjectDetail() {
   return (
     <Shell>
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px' }}>
-        {/* Back */}
         <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
           ← Projects
         </button>
 
         {editing ? (
           <div>
-            <input value={title} onChange={e => setTitle(e.target.value)} style={{ ...inp, fontSize: 22, fontFamily: 'Recoleta, serif', marginBottom: 12 }} />
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Project title"
+              style={{ ...inp, fontSize: 22, fontFamily: 'Recoleta, serif', marginBottom: 12 }} />
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <select value={type} onChange={e => { setType(e.target.value); setCustomType('') }} style={{ ...inp, flex: 1 }}>
+                {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
+              {type === 'Other'
+                ? <input value={customType} onChange={e => setCustomType(e.target.value)} placeholder="Category name"
+                    style={{ ...inp, flex: 1 }} />
+                : <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
+                    style={{ ...inp, flex: 1 }} />
+              }
+            </div>
+            {type === 'Other' && (
+              <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue"
+                style={{ ...inp, marginBottom: 12 }} />
+            )}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <input type="month" value={dateStart} onChange={e => setDateStart(e.target.value)} style={{ ...inp, flex: 1 }} />
+              <input type="month" value={dateEnd} onChange={e => setDateEnd(e.target.value)} style={{ ...inp, flex: 1 }} />
+            </div>
             <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, marginBottom: 12, maxWidth: 200 }}>
               {['Active', 'Completed', 'On hold', 'Cancelled'].map(s => <option key={s}>{s}</option>)}
             </select>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes…" rows={6}
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes…" rows={5}
               style={{ ...inp, resize: 'vertical', marginBottom: 16 }} />
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => void saveEdit()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
