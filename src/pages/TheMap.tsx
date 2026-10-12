@@ -81,18 +81,6 @@ export function TheMap() {
   const todayStr = dateStr(today.getFullYear(), today.getMonth(), today.getDate())
   const logForDate = logDate ? (byDate[logDate] ?? null) : null
 
-  const streakDays = (() => {
-    let s = 0
-    const d = new Date(today)
-    while (true) {
-      const ds = dateStr(d.getFullYear(), d.getMonth(), d.getDate())
-      if (!byDate[ds]) break
-      s++
-      d.setDate(d.getDate() - 1)
-    }
-    return s
-  })()
-
   return (
     <Shell>
       {logDate && <LogModal date={logDate} existing={logForDate} onDone={() => setLogDate(null)} />}
@@ -108,7 +96,6 @@ export function TheMap() {
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{ fontSize: 11, color: '#AAAAAA' }}><span style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: '#111111', marginRight: 4 }}>{loggedThisYear}</span>days</span>
-            {streakDays > 0 && <span style={{ fontSize: 11, color: '#AAAAAA' }}><span style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: '#F0A840', marginRight: 4 }}>{streakDays}</span>streak</span>}
             <button onClick={() => setLogDate(todayStr)} style={{ background: '#F5E642', borderRadius: 999, padding: '7px 16px', border: 'none', fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>+ Log today</button>
           </div>
         </div>
