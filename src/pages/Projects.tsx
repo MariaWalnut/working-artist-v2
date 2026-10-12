@@ -188,7 +188,7 @@ function ProjectRow({ p, past, onClick }: { p: Project; past?: boolean; onClick:
         <p style={{ fontFamily: 'Recoleta, serif', fontSize: past ? 15 : 16, color: past ? '#444444' : '#111111', margin: '0 0 3px' }}>{p.title}</p>
         {sub && <p style={{ fontSize: 10, color: past ? '#CCCCCC' : '#BBBBBB', margin: 0 }}>{sub}</p>}
       </div>
-      <p style={{ fontSize: 10, color: past ? '#BBBBBB' : '#888888', margin: 0 }}>{projectDate(p) ?? '—'}</p>
+      <p style={{ fontSize: 10, color: past ? '#BBBBBB' : '#888888', margin: 0 }}>{projectDate(p) ?? ''}</p>
       {!past ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F5E642', flexShrink: 0 }} />
