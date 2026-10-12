@@ -10,6 +10,7 @@ export interface Department {
   office?: string
   establishedYear?: number
   createdAt: number
+  coverImage?: string
 }
 
 export interface Project {
