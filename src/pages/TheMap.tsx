@@ -60,12 +60,18 @@ function LogModal({ date, existing, onDone }: { date: string; existing: DayLog |
   )
 }
 
+function dayLabel(ds: string) {
+  const d = new Date(ds + 'T12:00:00')
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
 export function TheMap() {
   const dept = useActiveDept()
   const navigate = useNavigate()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [logDate, setLogDate] = useState<string | null>(null)
+  const [hovered, setHovered] = useState<string | null>(null)
 
   const logs = useLiveQuery(() => dept?.id == null ? [] : db.dayLogs.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const byDate = Object.fromEntries(logs.map(l => [l.date, l]))
@@ -127,8 +133,18 @@ export function TheMap() {
               if (isFuture) { bg = '#F6F6F6'; border = '1px solid #F0F0F0' }
               else if (log) { bg = DAY_COLOR[log.dayType ?? log.mood ?? ''] ?? '#EEEEEE'; border = 'none' }
               return (
-                <button key={ds} onClick={() => !isFuture && setLogDate(ds)} title={ds}
-                  style={{ width: 29, height: 29, borderRadius: '50%', flexShrink: 0, background: bg, border, outline: isToday ? '2.5px solid #111111' : 'none', outlineOffset: 2, cursor: isFuture ? 'default' : 'pointer' }} />
+                <div key={ds} style={{ position: 'relative', flexShrink: 0 }}
+                  onMouseEnter={() => !isFuture && setHovered(ds)}
+                  onMouseLeave={() => setHovered(null)}>
+                  {hovered === ds && (
+                    <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', background: '#111111', color: '#FFFFFF', fontSize: 10, fontWeight: 500, borderRadius: 6, padding: '4px 8px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 10 }}>
+                      {dayLabel(ds)}
+                      <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '4px solid transparent', borderRight: '4px solid transparent', borderTop: '4px solid #111111' }} />
+                    </div>
+                  )}
+                  <button onClick={() => !isFuture && setLogDate(ds)}
+                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, outline: isToday ? '2.5px solid #111111' : 'none', outlineOffset: 2, cursor: isFuture ? 'default' : 'pointer', display: 'block' }} />
+                </div>
               )
             })
             return [label, ...days]
@@ -144,20 +160,6 @@ export function TheMap() {
           ))}
         </div>
 
-        {logs.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 16 }}>
-            {MOODS.map(m => {
-              const c = logs.filter(l => (l.dayType ?? l.mood) === m.key).length
-              return (
-                <div key={m.key} style={{ background: '#FAFAFA', borderRadius: 14, padding: '14px 16px' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.color, marginBottom: 8 }} />
-                  <p style={{ fontFamily: 'Recoleta, serif', fontSize: 22, margin: '0 0 2px', color: '#111111' }}>{c}</p>
-                  <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{m.label} days</p>
-                </div>
-              )
-            })}
-          </div>
-        )}
       </div>
     </Shell>
   )

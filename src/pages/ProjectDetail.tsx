@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Project } from '../db/db'
+import { db, type Project, type Todo } from '../db/db'
+import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { PROJECT_TYPES } from './Projects'
 
@@ -150,10 +151,106 @@ function projectFieldsFromRecord(p: Project): Record<string, string> {
   }
 }
 
+type KanbanCol = 'todo' | 'in-progress' | 'done'
+const COLUMNS: { key: KanbanCol; label: string }[] = [
+  { key: 'todo', label: 'To do' },
+  { key: 'in-progress', label: 'In progress' },
+  { key: 'done', label: 'Done' },
+]
+
+function TaskCard({ task, onMove, onDelete }: { task: Todo; onMove: (s: KanbanCol) => void; onDelete: () => void }) {
+  const isDone = task.kanbanStatus === 'done'
+  const today = new Date().toISOString().slice(0, 10)
+  const overdue = task.dueDate && task.dueDate < today && !isDone
+  return (
+    <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,.06)', position: 'relative' }}>
+      <p style={{ fontSize: 13, color: isDone ? '#CCCCCC' : '#111111', textDecoration: isDone ? 'line-through' : 'none', margin: 0 }}>{task.title}</p>
+      {task.dueDate && (
+        <p style={{ fontSize: 10, color: overdue ? '#E05252' : '#AAAAAA', margin: '4px 0 0' }}>
+          {overdue ? 'Overdue' : 'Due'} {task.dueDate.slice(5).replace('-', '/')}
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+        {COLUMNS.filter(c => c.key !== task.kanbanStatus).map(c => (
+          <button key={c.key} onClick={() => onMove(c.key)}
+            style={{ background: '#F5F5F5', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, color: '#888888', cursor: 'pointer' }}>
+            {c.label}
+          </button>
+        ))}
+        <button onClick={onDelete} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 14, color: '#DDDDDD', cursor: 'pointer', lineHeight: 1 }}>×</button>
+      </div>
+    </div>
+  )
+}
+
+function AddTaskInline({ projectId, deptId, col, onDone }: { projectId: number; deptId?: number; col: KanbanCol; onDone: () => void }) {
+  const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  async function save() {
+    if (!title.trim()) { onDone(); return }
+    await db.todos.add({ departmentId: deptId, projectId, title: title.trim(), done: false, kanbanStatus: col, dueDate: dueDate || undefined })
+    onDone()
+  }
+  return (
+    <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
+      <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Task"
+        style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#111111', background: 'transparent' }}
+        onKeyDown={e => { if (e.key === 'Enter') void save(); if (e.key === 'Escape') onDone() }} />
+      <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+        style={{ width: '100%', border: 'none', outline: 'none', fontSize: 11, color: '#AAAAAA', background: 'transparent', marginTop: 6 }} />
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button onClick={() => void save()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
+function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number }) {
+  const [addingIn, setAddingIn] = useState<KanbanCol | null>(null)
+  const tasks = useLiveQuery(() => db.todos.where('projectId').equals(projectId).toArray(), [projectId]) ?? []
+  const byCol = (c: KanbanCol) => tasks.filter(t => (t.kanbanStatus ?? 'todo') === c)
+
+  async function moveTask(task: Todo, s: KanbanCol) {
+    if (task.id == null) return
+    await db.todos.update(task.id, { kanbanStatus: s, done: s === 'done' })
+  }
+  async function deleteTask(task: Todo) {
+    if (task.id == null) return
+    await db.todos.delete(task.id)
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+      {COLUMNS.map(col => (
+        <div key={col.key}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#AAAAAA' }}>{col.label}</span>
+            <span style={{ fontSize: 10, color: '#DDDDDD' }}>{byCol(col.key).length}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#F9F9F9', borderRadius: 12, padding: 8, minHeight: 60 }}>
+            {byCol(col.key).map(task => (
+              <TaskCard key={task.id} task={task} onMove={s => void moveTask(task, s)} onDelete={() => void deleteTask(task)} />
+            ))}
+            {addingIn === col.key && (
+              <AddTaskInline projectId={projectId} deptId={deptId} col={col.key} onDone={() => setAddingIn(null)} />
+            )}
+            <button onClick={() => setAddingIn(col.key)}
+              style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer', padding: '6px 0', textAlign: 'left' }}>
+              + Add task
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const pid = Number(id)
+  const dept = useActiveDept()
 
   const project = useLiveQuery(() => db.projects.get(pid), [pid])
   const [editing, setEditing] = useState(false)
@@ -272,9 +369,16 @@ export function ProjectDetail() {
             <ProjectMeta p={project} />
 
             {project.notes ? (
-              <p style={{ fontSize: 14, color: '#444444', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: '0 0 32px' }}>{project.notes}</p>
+              <p style={{ fontSize: 14, color: '#444444', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: '0 0 28px' }}>{project.notes}</p>
             ) : (
-              <p style={{ fontSize: 13, color: '#CCCCCC', fontStyle: 'italic', margin: '0 0 32px' }}>No notes yet. <button onClick={startEdit} style={{ background: 'none', border: 'none', fontSize: 13, color: '#AAAAAA', cursor: 'pointer', padding: 0, fontStyle: 'italic' }}>Add one →</button></p>
+              <p style={{ fontSize: 13, color: '#CCCCCC', fontStyle: 'italic', margin: '0 0 28px' }}>No notes yet. <button onClick={startEdit} style={{ background: 'none', border: 'none', fontSize: 13, color: '#AAAAAA', cursor: 'pointer', padding: 0, fontStyle: 'italic' }}>Add one →</button></p>
+            )}
+
+            {project.id != null && (
+              <div style={{ marginBottom: 32 }}>
+                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 14px' }}>Tasks</p>
+                <KanbanBoard projectId={project.id} deptId={dept?.id} />
+              </div>
             )}
 
             <div style={{ borderTop: '1px solid #F5F5F5', paddingTop: 20 }}>

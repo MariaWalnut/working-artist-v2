@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Activity } from '../db/db'
 import { getActivities, PRACTICE_OPTIONS } from '../lib/activities'
+import { downloadBackup, importData, summarise } from '../lib/backup'
 import { Shell } from '../components/layout/Shell'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -31,6 +32,46 @@ export function Account() {
   const [editingName, setEditingName] = useState(false)
   const [editingActivities, setEditingActivities] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+
+  // Backup & restore
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [backupMsg, setBackupMsg] = useState<string | null>(null)
+  const [backupErr, setBackupErr] = useState<string | null>(null)
+  const [pending, setPending] = useState<{ json: string; rows: number; exportedAt?: string } | null>(null)
+  const [restoring, setRestoring] = useState(false)
+
+  async function handleExport() {
+    setBackupErr(null); setBackupMsg(null)
+    try { await downloadBackup(); setBackupMsg('Backup downloaded.') }
+    catch { setBackupErr('Could not export.') }
+  }
+
+  async function handleFilePick(file?: File) {
+    setBackupErr(null); setBackupMsg(null); setPending(null)
+    if (!file) return
+    try {
+      const json = await file.text()
+      const { rows, exportedAt } = summarise(json)
+      setPending({ json, rows, exportedAt })
+    } catch (e) {
+      setBackupErr(e instanceof Error ? e.message : 'Could not read that file.')
+    }
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  async function handleRestore() {
+    if (!pending) return
+    setRestoring(true); setBackupErr(null)
+    try {
+      const { rows } = await importData(pending.json)
+      setBackupMsg(`Restored ${rows} records, reloading…`)
+      setPending(null)
+      window.setTimeout(() => window.location.reload(), 700)
+    } catch (e) {
+      setBackupErr(e instanceof Error ? e.message : 'Restore failed.')
+      setRestoring(false)
+    }
+  }
 
   useEffect(() => { if (d?.name) setName(d.name) }, [d?.name])
 
@@ -139,6 +180,36 @@ export function Account() {
             </div>
           )}
         </div>
+      </Section>
+
+      <Section title="Backup">
+        <p style={{ fontSize: 12, color: '#AAAAAA', lineHeight: 1.6, marginBottom: 18 }}>
+          Export a backup to keep your own copy, or to move your studio to another browser or computer. Importing replaces everything here.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+          <button onClick={() => void handleExport()} style={{ background: '#111111', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#FFFFFF', cursor: 'pointer' }}>
+            Export backup
+          </button>
+          <label style={{ background: '#F5F5F5', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#888888', cursor: 'pointer' }}>
+            Import backup
+            <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={e => void handleFilePick(e.target.files?.[0])} />
+          </label>
+        </div>
+        {pending && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: '#FFFBE6', borderRadius: 10, padding: '12px 16px', marginBottom: 10 }}>
+            <span style={{ fontSize: 11, color: '#888888' }}>
+              Restore {pending.rows} records{pending.exportedAt ? ` · ${pending.exportedAt.slice(0, 10)}` : ''} — replaces current data
+            </span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button disabled={restoring} onClick={() => void handleRestore()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '6px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer', opacity: restoring ? 0.5 : 1 }}>
+                {restoring ? 'Restoring…' : 'Restore'}
+              </button>
+              <button disabled={restoring} onClick={() => setPending(null)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+            </div>
+          </div>
+        )}
+        {backupMsg && <p style={{ fontSize: 11, color: '#888888', marginTop: 6 }}>{backupMsg}</p>}
+        {backupErr && <p style={{ fontSize: 11, color: '#E05252', marginTop: 6 }}>{backupErr}</p>}
       </Section>
 
       <Section title="About">

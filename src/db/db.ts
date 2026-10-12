@@ -123,6 +123,17 @@ export interface DayLog {
   dayType?: string
 }
 
+export interface Todo {
+  id?: number
+  departmentId?: number
+  projectId?: number
+  title: string
+  done: boolean
+  kanbanStatus?: 'todo' | 'in-progress' | 'done'
+  dueDate?: string // yyyy-MM-dd
+  notes?: string
+}
+
 export interface Board {
   id?: number
   departmentId?: number
@@ -155,6 +166,7 @@ class AppDB extends Dexie {
   boardItems!: Table<BoardItem>
   books!: Table<Book>
   releases!: Table<Release>
+  todos!: Table<Todo>
 
   constructor() {
     super('WorkingArtistV2')
@@ -185,7 +197,25 @@ class AppDB extends Dexie {
       books: '++id, departmentId',
       releases: '++id, departmentId',
     })
+    this.version(4).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+    })
   }
 }
 
 export const db = new AppDB()
+
+// Ask the browser to keep our data rather than evicting it under storage pressure.
+// Without this, IndexedDB is "best-effort" and Safari can clear it silently.
+if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
+  navigator.storage.persist().catch(() => {})
+}

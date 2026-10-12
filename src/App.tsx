@@ -14,6 +14,7 @@ import { BookDetail } from './pages/BookDetail'
 import { AllEvents } from './pages/AllEvents'
 import { WorldMap } from './pages/WorldMap'
 import { VisionBoard } from './pages/VisionBoard'
+import { Career } from './pages/Career'
 
 function AppRoutes() {
   const depts = useLiveQuery(() => db.departments.toArray())
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Route path="/studio/boards" element={<VisionBoard />} />
       <Route path="/studio/books/:id" element={<BookDetail />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
+      <Route path="/career" element={<Career />} />
       <Route path="/account" element={<Account />} />
       <Route path="*" element={<Navigate to="/today" replace />} />
     </Routes>
