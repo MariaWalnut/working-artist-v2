@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
-import { Today } from './pages/Today'
 import { Projects } from './pages/Projects'
 import { Opportunities } from './pages/Opportunities'
 import { TheMap } from './pages/TheMap'
@@ -24,7 +23,6 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/today" element={<Today />} />
       <Route path="/projects" element={<Projects />} />
       <Route path="/projects/events" element={<AllEvents />} />
       <Route path="/projects/:id" element={<ProjectDetail />} />
@@ -39,7 +37,7 @@ function AppRoutes() {
       <Route path="/career" element={<Career />} />
       <Route path="/press" element={<Press />} />
       <Route path="/account" element={<Account />} />
-      <Route path="*" element={<Navigate to="/today" replace />} />
+      <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>
   )
 }

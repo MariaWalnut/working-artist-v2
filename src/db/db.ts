@@ -119,6 +119,7 @@ export interface PressEntry {
   url?: string
   notes?: string
   bookId?: number // optional link to a book
+  workId?: number // optional link to a work
 }
 
 export interface PressItem {

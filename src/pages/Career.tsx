@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
+import { WorldMapPanel } from './WorldMap'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
@@ -281,6 +282,10 @@ export function Career() {
       )}
 
       {selected && <EventPopup e={selected} onClose={() => setSelected(null)} />}
+
+      <div style={{ marginTop: 16 }}>
+        <WorldMapPanel />
+      </div>
     </Shell>
   )
 }

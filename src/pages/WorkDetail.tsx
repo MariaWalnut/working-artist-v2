@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PressItem, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
+import { useActiveDept } from '../lib/useDept'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
 
@@ -23,7 +24,9 @@ export function WorkDetail() {
   const navigate = useNavigate()
   const wid = Number(id)
 
+  const dept = useActiveDept()
   const work = useLiveQuery(() => db.works.get(wid), [wid])
+  const linkedPress = useLiveQuery(() => db.pressEntries.where('workId').equals(wid).toArray(), [wid]) ?? []
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
@@ -89,7 +92,7 @@ export function WorkDetail() {
         {/* Back + title row */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
           <button onClick={() => navigate('/studio')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}>
-            ← Studio
+            ← Works
           </button>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             {editing ? (
@@ -160,7 +163,7 @@ export function WorkDetail() {
                   </div>
                 </div>
               )}
-              {press.length === 0 && !addingPress && <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>No press yet</p>}
+              {press.length === 0 && linkedPress.length === 0 && !addingPress && <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>No press yet</p>}
               {press.map(p => (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: '1px solid #F5F5F5' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F0F0F0', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -171,6 +174,18 @@ export function WorkDetail() {
                     <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[p.outlet, p.date].filter(Boolean).join(' · ')}</div>
                   </div>
                   <button onClick={() => void removePress(p.id)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer', flexShrink: 0 }}>×</button>
+                </div>
+              ))}
+              {linkedPress.map(p => (
+                <div key={`lp${p.id}`} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: '1px solid #F5F5F5' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F5F5F5', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 7, fontWeight: 700, color: '#BBBBBB', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>{(p.outlet ?? '').slice(0, 4).toUpperCase() || '···'}</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', lineHeight: 1.35 }}>{p.title}</div>
+                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[p.outlet, p.date].filter(Boolean).join(' · ')}</div>
+                  </div>
+                  {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#AAAAAA', textDecoration: 'none', flexShrink: 0 }}>↗</a>}
                 </div>
               ))}
             </div>

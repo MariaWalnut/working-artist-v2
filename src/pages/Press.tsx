@@ -45,7 +45,7 @@ const TYPE_COLOR: Record<string, string> = {
   Profile: '#F0D4D4',
 }
 
-function PressForm({ entry, books, onDone }: { entry: PressEntry | null; books: Array<{ id?: number; title: string }>; onDone: () => void }) {
+function PressForm({ entry, books, works, onDone }: { entry: PressEntry | null; books: Array<{ id?: number; title: string }>; works: Array<{ id?: number; title: string }>; onDone: () => void }) {
   const dept = useActiveDept()
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
@@ -54,12 +54,13 @@ function PressForm({ entry, books, onDone }: { entry: PressEntry | null; books: 
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [bookId, setBookId] = useState<number | undefined>(entry?.bookId)
+  const [workId, setWorkId] = useState<number | undefined>(entry?.workId)
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F9F9F9', padding: '8px 10px', fontSize: 12, color: '#111111', outline: 'none', width: '100%' }
 
   async function save() {
     if (!title.trim()) return
-    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date.trim() || undefined, url: url.trim() || undefined, notes: notes.trim() || undefined, bookId }
+    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date.trim() || undefined, url: url.trim() || undefined, notes: notes.trim() || undefined, bookId, workId }
     if (entry?.id != null) await db.pressEntries.update(entry.id, data)
     else await db.pressEntries.add(data)
     onDone()
@@ -87,9 +88,13 @@ function PressForm({ entry, books, onDone }: { entry: PressEntry | null; books: 
             <option value="">Type…</option>
             {PRESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <select value={bookId ?? ''} onChange={e => setBookId(e.target.value ? Number(e.target.value) : undefined)} style={{ ...inp, flex: 2, color: bookId ? '#111111' : '#999999' }}>
-            <option value="">About the artist</option>
+          <select value={bookId ?? ''} onChange={e => { setBookId(e.target.value ? Number(e.target.value) : undefined); if (e.target.value) setWorkId(undefined) }} style={{ ...inp, flex: 1, color: bookId ? '#111111' : '#999999' }}>
+            <option value="">Book…</option>
             {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+          </select>
+          <select value={workId ?? ''} onChange={e => { setWorkId(e.target.value ? Number(e.target.value) : undefined); if (e.target.value) setBookId(undefined) }} style={{ ...inp, flex: 1, color: workId ? '#111111' : '#999999' }}>
+            <option value="">Work…</option>
+            {works.map(w => <option key={w.id} value={w.id}>{w.title}</option>)}
           </select>
         </div>
 
@@ -116,6 +121,7 @@ export function Press() {
 
   const entries = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const books = useLiveQuery(() => deptId == null ? [] : db.books.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [editing, setEditing] = useState<PressEntry | null | 'new'>(null)
@@ -144,6 +150,7 @@ export function Press() {
         <PressForm
           entry={editing === 'new' ? null : editing}
           books={books}
+          works={works}
           onDone={() => setEditing(null)}
         />
       )}
@@ -182,6 +189,7 @@ export function Press() {
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
           {filtered.map((p, i) => {
             const book = p.bookId ? books.find(b => b.id === p.bookId) : null
+            const work = p.workId ? works.find(w => w.id === p.workId) : null
             return (
               <div key={p.id} onClick={() => setEditing(p)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < filtered.length - 1 ? '1px solid #F5F5F5' : 'none', cursor: 'pointer' }}>
@@ -195,7 +203,7 @@ export function Press() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: '#111111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
                   <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>
-                    {[p.outlet, book ? book.title : null].filter(Boolean).join(' · ')}
+                    {[p.outlet, book?.title ?? work?.title].filter(Boolean).join(' · ')}
                   </div>
                 </div>
 
