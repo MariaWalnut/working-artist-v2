@@ -31,8 +31,9 @@ function AppRoutes() {
       <Route path="/opportunities" element={<Opportunities />} />
       <Route path="/the-map" element={<TheMap />} />
       <Route path="/the-map/world" element={<WorldMap />} />
+      <Route path="/the-map/vision" element={<VisionBoard />} />
       <Route path="/studio" element={<Studio />} />
-      <Route path="/studio/boards" element={<VisionBoard />} />
+      <Route path="/studio/boards" element={<Navigate to="/the-map/vision" replace />} />
       <Route path="/studio/books/:id" element={<BookDetail />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
       <Route path="/career" element={<Career />} />

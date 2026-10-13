@@ -8,13 +8,13 @@ import { Shell } from '../components/layout/Shell'
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const MOODS = [
-  { key: 'flow',   label: 'Flow',   color: '#F5E642' },
-  { key: 'good',   label: 'Good',   color: '#B8E0A4' },
-  { key: 'hard',   label: 'Hard',   color: '#E8C4B4' },
-  { key: 'collab', label: 'Social', color: '#78AECB' },
+  { key: 'hard',   label: 'Sad',         emoji: '😞' },
+  { key: 'good',   label: 'Okay',        emoji: '😐' },
+  { key: 'collab', label: 'Happy',       emoji: '🙂' },
+  { key: 'flow',   label: 'Super happy', emoji: '😄' },
 ]
 
-const DAY_COLOR: Record<string, string> = Object.fromEntries(MOODS.map(m => [m.key, m.color]))
+const DAY_EMOJI: Record<string, string> = Object.fromEntries(MOODS.map(m => [m.key, m.emoji]))
 
 function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
@@ -46,9 +46,12 @@ function LogModal({ date, existing, onDone }: { date: string; existing: DayLog |
         <p style={{ fontSize: 11, color: '#AAAAAA', textAlign: 'center', margin: '0 0 24px', letterSpacing: '0.04em' }}>
           {new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
           {MOODS.map(m => (
-            <button key={m.key} onClick={() => setMood(m.key)} style={{ width: 34, height: 34, borderRadius: '50%', border: mood === m.key ? '2.5px solid #111111' : '2px solid transparent', background: m.color, cursor: 'pointer', outline: 'none' }} title={m.label} />
+            <button key={m.key} onClick={() => setMood(m.key)}
+              style={{ width: 48, height: 48, borderRadius: '50%', border: mood === m.key ? `2.5px solid ${m.key === 'flow' ? '#111111' : '#111111'}` : '2px solid transparent', background: m.key === 'flow' ? '#F5E642' : mood === m.key ? '#F5F5F5' : '#F9F9F9', cursor: 'pointer', outline: 'none', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={m.label}>
+              {m.emoji}
+            </button>
           ))}
         </div>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="A note… (optional)"
@@ -89,6 +92,7 @@ export function TheMap() {
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
           <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, margin: 0 }}>The Map</p>
           <button onClick={() => navigate('/the-map/world')} style={{ marginLeft: 12, background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>World</button>
+          <button onClick={() => navigate('/the-map/vision')} style={{ marginLeft: 6, background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>Vision</button>
           <div style={{ marginLeft: 16, display: 'flex', gap: 6 }}>
             {years.map(y => (
               <button key={y} onClick={() => setYear(y)} style={{ padding: '5px 12px', borderRadius: 20, border: 'none', background: year === y ? '#FFFFFF' : '#EBEBEB', boxShadow: year === y ? '0 1px 6px rgba(0,0,0,.12)' : 'none', fontSize: 12, fontWeight: year === y ? 600 : 400, color: '#111111', cursor: 'pointer' }}>{y}</button>
@@ -115,10 +119,10 @@ export function TheMap() {
               const log = byDate[ds]
               const isToday = ds === todayStr
               const isFuture = ds > todayStr
-              let bg = 'transparent'
-              let border = '1.5px solid #E8E8E8'
-              if (isFuture) { bg = '#F6F6F6'; border = '1px solid #F0F0F0' }
-              else if (log) { bg = DAY_COLOR[log.dayType ?? log.mood ?? ''] ?? '#EEEEEE'; border = 'none' }
+              const emoji = log ? (DAY_EMOJI[log.dayType ?? log.mood ?? ''] ?? '') : ''
+              const isFlow = (log?.dayType ?? log?.mood) === 'flow'
+              const bg = isFuture ? '#F6F6F6' : (log && isFlow) ? '#F5E642' : 'transparent'
+              const border = isFuture ? '1px solid #F0F0F0' : log ? 'none' : '1.5px solid #E8E8E8'
               return (
                 <div key={ds} style={{ position: 'relative', flexShrink: 0 }}
                   onMouseEnter={() => !isFuture && setHovered(ds)}
@@ -130,7 +134,9 @@ export function TheMap() {
                     </div>
                   )}
                   <button onClick={() => !isFuture && setLogDate(ds)}
-                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, boxShadow: isToday ? '0 0 0 2px #111111' : 'none', cursor: isFuture ? 'default' : 'pointer', display: 'block' }} />
+                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, boxShadow: isToday ? '0 0 0 2px #111111' : 'none', cursor: isFuture ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, lineHeight: 1 }}>
+                    {emoji}
+                  </button>
                 </div>
               )
             })
@@ -140,8 +146,8 @@ export function TheMap() {
 
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 24, paddingTop: 18, borderTop: '1px solid #F5F5F5', alignItems: 'center' }}>
           {MOODS.map(m => (
-            <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.color }} />
+            <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 14 }}>{m.emoji}</span>
               <span style={{ fontSize: 10, color: '#888888' }}>{m.label}</span>
             </div>
           ))}

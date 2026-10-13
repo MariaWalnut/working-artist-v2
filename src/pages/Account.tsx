@@ -100,14 +100,6 @@ export function Account() {
     setConfirmReset(false)
   }
 
-  const counts = useLiveQuery(async () => ({
-    projects: await db.projects.count(),
-    opportunities: await db.opportunities.count(),
-    works: await db.works.count(),
-    books: await db.books.count(),
-    releases: await db.releases.count(),
-    days: await db.dayLogs.count(),
-  }))
 
   return (
     <Shell>
@@ -160,26 +152,18 @@ export function Account() {
         </div>
       </Section>
 
-      <Section title="Data">
-        <Field label="Projects"><span style={{ fontSize: 13, color: '#888888' }}>{counts?.projects ?? 0}</span></Field>
-        <Field label="Opportunities"><span style={{ fontSize: 13, color: '#888888' }}>{counts?.opportunities ?? 0}</span></Field>
-        <Field label="Works"><span style={{ fontSize: 13, color: '#888888' }}>{counts?.works ?? 0}</span></Field>
-        <Field label="Books"><span style={{ fontSize: 13, color: '#888888' }}>{counts?.books ?? 0}</span></Field>
-        <Field label="Releases"><span style={{ fontSize: 13, color: '#888888' }}>{counts?.releases ?? 0}</span></Field>
-        <Field label="Days logged"><span style={{ fontSize: 13, color: '#888888' }}>{counts?.days ?? 0}</span></Field>
-        <div style={{ marginTop: 20 }}>
-          {!confirmReset ? (
-            <button onClick={() => setConfirmReset(true)} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '9px 16px', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>
-              Clear all data…
-            </button>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 12, color: '#888888' }}>This deletes everything. Continue?</span>
-              <button onClick={() => void resetAll()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete all</button>
-              <button onClick={() => setConfirmReset(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
-            </div>
-          )}
-        </div>
+      <Section title="Danger zone">
+        {!confirmReset ? (
+          <button onClick={() => setConfirmReset(true)} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '9px 16px', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>
+            Clear all data…
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 12, color: '#888888' }}>This deletes everything. Continue?</span>
+            <button onClick={() => void resetAll()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete all</button>
+            <button onClick={() => setConfirmReset(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+          </div>
+        )}
       </Section>
 
       <Section title="Backup">

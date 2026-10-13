@@ -246,9 +246,6 @@ export function Studio() {
                 + Add release
               </button>
             )}
-            <button onClick={() => navigate('/studio/boards')} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, color: '#AAAAAA', cursor: 'pointer' }}>
-              Vision boards
-            </button>
           </div>
         </div>
 
