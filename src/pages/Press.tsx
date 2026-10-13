@@ -4,6 +4,36 @@ import { db, type PressEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+async function importPressFromV1(deptId?: number): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('working-artist')
+    req.onerror = () => reject(new Error('Could not open v1 database'))
+    req.onsuccess = () => {
+      const v1db = req.result
+      if (!Array.from(v1db.objectStoreNames).includes('press')) { v1db.close(); resolve(0); return }
+      const tx = v1db.transaction('press', 'readonly')
+      const getAll = tx.objectStore('press').getAll() as IDBRequest<Array<{ id?: number; departmentId?: number; title: string; type?: string; outlet?: string; link?: string; year?: number; month?: number; notes?: string }>>
+      getAll.onsuccess = async () => {
+        v1db.close()
+        const entries: PressEntry[] = getAll.result.map(r => ({
+          departmentId: deptId ?? r.departmentId,
+          title: r.title,
+          type: r.type,
+          outlet: r.outlet,
+          date: r.year ? (r.month ? `${MONTH_SHORT[(r.month - 1) % 12]} ${r.year}` : String(r.year)) : undefined,
+          url: r.link,
+          notes: r.notes,
+        }))
+        await db.pressEntries.bulkAdd(entries)
+        resolve(entries.length)
+      }
+      getAll.onerror = () => { v1db.close(); reject(getAll.error) }
+    }
+  })
+}
+
 const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile']
 
 const TYPE_COLOR: Record<string, string> = {
@@ -89,6 +119,19 @@ export function Press() {
 
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [editing, setEditing] = useState<PressEntry | null | 'new'>(null)
+  const [importing, setImporting] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [importCount, setImportCount] = useState(0)
+
+  async function handleImportV1() {
+    setImporting('loading')
+    try {
+      const n = await importPressFromV1(dept?.id)
+      setImportCount(n)
+      setImporting(n > 0 ? 'done' : 'error')
+    } catch {
+      setImporting('error')
+    }
+  }
 
   const sorted = [...entries].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
   const filtered = typeFilter ? sorted.filter(e => e.type === typeFilter) : sorted
@@ -107,7 +150,16 @@ export function Press() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 24, fontWeight: 400, margin: 0, color: '#111111' }}>Press</h1>
-        <button onClick={() => setEditing('new')} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {entries.length === 0 && (
+            <button onClick={() => void handleImportV1()}
+              disabled={importing === 'loading'}
+              style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: importing === 'done' ? '#888888' : '#666666', cursor: 'pointer' }}>
+              {importing === 'loading' ? 'Importing…' : importing === 'done' ? `✓ ${importCount} imported` : importing === 'error' ? 'Nothing found in v1' : 'Import from v1'}
+            </button>
+          )}
+          <button onClick={() => setEditing('new')} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
+        </div>
       </div>
 
       {/* Type filter */}

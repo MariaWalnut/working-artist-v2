@@ -5,6 +5,7 @@ import { useActiveDept } from '../../lib/useDept'
 const NAV = [
   { label: 'Today', to: '/today' },
   { label: 'Projects', to: '/projects' },
+  { label: 'Events', to: '/projects/events' },
   { label: 'Opportunities', to: '/opportunities' },
   { label: 'The Map', to: '/the-map' },
   { label: 'Career', to: '/career' },
