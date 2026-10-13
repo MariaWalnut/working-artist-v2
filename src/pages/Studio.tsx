@@ -303,7 +303,9 @@ export function Studio() {
                   </div>
                   {books.map(b => (
                     <div key={b.id} onClick={() => navigate(`/studio/books/${b.id}`)} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 160px 110px 110px', padding: '12px 24px', borderBottom: '1px solid #F9F9F9', alignItems: 'center', cursor: 'pointer' }}>
-                      <div style={{ width: 32, height: 40, borderRadius: 4, background: 'linear-gradient(135deg, #E8D8C0 0%, #D4C0A0 100%)', flexShrink: 0 }} />
+                      <div style={{ width: 32, height: 40, borderRadius: 4, background: 'linear-gradient(135deg, #E8D8C0 0%, #D4C0A0 100%)', flexShrink: 0, overflow: 'hidden' }}>
+                        {b.coverImage && <img src={b.coverImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                      </div>
                       <div>
                         <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px' }}>{b.title}</p>
                         {b.subtitle && <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{b.subtitle}</p>}
