@@ -25,6 +25,7 @@ export function WorkDetail() {
 
   const work = useLiveQuery(() => db.works.get(wid), [wid])
   const linkedPress = useLiveQuery(() => db.pressEntries.filter(p => p.workId === wid).toArray(), [wid]) ?? []
+  const appearedIn = useLiveQuery(() => db.eventEntries.filter(e => (e.workIds ?? []).includes(wid)).toArray(), [wid]) ?? []
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
@@ -201,8 +202,19 @@ export function WorkDetail() {
             </div>
           </div>
 
-          {/* RIGHT: rights + delete */}
+          {/* RIGHT: appeared in + rights + delete */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {appearedIn.length > 0 && (
+              <div style={{ ...card }}>
+                {sectionLabel('Appeared in')}
+                {appearedIn.map(e => (
+                  <div key={e.id} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{e.title}</div>
+                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[e.type, e.location, e.date ? e.date.slice(0, 4) : ''].filter(Boolean).join(' · ')}</div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 {sectionLabel('Rights')}

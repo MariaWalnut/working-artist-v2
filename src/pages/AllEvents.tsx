@@ -20,7 +20,11 @@ const TYPE_DOT: Record<string, string> = {
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
-function EventForm({ entry, onDone }: { entry: EventEntry | null; onDone: () => void }) {
+function EventForm({ entry, works, onDone }: {
+  entry: EventEntry | null
+  works: Array<{ id?: number; title: string; medium?: string }>
+  onDone: () => void
+}) {
   const dept = useActiveDept()
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
@@ -28,8 +32,13 @@ function EventForm({ entry, onDone }: { entry: EventEntry | null; onDone: () => 
   const [date, setDate] = useState(entry?.date ?? '')
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
+  const [workIds, setWorkIds] = useState<number[]>(entry?.workIds ?? [])
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F9F9F9', padding: '8px 10px', fontSize: 12, color: '#111111', outline: 'none', width: '100%' }
+
+  function toggleWork(id: number) {
+    setWorkIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
 
   async function save() {
     if (!title.trim()) return
@@ -41,8 +50,9 @@ function EventForm({ entry, onDone }: { entry: EventEntry | null; onDone: () => 
       date: date || undefined,
       url: url.trim() || undefined,
       notes: notes.trim() || undefined,
+      workIds: workIds.length > 0 ? workIds : undefined,
     }
-    if (entry?.id != null) await db.eventEntries.update(entry.id, data)
+    if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
     else await db.eventEntries.add(data)
     onDone()
   }
@@ -73,6 +83,24 @@ function EventForm({ entry, onDone }: { entry: EventEntry | null; onDone: () => 
           <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
           <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" style={{ ...inp, flex: 1 }} />
         </div>
+
+        {works.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 8px' }}>Works shown</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto' }}>
+              {works.map(w => {
+                if (w.id == null) return null
+                const sel = workIds.includes(w.id)
+                return (
+                  <button key={w.id} type="button" onClick={() => toggleWork(w.id!)}
+                    style={{ padding: '4px 11px', borderRadius: 999, border: sel ? 'none' : '1px solid #E8E8E8', background: sel ? '#F5E642' : 'transparent', color: sel ? '#111111' : '#888888', fontSize: 11, fontWeight: sel ? 600 : 400, cursor: 'pointer', transition: 'background 0.1s' }}>
+                    {w.title}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (optional)" rows={2}
           style={{ ...inp, resize: 'vertical', marginBottom: 16 }} />
@@ -125,6 +153,7 @@ export function AllEvents() {
   const [editing, setEditing] = useState<EventEntry | 'new' | null>(null)
 
   const entries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const works = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
 
   const sorted = useMemo(() => [...entries].sort((a, b) => sortAsc
     ? (a.date ?? '').localeCompare(b.date ?? '')
@@ -167,7 +196,7 @@ export function AllEvents() {
   return (
     <Shell>
       {editing !== null && (
-        <EventForm entry={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />
+        <EventForm entry={editing === 'new' ? null : editing} works={works} onDone={() => setEditing(null)} />
       )}
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -228,10 +257,21 @@ export function AllEvents() {
             <div key={e.id} onClick={() => setEditing(e)}
               style={{ display: 'grid', gridTemplateColumns: '90px 1fr 130px 110px', padding: '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: (e.date ?? '') >= today ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: (e.date ?? '') >= today ? '#111111' : '#999999' }}>{fmtDate(e.date)}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
-                {(e.date ?? '') >= today && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>Upcoming</span>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+                  {(e.date ?? '') >= today && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>Upcoming</span>}
+                </div>
+                {e.workIds && e.workIds.length > 0 && (
+                  <div style={{ paddingLeft: 14, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {e.workIds.map(id => {
+                      const w = works.find(x => x.id === id)
+                      if (!w) return null
+                      return <span key={id} style={{ fontSize: 9, color: '#AAAAAA', background: '#F5F5F5', padding: '1px 6px', borderRadius: 999 }}>{w.title}</span>
+                    })}
+                  </div>
+                )}
               </div>
               <span style={{ fontSize: 11, color: '#888888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.location ?? ''}</span>
               <span style={{ fontSize: 9, fontWeight: 600, background: '#F5F5F5', color: '#666666', padding: '3px 8px', borderRadius: 4, width: 'fit-content' }}>{e.type ?? ''}</span>

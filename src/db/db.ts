@@ -107,6 +107,7 @@ export interface EventEntry {
   date?: string // YYYY-MM
   notes?: string
   url?: string
+  workIds?: number[]
 }
 
 export interface PressEntry {
