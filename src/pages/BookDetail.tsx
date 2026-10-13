@@ -37,6 +37,8 @@ export function BookDetail() {
   const [pressOutlet, setPressOutlet] = useState('')
   const [pressTitle, setPressTitle] = useState('')
   const [pressDate, setPressDate] = useState('')
+  const [pressUrl, setPressUrl] = useState('')
+  const [pressType, setPressType] = useState('')
   const [addingRight, setAddingRight] = useState(false)
   const [rightLang, setRightLang] = useState('')
   const [rightPub, setRightPub] = useState('')
@@ -83,9 +85,9 @@ export function BookDetail() {
 
   async function addPress() {
     if (!pressTitle.trim()) return
-    const item: PressItem = { id: uid(), outlet: pressOutlet.trim(), title: pressTitle.trim(), date: pressDate || undefined }
+    const item: PressItem = { id: uid(), outlet: pressOutlet.trim(), title: pressTitle.trim(), date: pressDate || undefined, url: pressUrl.trim() || undefined, type: pressType || undefined }
     await db.books.update(bid, { press: [...press, item] })
-    setPressOutlet(''); setPressTitle(''); setPressDate(''); setAddingPress(false)
+    setPressOutlet(''); setPressTitle(''); setPressDate(''); setPressUrl(''); setPressType(''); setAddingPress(false)
   }
 
   async function removePress(pid: string) {
@@ -189,11 +191,18 @@ export function BookDetail() {
               </div>
               {addingPress && (
                 <div style={{ background: '#F9F9F9', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+                  <input value={pressTitle} onChange={e => setPressTitle(e.target.value)} placeholder="Headline" style={{ ...inp, marginBottom: 6 }} />
                   <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                    <input value={pressOutlet} onChange={e => setPressOutlet(e.target.value)} placeholder="Outlet" style={{ ...inp, flex: 1 }} />
+                    <input value={pressOutlet} onChange={e => setPressOutlet(e.target.value)} placeholder="Outlet" style={{ ...inp, flex: 2 }} />
                     <input value={pressDate} onChange={e => setPressDate(e.target.value)} placeholder="Date" style={{ ...inp, flex: 1 }} />
                   </div>
-                  <input value={pressTitle} onChange={e => setPressTitle(e.target.value)} placeholder="Headline / description" style={{ ...inp, marginBottom: 8 }} />
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                    <select value={pressType} onChange={e => setPressType(e.target.value)} style={{ ...inp, flex: 1, color: pressType ? '#111111' : '#AAAAAA' }}>
+                      <option value="">Type…</option>
+                      {['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile'].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <input value={pressUrl} onChange={e => setPressUrl(e.target.value)} placeholder="https://…" style={{ ...inp, flex: 2 }} />
+                  </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => void addPress()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
                     <button onClick={() => setAddingPress(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
@@ -202,15 +211,19 @@ export function BookDetail() {
               )}
               {press.length === 0 && !addingPress && <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>No press yet</p>}
               {press.map(p => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderBottom: '1px solid #F5F5F5' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F0F0F0', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 7, fontWeight: 700, color: '#888888', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>{p.outlet.slice(0, 4).toUpperCase()}</span>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: '1px solid #F5F5F5' }}>
+                  <div style={{ width: 38, flexShrink: 0, fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1.3 }}>
+                    {p.date ?? ''}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', lineHeight: 1.35 }}>{p.title}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[p.outlet, p.date].filter(Boolean).join(' · ')}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
+                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 1 }}>{p.outlet}</div>
                   </div>
-                  <button onClick={() => void removePress(p.id)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer', flexShrink: 0 }}>×</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {p.type && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#888888', padding: '2px 6px', borderRadius: 4 }}>{p.type}</span>}
+                    {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: 11, color: '#AAAAAA', textDecoration: 'none', display: 'flex', alignItems: 'center' }} title={p.url}>↗</a>}
+                    <button onClick={() => void removePress(p.id)} style={{ background: 'none', border: 'none', fontSize: 13, color: '#DDDDDD', cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}>×</button>
+                  </div>
                 </div>
               ))}
             </div>

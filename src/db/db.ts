@@ -104,6 +104,7 @@ export interface PressItem {
   title: string
   date?: string
   url?: string
+  type?: string // Interview / Feature / Review / etc.
 }
 
 export interface RightItem {
