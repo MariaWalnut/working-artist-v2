@@ -144,7 +144,7 @@ export function Opportunities() {
           </div>
 
           {filtered.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No opportunities</p>
+            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p>
           ) : filtered.map(o => {
             const today = new Date().toISOString().slice(0, 10)
             const overdue = o.deadline && o.deadline < today && !['Won', 'Closed'].includes(o.status)
