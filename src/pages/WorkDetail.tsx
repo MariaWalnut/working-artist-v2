@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PressItem, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
-import { useActiveDept } from '../lib/useDept'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
 
@@ -24,7 +23,6 @@ export function WorkDetail() {
   const navigate = useNavigate()
   const wid = Number(id)
 
-  const dept = useActiveDept()
   const work = useLiveQuery(() => db.works.get(wid), [wid])
   const linkedPress = useLiveQuery(() => db.pressEntries.where('workId').equals(wid).toArray(), [wid]) ?? []
   const [editing, setEditing] = useState(false)
