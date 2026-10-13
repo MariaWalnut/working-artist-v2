@@ -227,7 +227,6 @@ export function Projects() {
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
         <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, margin: 0 }}>On My Desk</p>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button onClick={() => navigate('/projects/events')} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>All events</button>
           <button onClick={() => setAdding(v => !v)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ New</button>
         </div>
       </div>

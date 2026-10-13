@@ -98,6 +98,17 @@ export interface Release {
   notes?: string
 }
 
+export interface EventEntry {
+  id?: number
+  departmentId?: number
+  title: string
+  type?: string // Reading, Exhibition, Book Fair, Talk, Performance, Screening, Award, Other
+  location?: string
+  date?: string // YYYY-MM
+  notes?: string
+  url?: string
+}
+
 export interface PressEntry {
   id?: number
   departmentId?: number
@@ -181,6 +192,7 @@ class AppDB extends Dexie {
   releases!: Table<Release>
   todos!: Table<Todo>
   pressEntries!: Table<PressEntry>
+  eventEntries!: Table<EventEntry>
 
   constructor() {
     super('WorkingArtistV2')
@@ -235,6 +247,20 @@ class AppDB extends Dexie {
       releases: '++id, departmentId',
       todos: '++id, departmentId, projectId',
       pressEntries: '++id, departmentId',
+    })
+    this.version(6).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
+      eventEntries: '++id, departmentId',
     })
   }
 }

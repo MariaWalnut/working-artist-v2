@@ -1,61 +1,107 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useNavigate } from 'react-router-dom'
-import { db } from '../db/db'
+import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 
-// ─── Type styling ─────────────────────────────────────────────────────────────
+const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Talk', 'Performance', 'Screening', 'Award', 'Residency', 'Other']
 
 const TYPE_DOT: Record<string, string> = {
+  Reading:     '#8CB4D4',
   Exhibition:  '#111111',
-  Residency:   '#888888',
-  Release:     'transparent',
+  'Book Fair': '#F0C878',
+  Talk:        '#B8C8A8',
+  Performance: '#D4A8C8',
+  Screening:   '#A8B4D4',
   Award:       '#F5E642',
-  Commission:  '#AAAAAA',
-  Press:       '#DDDDDD',
-  Books:       '#AAAAAA',
-  Publications:'#AAAAAA',
-  Other:       '#EEEEEE',
-}
-const TYPE_DOT_BORDER: Record<string, string> = {
-  Release: '1.5px solid #CCCCCC',
+  Residency:   '#888888',
+  Other:       '#DDDDDD',
 }
 
-const TYPE_BADGE_BG: Record<string, string> = {
-  Exhibition: '#111111',
-  Award:      '#F5E642',
-  Residency:  '#888888',
-}
-const TYPE_BADGE_COLOR: Record<string, string> = {
-  Exhibition: '#FFFFFF',
-  Residency:  '#FFFFFF',
+// ─── Form ─────────────────────────────────────────────────────────────────────
+
+function EventForm({ entry, onDone }: { entry: EventEntry | null; onDone: () => void }) {
+  const dept = useActiveDept()
+  const [title, setTitle] = useState(entry?.title ?? '')
+  const [type, setType] = useState(entry?.type ?? '')
+  const [location, setLocation] = useState(entry?.location ?? '')
+  const [date, setDate] = useState(entry?.date ?? '')
+  const [url, setUrl] = useState(entry?.url ?? '')
+  const [notes, setNotes] = useState(entry?.notes ?? '')
+
+  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F9F9F9', padding: '8px 10px', fontSize: 12, color: '#111111', outline: 'none', width: '100%' }
+
+  async function save() {
+    if (!title.trim()) return
+    const data: EventEntry = {
+      departmentId: dept?.id,
+      title: title.trim(),
+      type: type || undefined,
+      location: location.trim() || undefined,
+      date: date || undefined,
+      url: url.trim() || undefined,
+      notes: notes.trim() || undefined,
+    }
+    if (entry?.id != null) await db.eventEntries.update(entry.id, data)
+    else await db.eventEntries.add(data)
+    onDone()
+  }
+
+  async function del() {
+    if (entry?.id != null) await db.eventEntries.delete(entry.id)
+    onDone()
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20 }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 16px' }}>{entry ? 'Edit event' : 'Add event'}</p>
+
+        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title"
+          style={{ ...inp, marginBottom: 10, fontSize: 14 }}
+          onKeyDown={e => { if (e.key === 'Enter') void save() }} />
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#999999' }}>
+            <option value="">Type…</option>
+            {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input type="month" value={date} onChange={e => setDate(e.target.value)} style={{ ...inp, flex: 1 }} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
+          <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" style={{ ...inp, flex: 1 }} />
+        </div>
+
+        <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (optional)" rows={2}
+          style={{ ...inp, resize: 'vertical', marginBottom: 16 }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>{entry && <button onClick={() => void del()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => void save()} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{entry ? 'Save' : 'Add'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-// ─── Event type ───────────────────────────────────────────────────────────────
-
-type Event = {
-  id: string
-  title: string
-  location?: string
-  date?: string
-  type: string
-  year: number
-  upcoming: boolean
-  sourceType: 'project' | 'press'
-  sourceId?: number
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toYear(s?: string) { return s ? Number(s.slice(0, 4)) : 0 }
-function fmtDate(s?: string): string | null {
-  if (!s) return null
+
+function fmtDate(s?: string): string {
+  if (!s) return ''
   const parts = s.split('-')
-  if (parts.length < 2 || !parts[1]) return parts[0] ?? null
+  if (parts.length < 2 || !parts[1]) return parts[0] ?? ''
   return new Date(Number(parts[0]), Number(parts[1]) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
 }
 
-function exportCSV(events: Event[]) {
-  const rows = [['Date', 'Event', 'City', 'Type', 'Year'], ...events.map(e => [fmtDate(e.date) ?? '', e.title, e.location ?? '', e.type, String(e.year)])]
+function exportCSV(events: EventEntry[]) {
+  const rows = [['Date', 'Event', 'City', 'Type'], ...events.map(e => [fmtDate(e.date), e.title, e.location ?? '', e.type ?? ''])]
   const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n')
   const a = document.createElement('a')
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
@@ -69,7 +115,6 @@ const PAGE_SIZE = 15
 
 export function AllEvents() {
   const dept = useActiveDept()
-  const navigate = useNavigate()
   const today = new Date().toISOString().slice(0, 7)
 
   const [yearFilter, setYearFilter] = useState<number | null>(null)
@@ -77,56 +122,30 @@ export function AllEvents() {
   const [cityFilter, setCityFilter] = useState<string | null>(null)
   const [sortAsc, setSortAsc] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [editing, setEditing] = useState<EventEntry | 'new' | null>(null)
 
-  const projects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const pressEntries = useLiveQuery(() => dept?.id == null ? [] : db.pressEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const entries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
 
-  const events: Event[] = useMemo(() => {
-    const fromProjects: Event[] = projects.map(p => ({
-      id: `p${p.id}`,
-      title: p.title,
-      location: p.location,
-      date: p.dateStart ?? p.dateEnd,
-      type: p.projectType ?? 'Other',
-      year: toYear(p.dateStart ?? p.dateEnd) || new Date().getFullYear(),
-      upcoming: (p.dateStart ?? '') >= today,
-      sourceType: 'project' as const,
-      sourceId: p.id,
-    }))
-    const fromPress: Event[] = pressEntries.map(p => ({
-      id: `pr${p.id}`,
-      title: p.title,
-      location: p.outlet,
-      date: p.date,
-      type: 'Press',
-      year: toYear(p.date) || new Date().getFullYear(),
-      upcoming: false,
-      sourceType: 'press' as const,
-      sourceId: p.id,
-    }))
-    const all = [...fromProjects, ...fromPress]
-    return all.sort((a, b) => sortAsc
-      ? (a.date ?? '').localeCompare(b.date ?? '')
-      : (b.date ?? '').localeCompare(a.date ?? ''))
-  }, [projects, pressEntries, sortAsc, today])
+  const sorted = useMemo(() => [...entries].sort((a, b) => sortAsc
+    ? (a.date ?? '').localeCompare(b.date ?? '')
+    : (b.date ?? '').localeCompare(a.date ?? '')), [entries, sortAsc])
 
-  const years = useMemo(() => [...new Set(events.map(e => e.year))].sort((a, b) => b - a), [events])
-  const types = useMemo(() => [...new Set(events.map(e => e.type))], [events])
-  const cities = useMemo(() => [...new Set(events.map(e => e.location).filter(Boolean))] as string[], [events])
+  const years = useMemo(() => [...new Set(sorted.map(e => toYear(e.date)).filter(Boolean))].sort((a, b) => b - a), [sorted])
+  const types = useMemo(() => [...new Set(sorted.map(e => e.type).filter(Boolean))] as string[], [sorted])
+  const cities = useMemo(() => [...new Set(sorted.map(e => e.location).filter(Boolean))] as string[], [sorted])
 
-  const filtered = useMemo(() => events.filter(e => {
-    if (yearFilter && e.year !== yearFilter) return false
+  const filtered = useMemo(() => sorted.filter(e => {
+    if (yearFilter && toYear(e.date) !== yearFilter) return false
     if (typeFilter && e.type !== typeFilter) return false
     if (cityFilter && e.location !== cityFilter) return false
     return true
-  }), [events, yearFilter, typeFilter, cityFilter])
+  }), [sorted, yearFilter, typeFilter, cityFilter])
 
   const visible = showAll ? filtered : filtered.slice(0, PAGE_SIZE)
 
-  // Analytics
   const typeCounts = useMemo(() => {
     const m: Record<string, number> = {}
-    filtered.forEach(e => { m[e.type] = (m[e.type] ?? 0) + 1 })
+    filtered.forEach(e => { if (e.type) m[e.type] = (m[e.type] ?? 0) + 1 })
     return Object.entries(m).sort((a, b) => b[1] - a[1])
   }, [filtered])
 
@@ -147,6 +166,10 @@ export function AllEvents() {
 
   return (
     <Shell>
+      {editing !== null && (
+        <EventForm entry={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />
+      )}
+
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
 
         {/* ── Left: filters ─────────────────────────────────────── */}
@@ -162,7 +185,7 @@ export function AllEvents() {
               {types.map(t => (
                 <button key={t} onClick={() => setTypeFilter(typeFilter === t ? null : t)}
                   style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', textAlign: 'left', padding: '4px 8px', borderRadius: 8, border: 'none', background: typeFilter === t ? '#F5F5F5' : 'none', color: typeFilter === t ? '#111111' : '#888888', fontSize: 11, fontWeight: typeFilter === t ? 600 : 400, cursor: 'pointer' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[t] ?? '#DDDDDD', border: TYPE_DOT_BORDER[t] ?? 'none' }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[t] ?? '#DDDDDD' }} />
                   {t}
                 </button>
               ))}
@@ -176,58 +199,51 @@ export function AllEvents() {
           )}
         </div>
 
-        {/* ── Centre: event table ───────────────────────────────── */}
+        {/* ── Centre: table ─────────────────────────────────────── */}
         <div style={{ flex: 1, background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
-          {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', padding: '14px 20px 12px', borderBottom: '1px solid #F0F0F0', gap: 8 }}>
-            <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111' }}>All events</span>
+            <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111' }}>Events</span>
             <span style={{ fontSize: 10, color: '#CCCCCC', fontWeight: 500 }}>{filtered.length}</span>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
               <button onClick={() => setSortAsc(v => !v)}
                 style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 10px', fontSize: 10, color: '#888888', cursor: 'pointer' }}>
                 Date {sortAsc ? '↑' : '↓'}
               </button>
-              <button onClick={() => navigate('/projects')}
+              <button onClick={() => setEditing('new')}
                 style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
-                + Add event
+                + Add
               </button>
             </div>
           </div>
 
-          {/* Column headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 120px 110px 60px', padding: '10px 20px', borderBottom: '1px solid #F0F0F0' }}>
-            {['Date', 'Event', 'City', 'Type', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 130px 110px', padding: '10px 20px', borderBottom: '1px solid #F0F0F0' }}>
+            {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
           </div>
 
-          {/* Rows */}
           {filtered.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No events</p>
-          ) : visible.map((e, i) => {
-            const badgeBg = TYPE_BADGE_BG[e.type] ?? '#F5F5F5'
-            const badgeColor = TYPE_BADGE_COLOR[e.type] ?? '#666666'
-            return (
-              <div key={e.id} onClick={() => e.sourceType === 'project' && e.sourceId ? navigate(`/projects/${e.sourceId}`) : undefined}
-                style={{ display: 'grid', gridTemplateColumns: '90px 1fr 120px 110px 60px', padding: '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: e.sourceType === 'project' ? 'pointer' : 'default', background: e.upcoming ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
-                <span style={{ fontSize: 11, fontWeight: 500, color: e.upcoming ? '#111111' : '#999999' }}>{fmtDate(e.date) ?? '—'}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type] ?? '#DDDDDD', border: TYPE_DOT_BORDER[e.type] ?? 'none' }} />
-                  <span style={{ fontSize: 13, fontWeight: 500, color: e.upcoming ? '#111111' : '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
-                  {e.upcoming && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>Upcoming</span>}
-                </div>
-                <span style={{ fontSize: 11, color: '#888888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.location ?? ''}</span>
-                <span style={{ fontSize: 9, fontWeight: 600, background: badgeBg, color: badgeColor, padding: '3px 8px', borderRadius: 4, width: 'fit-content' }}>{e.type}</span>
-                <span style={{ fontSize: 11, color: '#CCCCCC', textAlign: 'right' }}>{e.year || ''}</span>
+            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {entries.length === 0 ? 'No events yet' : 'Nothing matches'}
+            </p>
+          ) : visible.map((e, i) => (
+            <div key={e.id} onClick={() => setEditing(e)}
+              style={{ display: 'grid', gridTemplateColumns: '90px 1fr 130px 110px', padding: '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: (e.date ?? '') >= today ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: (e.date ?? '') >= today ? '#111111' : '#999999' }}>{fmtDate(e.date)}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
+                <span style={{ fontSize: 13, fontWeight: 500, color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+                {(e.date ?? '') >= today && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>Upcoming</span>}
               </div>
-            )
-          })}
+              <span style={{ fontSize: 11, color: '#888888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.location ?? ''}</span>
+              <span style={{ fontSize: 9, fontWeight: 600, background: '#F5F5F5', color: '#666666', padding: '3px 8px', borderRadius: 4, width: 'fit-content' }}>{e.type ?? ''}</span>
+            </div>
+          ))}
 
-          {/* Footer */}
           <div style={{ display: 'flex', alignItems: 'center', padding: '12px 20px', borderTop: '1px solid #F5F5F5', gap: 8 }}>
             <span style={{ fontSize: 10, color: '#CCCCCC' }}>{filtered.length} events{!showAll && filtered.length > PAGE_SIZE ? ` · showing ${PAGE_SIZE}` : ''}</span>
             {!showAll && filtered.length > PAGE_SIZE && (
               <button onClick={() => setShowAll(true)} style={{ background: 'none', border: 'none', fontSize: 10, color: '#888888', cursor: 'pointer', textDecoration: 'underline' }}>Load all</button>
             )}
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            <div style={{ marginLeft: 'auto' }}>
               <button onClick={() => exportCSV(filtered)} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: '#888888', cursor: 'pointer' }}>Export CSV</button>
             </div>
           </div>
@@ -240,7 +256,7 @@ export function AllEvents() {
               <p style={{ fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 14px' }}>By type</p>
               {typeCounts.map(([type, count]) => (
                 <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: TYPE_DOT[type] ?? '#DDDDDD', border: TYPE_DOT_BORDER[type] ?? 'none', flexShrink: 0 }} />
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: TYPE_DOT[type] ?? '#DDDDDD', flexShrink: 0 }} />
                   <span style={{ fontSize: 11, color: '#444444', flex: 1 }}>{type}</span>
                   <span style={{ fontSize: 11, fontWeight: 600, color: '#111111' }}>{count}</span>
                 </div>
