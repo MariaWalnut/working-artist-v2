@@ -180,22 +180,33 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
   )
 }
 
-function ProjectRow({ p, past, onClick }: { p: Project; past?: boolean; onClick: () => void }) {
+function ProjectCard({ p, onClick }: { p: Project; onClick: () => void }) {
+  const sub = projectSubtitle(p)
+  const date = projectDate(p)
+  return (
+    <div onClick={onClick}
+      style={{ background: '#FFFFFF', borderRadius: 16, padding: '20px 22px', cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: 0, minHeight: 110, transition: 'box-shadow 0.15s' }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,.10)')}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,.06)')}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#BBBBBB' }}>{p.projectType ?? 'Project'}</span>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#F5E642', flexShrink: 0, marginTop: 2 }} />
+      </div>
+      <p style={{ fontFamily: 'Recoleta, serif', fontSize: 17, color: '#111111', margin: '0 0 4px', lineHeight: 1.3 }}>{p.title}</p>
+      {sub && <p style={{ fontSize: 11, color: '#AAAAAA', margin: 0, lineHeight: 1.4 }}>{sub}</p>}
+      {date && <p style={{ fontSize: 10, color: '#CCCCCC', margin: 'auto 0 0', paddingTop: 12 }}>{date}</p>}
+    </div>
+  )
+}
+
+function PastRow({ p, onClick }: { p: Project; onClick: () => void }) {
   const sub = projectSubtitle(p)
   return (
-    <div onClick={onClick} style={{ display: 'grid', gridTemplateColumns: '1fr 130px 160px 100px', alignItems: 'center', padding: past ? '12px 0' : '14px 0', borderBottom: '1px solid #F9F9F9', cursor: 'pointer', opacity: past ? 0.7 : 1 }}>
-      <div>
-        <p style={{ fontFamily: 'Recoleta, serif', fontSize: past ? 15 : 16, color: past ? '#444444' : '#111111', margin: '0 0 3px' }}>{p.title}</p>
-        {sub && <p style={{ fontSize: 10, color: past ? '#CCCCCC' : '#BBBBBB', margin: 0 }}>{sub}</p>}
-      </div>
-      <p style={{ fontSize: 10, color: past ? '#BBBBBB' : '#888888', margin: 0 }}>{projectDate(p) ?? ''}</p>
-      {!past ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F5E642', flexShrink: 0 }} />
-          <span style={{ fontSize: 10, color: '#888888' }}>{p.status ?? 'Active'}</span>
-        </div>
-      ) : <div />}
-      <p style={{ textAlign: 'right', fontSize: 10, color: past ? '#DDDDDD' : '#CCCCCC', margin: 0 }}>→</p>
+    <div onClick={onClick}
+      style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '10px 0', borderBottom: '1px solid #F9F9F9', cursor: 'pointer' }}>
+      <p style={{ fontFamily: 'Recoleta, serif', fontSize: 14, color: '#666666', margin: 0, flex: 1 }}>{p.title}</p>
+      {sub && <span style={{ fontSize: 10, color: '#CCCCCC', flexShrink: 0 }}>{sub}</span>}
+      <span style={{ fontSize: 10, color: '#DDDDDD', flexShrink: 0, width: 100, textAlign: 'right' }}>{projectDate(p) ?? ''}</span>
     </div>
   )
 }
@@ -212,34 +223,34 @@ export function Projects() {
   return (
     <Shell>
       {adding && <NewProjectForm onDone={() => setAdding(false)} />}
-      <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '22px 28px 18px', borderBottom: '1px solid #F5F5F5' }}>
-          <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, margin: 0 }}>Projects</p>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <button onClick={() => navigate('/projects/events')} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>All events</button>
-            <button onClick={() => setAdding(v => !v)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ New project</button>
-          </div>
-        </div>
-        <div style={{ padding: '0 28px 28px' }}>
-          <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column' }}>
-            {active.map(p => <ProjectRow key={p.id} p={p} onClick={() => navigate(`/projects/${p.id}`)} />)}
-          </div>
-          {past.length > 0 && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '22px 0 6px' }}>
-                <span style={{ fontSize: 9, fontWeight: 500, color: '#CCCCCC', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Earlier work</span>
-                <div style={{ flex: 1, height: 1, background: '#F0F0F0' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {past.map(p => <ProjectRow key={p.id} p={p} past onClick={() => navigate(`/projects/${p.id}`)} />)}
-              </div>
-            </>
-          )}
-          {projects.length === 0 && (
-            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No projects yet</p>
-          )}
+
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, margin: 0 }}>Projects</p>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <button onClick={() => navigate('/projects/events')} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>All events</button>
+          <button onClick={() => setAdding(v => !v)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ New</button>
         </div>
       </div>
+
+      {active.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 28 }}>
+          {active.map(p => <ProjectCard key={p.id} p={p} onClick={() => navigate(`/projects/${p.id}`)} />)}
+        </div>
+      )}
+
+      {past.length > 0 && (
+        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '18px 24px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
+            <span style={{ fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Earlier work</span>
+            <div style={{ flex: 1, height: 1, background: '#F0F0F0' }} />
+          </div>
+          {past.map(p => <PastRow key={p.id} p={p} onClick={() => navigate(`/projects/${p.id}`)} />)}
+        </div>
+      )}
+
+      {projects.length === 0 && (
+        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>No projects yet.</div>
+      )}
     </Shell>
   )
 }
