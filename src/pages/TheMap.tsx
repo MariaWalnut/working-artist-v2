@@ -48,8 +48,11 @@ function LogModal({ date, existing, onDone }: { date: string; existing: DayLog |
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
           {MOODS.map(m => (
-            <button key={m.key} onClick={() => setMood(m.key)}
-              style={{ width: 48, height: 48, borderRadius: '50%', border: mood === m.key ? '2.5px solid #111111' : '2.5px solid transparent', background: m.color, cursor: 'pointer', outline: 'none', opacity: mood && mood !== m.key ? 0.45 : 1, transition: 'opacity 0.12s, border-color 0.12s' }} title={m.label} />
+            <div key={m.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: mood && mood !== m.key ? 0.4 : 1, transition: 'opacity 0.12s' }}>
+              <button onClick={() => setMood(m.key)}
+                style={{ width: 48, height: 48, borderRadius: '50%', border: mood === m.key ? '2.5px solid #111111' : '2.5px solid transparent', background: m.color, cursor: 'pointer', outline: 'none' }} />
+              <span style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{m.label}</span>
+            </div>
           ))}
         </div>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="A note… (optional)"
