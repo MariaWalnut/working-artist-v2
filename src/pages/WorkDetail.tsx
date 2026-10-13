@@ -24,7 +24,7 @@ export function WorkDetail() {
   const wid = Number(id)
 
   const work = useLiveQuery(() => db.works.get(wid), [wid])
-  const linkedPress = useLiveQuery(() => db.pressEntries.where('workId').equals(wid).toArray(), [wid]) ?? []
+  const linkedPress = useLiveQuery(() => db.pressEntries.filter(p => p.workId === wid).toArray(), [wid]) ?? []
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
