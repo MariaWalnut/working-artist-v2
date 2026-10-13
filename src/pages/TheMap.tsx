@@ -8,13 +8,13 @@ import { Shell } from '../components/layout/Shell'
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const MOODS = [
-  { key: 'hard',   label: 'Sad',         emoji: '😞' },
-  { key: 'good',   label: 'Okay',        emoji: '😐' },
-  { key: 'collab', label: 'Happy',       emoji: '🙂' },
-  { key: 'flow',   label: 'Super happy', emoji: '😄' },
+  { key: 'hard',   label: 'Sad',         color: '#8CB4D4' },
+  { key: 'good',   label: 'Okay',        color: '#B8C8A8' },
+  { key: 'collab', label: 'Happy',       color: '#F0C878' },
+  { key: 'flow',   label: 'Super happy', color: '#F5E642' },
 ]
 
-const DAY_EMOJI: Record<string, string> = Object.fromEntries(MOODS.map(m => [m.key, m.emoji]))
+const DAY_COLOR: Record<string, string> = Object.fromEntries(MOODS.map(m => [m.key, m.color]))
 
 function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
@@ -49,9 +49,7 @@ function LogModal({ date, existing, onDone }: { date: string; existing: DayLog |
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
           {MOODS.map(m => (
             <button key={m.key} onClick={() => setMood(m.key)}
-              style={{ width: 48, height: 48, borderRadius: '50%', border: mood === m.key ? `2.5px solid ${m.key === 'flow' ? '#111111' : '#111111'}` : '2px solid transparent', background: m.key === 'flow' ? '#F5E642' : mood === m.key ? '#F5F5F5' : '#F9F9F9', cursor: 'pointer', outline: 'none', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={m.label}>
-              {m.emoji}
-            </button>
+              style={{ width: 48, height: 48, borderRadius: '50%', border: mood === m.key ? '2.5px solid #111111' : '2.5px solid transparent', background: m.color, cursor: 'pointer', outline: 'none', opacity: mood && mood !== m.key ? 0.45 : 1, transition: 'opacity 0.12s, border-color 0.12s' }} title={m.label} />
           ))}
         </div>
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="A note… (optional)"
@@ -119,9 +117,8 @@ export function TheMap() {
               const log = byDate[ds]
               const isToday = ds === todayStr
               const isFuture = ds > todayStr
-              const emoji = log ? (DAY_EMOJI[log.dayType ?? log.mood ?? ''] ?? '') : ''
-              const isFlow = (log?.dayType ?? log?.mood) === 'flow'
-              const bg = isFuture ? '#F6F6F6' : (log && isFlow) ? '#F5E642' : 'transparent'
+              const moodKey = log?.dayType ?? log?.mood ?? ''
+              const bg = isFuture ? '#F6F6F6' : log ? (DAY_COLOR[moodKey] ?? '#DDDDDD') : 'transparent'
               const border = isFuture ? '1px solid #F0F0F0' : log ? 'none' : '1.5px solid #E8E8E8'
               return (
                 <div key={ds} style={{ position: 'relative', flexShrink: 0 }}
@@ -134,9 +131,7 @@ export function TheMap() {
                     </div>
                   )}
                   <button onClick={() => !isFuture && setLogDate(ds)}
-                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, boxShadow: isToday ? '0 0 0 2px #111111' : 'none', cursor: isFuture ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, lineHeight: 1 }}>
-                    {emoji}
-                  </button>
+                    style={{ width: 29, height: 29, borderRadius: '50%', background: bg, border, boxShadow: isToday ? '0 0 0 2px #111111' : 'none', cursor: isFuture ? 'default' : 'pointer' }} />
                 </div>
               )
             })
@@ -146,8 +141,8 @@ export function TheMap() {
 
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 24, paddingTop: 18, borderTop: '1px solid #F5F5F5', alignItems: 'center' }}>
           {MOODS.map(m => (
-            <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 14 }}>{m.emoji}</span>
+            <div key={m.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.color, flexShrink: 0 }} />
               <span style={{ fontSize: 10, color: '#888888' }}>{m.label}</span>
             </div>
           ))}
