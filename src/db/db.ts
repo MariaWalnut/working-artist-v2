@@ -98,6 +98,18 @@ export interface Release {
   notes?: string
 }
 
+export interface PressEntry {
+  id?: number
+  departmentId?: number
+  title: string
+  type?: string // Interview / Feature / Selection / Review / Mention / Profile
+  outlet?: string
+  date?: string // free-form, e.g. "Oct 2024"
+  url?: string
+  notes?: string
+  bookId?: number // optional link to a book
+}
+
 export interface PressItem {
   id: string
   outlet: string
@@ -168,6 +180,7 @@ class AppDB extends Dexie {
   books!: Table<Book>
   releases!: Table<Release>
   todos!: Table<Todo>
+  pressEntries!: Table<PressEntry>
 
   constructor() {
     super('WorkingArtistV2')
@@ -209,6 +222,19 @@ class AppDB extends Dexie {
       books: '++id, departmentId',
       releases: '++id, departmentId',
       todos: '++id, departmentId, projectId',
+    })
+    this.version(5).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
     })
   }
 }

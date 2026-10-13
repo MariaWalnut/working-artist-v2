@@ -8,6 +8,7 @@ const NAV = [
   { label: 'Opportunities', to: '/opportunities' },
   { label: 'The Map', to: '/the-map' },
   { label: 'Career', to: '/career' },
+  { label: 'Press', to: '/press' },
   { label: 'Studio', to: '/studio' },
   { label: 'Account', to: '/account' },
 ]
