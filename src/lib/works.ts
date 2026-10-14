@@ -101,3 +101,19 @@ export async function migrateLegacyWorks(t: {
     }
   })
 }
+
+const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+
+// Press dates are typed freely ("Oct 2024", "2024-10", "12.10.2024", "October 2024"). Returns [year, month or 0].
+export function parseLooseDate(raw?: string): [number, number] | null {
+  if (!raw) return null
+  const s = raw.trim().toLowerCase()
+  const dmy = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/)
+  if (dmy) return [Number(dmy[3]), Number(dmy[2]) || 0]
+  const ym = s.match(/^(\d{4})(?:[-/.](\d{1,2}))?/)
+  if (ym) return [Number(ym[1]), Number(ym[2] ?? 0) || 0]
+  const year = s.match(/\b(1[89]\d{2}|2\d{3})\b/)
+  if (!year) return null
+  const month = MONTH_KEYS.findIndex(m => s.includes(m)) + 1
+  return [Number(year[1]), month]
+}

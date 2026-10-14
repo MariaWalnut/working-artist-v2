@@ -5,12 +5,14 @@ import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { WorldMapPanel } from './WorldMap'
-import { kindOf, workSubtitle } from '../lib/works'
+import { kindOf, parseLooseDate, workSubtitle } from '../lib/works'
+import { ClippingViewer } from '../components/ClippingViewer'
+import type { PressEntry } from '../db/db'
 import { formatEventDate } from '../lib/eventDates'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
-type EventKind = 'project' | 'event' | 'work'
+type EventKind = 'project' | 'event' | 'work' | 'press'
 
 interface CareerEvent {
   key: string
@@ -21,8 +23,8 @@ interface CareerEvent {
   sub: string
   dateLabel?: string
   open?: string // route for "Open"
-  linksTitle?: string
-  links?: Array<{ label: string; to: string }>
+  groups?: Array<{ title: string; links: Array<{ label: string; to: string }> }>
+  clipping?: PressEntry
 }
 
 function projectDate(p: { projectType?: string; dateStart?: string; dateEnd?: string; publishedDate?: string; releaseDate?: string; awardYear?: string }): [number, number] | null {
@@ -72,12 +74,14 @@ const KIND_DOT: Record<EventKind, string> = {
   project: '#111111',
   event: '#E0A030',
   work: '#AAAAAA',
+  press: '#9C86C4',
 }
 
 const KIND_LABELS: Record<EventKind, string> = {
   project: 'Projects',
   event: 'Events',
   work: 'Works',
+  press: 'Press',
 }
 
 // ─── YearRow ─────────────────────────────────────────────────────────────────
@@ -167,6 +171,8 @@ function YearRow({ year, events, minGap, measureRef, collapsed, onToggle, onSele
 
 function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
   const navigate = useNavigate()
+  const [viewing, setViewing] = useState(false)
+  if (viewing && e.clipping) return <ClippingViewer entry={e.clipping} onClose={() => setViewing(false)} />
   const monthLabel = e.dateLabel ?? (e.month > 0
     ? new Date(e.year, e.month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
     : String(e.year))
@@ -176,18 +182,19 @@ function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 10px' }}>{e.kind} · {monthLabel}</p>
         <h2 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 6px', color: '#111111' }}>{e.label}</h2>
         <p style={{ fontSize: 13, color: '#888888', margin: 0 }}>{e.sub}</p>
-        {e.links && e.links.length > 0 && (
-          <div style={{ marginTop: 18 }}>
-            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 6px' }}>{e.linksTitle}</p>
-            {e.links.map(l => (
+        {(e.groups ?? []).filter(g => g.links.length > 0).map(g => (
+          <div key={g.title} style={{ marginTop: 18 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 6px' }}>{g.title}</p>
+            {g.links.map(l => (
               <button key={l.to + l.label} onClick={() => navigate(l.to)}
-                style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '9px 0', fontSize: 13, color: '#111111', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                style={{ display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '9px 0', fontSize: 13, color: '#111111', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
                 {l.label}<span style={{ color: '#BBBBBB' }}>→</span>
               </button>
             ))}
           </div>
-        )}
+        ))}
         <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+          {e.clipping && <button onClick={() => setViewing(true)} style={{ background: '#111111', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>View clipping</button>}
           {e.open && <button onClick={() => navigate(e.open!)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer' }}>Open</button>}
           <button onClick={onClose} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Close</button>
         </div>
@@ -205,8 +212,9 @@ export function Career() {
   const projects = useLiveQuery(() => deptId == null ? [] : db.projects.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const events = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const press = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
-  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true })
+  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
@@ -246,7 +254,7 @@ export function Career() {
       all.push({
         key: `e${ev.id}`, year: y, month: parseInt(ev.date.slice(5, 7), 10) || 0, kind: 'event', label: ev.title,
         sub: [ev.type, ev.location].filter(Boolean).join(' · ') || 'Event', dateLabel: formatEventDate(ev.date, ev.endDate),
-        open: '/projects/events', linksTitle: 'Works shown', links: shown,
+        open: '/projects/events', groups: [{ title: 'Works shown', links: shown }],
       })
     }
   }
@@ -258,7 +266,25 @@ export function Career() {
       if (!year) continue
       const month = pubYear ? parseInt(w.publishedDate!.slice(5, 7), 10) || 0 : w.month ?? 0
       const shownAt = events.filter(ev => (ev.workIds ?? []).includes(w.id!)).map(ev => ({ label: [ev.title, formatEventDate(ev.date, ev.endDate)].filter(Boolean).join(' · '), to: '/projects/events' }))
-      all.push({ key: `w${w.id}`, year, month, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`, linksTitle: 'Shown at', links: shownAt })
+      const pressAbout = press.filter(p => p.workId === w.id).map(p => ({ label: [p.title, p.outlet].filter(Boolean).join(' · '), to: '/press' }))
+      all.push({
+        key: `w${w.id}`, year, month, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`,
+        groups: [{ title: 'Shown at', links: shownAt }, { title: 'Press', links: pressAbout }],
+      })
+    }
+  }
+
+  if (show.press) {
+    for (const p of press) {
+      const d = parseLooseDate(p.date)
+      if (!d) continue
+      const about = p.workId != null ? works.find(w => w.id === p.workId) : undefined
+      all.push({
+        key: `r${p.id}`, year: d[0], month: d[1], kind: 'press', label: p.title,
+        sub: [p.type, p.outlet].filter(Boolean).join(' · ') || 'Press', dateLabel: p.date, open: '/press',
+        groups: about ? [{ title: 'About', links: [{ label: about.title, to: `/studio/${about.id}` }] }] : [],
+        clipping: p.clipping ? p : undefined,
+      })
     }
   }
 
@@ -287,7 +313,7 @@ export function Career() {
 
       {isEmpty ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
-          Add dated projects, events or works to build your career timeline.
+          Add dated projects, events, works or press to build your career timeline.
         </div>
       ) : (
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
