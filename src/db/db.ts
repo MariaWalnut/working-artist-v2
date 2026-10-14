@@ -104,7 +104,8 @@ export interface EventEntry {
   title: string
   type?: string // Reading, Exhibition, Book Fair, Talk, Performance, Screening, Award, Other
   location?: string
-  date?: string // YYYY-MM
+  date?: string // YYYY, YYYY-MM or YYYY-MM-DD
+  endDate?: string // same shapes, optional
   notes?: string
   url?: string
   workIds?: number[]

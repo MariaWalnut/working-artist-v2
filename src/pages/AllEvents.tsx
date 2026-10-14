@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
+import { currentMonth, formatEventDate, isOngoing, isUpcoming } from '../lib/eventDates'
 import { Shell } from '../components/layout/Shell'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -36,6 +37,57 @@ function useNarrow() {
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
+const fieldLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 6px' }
+
+function daysIn(y: string, m: string) { return new Date(Number(y), Number(m), 0).getDate() }
+
+// Year is required for a date; month and day are optional and narrow it down.
+function DateFields({ label, value, onChange, inp, action }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  inp: React.CSSProperties
+  action?: React.ReactNode
+}) {
+  const [y, m, d] = value ? value.split('-') : []
+  const thisYear = new Date().getFullYear()
+  const years = Array.from({ length: thisYear + 4 - 1980 }, (_, i) => thisYear + 3 - i)
+  const dayCount = y && m ? daysIn(y, m) : 31
+
+  function set(ny?: string, nm?: string, nd?: string) {
+    if (!ny) return onChange('')
+    if (!nm) return onChange(ny)
+    if (nd && Number(nd) > daysIn(ny, nm)) nd = undefined
+    onChange(nd ? `${ny}-${nm}-${nd}` : `${ny}-${nm}`)
+  }
+
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <p style={fieldLabel}>{label}</p>
+        {action}
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <select aria-label={`${label} day`} value={d ?? ''} disabled={!m} onChange={e => set(y, m, e.target.value || undefined)}
+          style={{ ...inp, flex: 0.8, color: d ? '#111111' : '#999999', opacity: m ? 1 : 0.6 }}>
+          <option value="">Day…</option>
+          {Array.from({ length: dayCount }, (_, i) => String(i + 1).padStart(2, '0')).map(v => <option key={v} value={v}>{Number(v)}</option>)}
+        </select>
+        <select aria-label={`${label} month`} value={m ?? ''} onChange={e => set(y || String(thisYear), e.target.value || undefined, d)}
+          style={{ ...inp, flex: 1.2, color: m ? '#111111' : '#999999' }}>
+          <option value="">Month…</option>
+          {MONTHS.map((name, i) => <option key={name} value={String(i + 1).padStart(2, '0')}>{name}</option>)}
+        </select>
+        <select aria-label={`${label} year`} value={y ?? ''} onChange={e => set(e.target.value || undefined, m, d)}
+          style={{ ...inp, flex: 1, color: y ? '#111111' : '#999999' }}>
+          <option value="">Year…</option>
+          {years.map(v => <option key={v} value={String(v)}>{v}</option>)}
+        </select>
+      </div>
+    </div>
+  )
+}
+
 function EventForm({ entry, works, onDone }: {
   entry: EventEntry | null
   works: Array<{ id?: number; title: string; medium?: string }>
@@ -50,15 +102,9 @@ function EventForm({ entry, works, onDone }: {
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [goals, setGoals] = useState(entry?.goals ?? '')
   const [workIds, setWorkIds] = useState<number[]>(entry?.workIds ?? [])
-  const [year, month] = date.split('-')
-  const thisYear = new Date().getFullYear()
-  const years = Array.from({ length: thisYear + 4 - 1980 }, (_, i) => thisYear + 3 - i)
-  const upcoming = !date || date.slice(0, 7) >= new Date().toISOString().slice(0, 7)
-
-  function setDatePart(y: string | undefined, m: string | undefined) {
-    if (!y) { setDate(''); return }
-    setDate(m ? `${y}-${m}` : y)
-  }
+  const [endDate, setEndDate] = useState(entry?.endDate ?? '')
+  const [showEnd, setShowEnd] = useState(!!entry?.endDate)
+  const upcoming = !date || isUpcoming({ title, date, endDate: endDate || undefined })
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F9F9F9', padding: '8px 10px', fontSize: 12, color: '#111111', outline: 'none', width: '100%' }
 
@@ -73,7 +119,7 @@ function EventForm({ entry, works, onDone }: {
       title: title.trim(),
       type: type || undefined,
       location: location.trim() || undefined,
-      date: date || undefined,
+      ...orderedDates(date, endDate),
       url: url.trim() || undefined,
       notes: notes.trim() || undefined,
       goals: goals.trim() || undefined,
@@ -98,25 +144,26 @@ function EventForm({ entry, works, onDone }: {
           style={{ ...inp, marginBottom: 10, fontSize: 14 }}
           onKeyDown={e => { if (e.key === 'Enter') void save() }} />
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#999999' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          <select aria-label="Type" value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#999999' }}>
             <option value="">Type…</option>
             {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <select aria-label="Month" value={month ?? ''} onChange={e => setDatePart(year || String(thisYear), e.target.value || undefined)} style={{ ...inp, flex: 1, color: month ? '#111111' : '#999999' }}>
-            <option value="">Month…</option>
-            {MONTHS.map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
-          </select>
-          <select aria-label="Year" value={year ?? ''} onChange={e => setDatePart(e.target.value || undefined, month)} style={{ ...inp, flex: 1, color: year ? '#111111' : '#999999' }}>
-            <option value="">Year…</option>
-            {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
-          </select>
+          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
-          <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" style={{ ...inp, flex: 1 }} />
-        </div>
+        <DateFields label={showEnd ? 'Starts' : 'Date'} value={date} onChange={setDate} inp={inp}
+          action={!showEnd && (
+            <button type="button" onClick={() => setShowEnd(true)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 10, color: '#999999', cursor: 'pointer' }}>+ End date</button>
+          )} />
+        {showEnd && (
+          <DateFields label="Ends" value={endDate} onChange={setEndDate} inp={inp}
+            action={
+              <button type="button" onClick={() => { setShowEnd(false); setEndDate('') }} style={{ background: 'none', border: 'none', padding: 0, fontSize: 10, color: '#999999', cursor: 'pointer' }}>Remove</button>
+            } />
+        )}
+
+        <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" aria-label="Link" style={{ ...inp, marginBottom: 10 }} />
 
         {(upcoming || goals) && (
           <div style={{ marginBottom: 10 }}>
@@ -164,15 +211,15 @@ function EventForm({ entry, works, onDone }: {
 
 function toYear(s?: string) { return s ? Number(s.slice(0, 4)) : 0 }
 
-function fmtDate(s?: string): string {
-  if (!s) return ''
-  const parts = s.split('-')
-  if (parts.length < 2 || !parts[1]) return parts[0] ?? ''
-  return new Date(Number(parts[0]), Number(parts[1]) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+// Drops an end that matches the start and swaps the two if they were entered backwards.
+function orderedDates(start: string, end: string): Pick<EventEntry, 'date' | 'endDate'> {
+  if (!start) return { date: end || undefined, endDate: undefined }
+  if (!end || end === start) return { date: start, endDate: undefined }
+  return end < start ? { date: end, endDate: start } : { date: start, endDate: end }
 }
 
 function exportCSV(events: EventEntry[]) {
-  const rows = [['Date', 'Event', 'City', 'Type'], ...events.map(e => [fmtDate(e.date), e.title, e.location ?? '', e.type ?? ''])]
+  const rows = [['Date', 'Event', 'City', 'Type'], ...events.map(e => [formatEventDate(e.date, e.endDate), e.title, e.location ?? '', e.type ?? ''])]
   const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n')
   const a = document.createElement('a')
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
@@ -187,7 +234,7 @@ const PAGE_SIZE = 15
 export function AllEvents() {
   const dept = useActiveDept()
   const narrow = useNarrow()
-  const today = new Date().toISOString().slice(0, 7)
+  const today = currentMonth()
 
   const [yearFilter, setYearFilter] = useState<number | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
@@ -296,7 +343,7 @@ export function AllEvents() {
           </div>
 
           {!narrow && (
-            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 130px 110px', padding: '10px 20px', borderBottom: '1px solid #F0F0F0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', padding: '10px 20px', borderBottom: '1px solid #F0F0F0' }}>
               {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
             </div>
           )}
@@ -307,13 +354,13 @@ export function AllEvents() {
             </p>
           ) : visible.map((e, i) => (
             <div key={e.id} onClick={() => setEditing(e)}
-              style={{ display: 'grid', gridTemplateColumns: narrow ? '64px 1fr' : '90px 1fr 130px 110px', padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: (e.date ?? '') >= today ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
-              <span style={{ fontSize: 11, fontWeight: 500, color: (e.date ?? '') >= today ? '#111111' : '#999999' }}>{fmtDate(e.date)}</span>
+              style={{ display: 'grid', gridTemplateColumns: narrow ? '72px 1fr' : '110px 1fr 130px 110px', padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? '#111111' : '#999999' }}>{formatEventDate(e.date, e.endDate)}</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
                   <span style={{ fontSize: 13, fontWeight: 500, color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
-                  {(e.date ?? '') >= today && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>Upcoming</span>}
+                  {isUpcoming(e, today) && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>{isOngoing(e) ? 'On now' : 'Upcoming'}</span>}
                 </div>
                 {narrow && (e.location || e.type) && (
                   <span style={{ paddingLeft: 14, fontSize: 10, color: '#999999' }}>{[e.location, e.type].filter(Boolean).join(' · ')}</span>

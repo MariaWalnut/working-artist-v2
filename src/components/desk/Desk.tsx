@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem, type EventEntry, type Opportunity, type Project, type Todo } from '../../db/db'
 import { isActive, projectDate, projectSubtitle } from '../../lib/projects'
+import { formatEventDate, isUpcoming } from '../../lib/eventDates'
 
 type DeskType = 'project' | 'tasks' | 'list' | 'submission' | 'comingup' | 'note' | 'quote' | 'image' | 'title'
 type Picker = 'project' | 'submission' | 'earlier' | null
@@ -77,13 +78,6 @@ function dueLabel(iso?: string): { text: string; overdue: boolean } | null {
   return { text: fmtDay(iso), overdue: false }
 }
 
-function monthLabel(ym?: string) {
-  if (!ym) return ''
-  const [y, m] = ym.split('-')
-  if (!y || !m) return ym
-  return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'short' })
-}
-
 function parseList(content: string): ListData {
   try {
     const d = JSON.parse(content) as Partial<ListData>
@@ -147,7 +141,7 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
   const navigate = useNavigate()
   const month = localISO().slice(0, 7)
   const today = localISO()
-  const ev = events.filter(e => (e.date ?? '') >= month).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).slice(0, 6)
+  const ev = events.filter(e => isUpcoming(e, month)).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).slice(0, 6)
   const subs = opps.filter(o => notSent(o) && o.deadline && o.deadline >= today)
     .sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? '')).slice(0, 5)
   const chip: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, border: 'none', borderRadius: 999, padding: '6px 12px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'inherit' }
@@ -164,7 +158,7 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
             <button key={`e${e.id}`} onClick={() => navigate('/projects/events')} style={{ ...chip, background: '#F9F9F9' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: EVENT_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
               <span style={{ fontSize: 12, fontWeight: 500, color: '#444444' }}>{e.title}</span>
-              <span style={{ fontSize: 10, color: '#999999' }}>{monthLabel(e.date)}</span>
+              <span style={{ fontSize: 10, color: '#999999' }}>{formatEventDate(e.date, e.endDate, { year: false })}</span>
             </button>
           ))}
           {subs.map(o => {
