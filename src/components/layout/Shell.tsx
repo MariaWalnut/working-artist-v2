@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useActiveDept } from '../../lib/useDept'
 
@@ -18,6 +18,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const location = useLocation()
   const dept = useActiveDept()
   const wordmark = dept?.name?.trim() || 'Working Artist'
+  const [menuOpen, setMenuOpen] = useState(false)
+  const isActive = (to: string) => location.pathname === to || (to !== '/projects' && location.pathname.startsWith(to)) || (to === '/projects' && /^\/projects\/\d+/.test(location.pathname))
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[1280px] flex-col px-5 pb-16 pt-6 sm:px-9 sm:pt-8">
@@ -31,7 +33,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </button>
         <nav className="hidden items-baseline gap-7 sm:flex">
           {NAV.map((item) => {
-            const active = location.pathname === item.to || (item.to !== '/today' && location.pathname.startsWith(item.to))
+            const active = isActive(item.to)
             return (
               <button
                 key={item.to}
@@ -53,7 +55,38 @@ export function Shell({ children }: { children: ReactNode }) {
             )
           })}
         </nav>
+        <button
+          className="flex items-center justify-center sm:hidden"
+          aria-label={menuOpen ? 'Close menu' : 'Menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(v => !v)}
+          style={{ width: 44, height: 44, marginRight: -12, alignSelf: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+            {menuOpen
+              ? <path d="M3 1l12 12M15 1L3 13" stroke="#111111" strokeWidth="1.6" strokeLinecap="round" />
+              : <path d="M1 1h16M1 7h16M1 13h16" stroke="#111111" strokeWidth="1.6" strokeLinecap="round" />}
+          </svg>
+        </button>
       </header>
+
+      {menuOpen && (
+        <nav className="sm:hidden" style={{ background: '#FFFFFF', borderRadius: 20, padding: '8px 20px', marginTop: -16, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
+          {NAV.map((item, i) => {
+            const active = isActive(item.to)
+            return (
+              <button
+                key={item.to}
+                onClick={() => { setMenuOpen(false); navigate(item.to) }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 48, fontFamily: 'Recoleta, serif', fontSize: 17, color: active ? '#111111' : '#888888', background: 'none', border: 'none', borderBottom: i < NAV.length - 1 ? '1px solid #F5F5F5' : 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+              >
+                {item.label}
+                {active && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F5E642' }} />}
+              </button>
+            )
+          })}
+        </nav>
+      )}
 
       <main className="flex-1">{children}</main>
     </div>

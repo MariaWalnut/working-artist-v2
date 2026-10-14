@@ -315,7 +315,7 @@ export function ProjectDetail() {
     <Shell>
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px' }}>
         <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
-          ← Projects
+          ← On My Desk
         </button>
 
         {editing ? (
