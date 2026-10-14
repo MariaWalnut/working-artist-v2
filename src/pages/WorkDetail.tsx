@@ -343,7 +343,7 @@ export function WorkDetail() {
               <div style={{ ...card }}>
                 {sectionLabel('Awards')}
                 {linkedAwards.map(a => (
-                  <button key={a.id} onClick={() => navigate('/press')}
+                  <button key={a.id} onClick={() => navigate('/career/recognition')}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '8px 0', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{a.title}</div>
                     <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[a.type, a.outlet, a.date].filter(Boolean).join(' · ')}</div>

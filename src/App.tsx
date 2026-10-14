@@ -33,7 +33,8 @@ function AppRoutes() {
       <Route path="/studio/books/:id" element={<LegacyBookRedirect />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
       <Route path="/career" element={<Career />} />
-      <Route path="/press" element={<Press />} />
+      <Route path="/career/recognition" element={<Press />} />
+      <Route path="/press" element={<Navigate to="/career/recognition" replace />} />
       <Route path="/account" element={<Account />} />
       <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>

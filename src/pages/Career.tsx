@@ -7,6 +7,7 @@ import { Shell } from '../components/layout/Shell'
 import { WorldMapPanel } from './WorldMap'
 import { kindOf, parseLooseDate, workSubtitle } from '../lib/works'
 import { ClippingViewer } from '../components/ClippingViewer'
+import { CareerTabs } from '../components/CareerTabs'
 import type { PressEntry } from '../db/db'
 import { formatEventDate } from '../lib/eventDates'
 
@@ -271,7 +272,7 @@ export function Career() {
       if (!year) continue
       const month = pubYear ? parseInt(w.publishedDate!.slice(5, 7), 10) || 0 : w.month ?? 0
       const shownAt = events.filter(ev => (ev.workIds ?? []).includes(w.id!)).map(ev => ({ label: [ev.title, formatEventDate(ev.date, ev.endDate)].filter(Boolean).join(' · '), to: '/projects/events' }))
-      const about = press.filter(p => p.workId === w.id).map(p => ({ award: p.category === 'award', label: [p.title, p.outlet].filter(Boolean).join(' · '), to: '/press' }))
+      const about = press.filter(p => p.workId === w.id).map(p => ({ award: p.category === 'award', label: [p.title, p.outlet].filter(Boolean).join(' · '), to: '/career/recognition' }))
       const pressAbout = about.filter(p => !p.award)
       const awardsFor = about.filter(p => p.award)
       all.push({
@@ -288,7 +289,7 @@ export function Career() {
     const about = p.workId != null ? works.find(w => w.id === p.workId) : undefined
     all.push({
       key: `r${p.id}`, year: d[0], month: d[1], kind, label: p.title,
-      sub: [p.type, p.outlet].filter(Boolean).join(' · ') || (kind === 'award' ? 'Award' : 'Press'), dateLabel: p.date, open: '/press',
+      sub: [p.type, p.outlet].filter(Boolean).join(' · ') || (kind === 'award' ? 'Award' : 'Press'), dateLabel: p.date, open: '/career/recognition',
       groups: about ? [{ title: kind === 'award' ? 'For' : 'About', links: [{ label: about.title, to: `/studio/${about.id}` }] }] : [],
       clipping: p.clipping ? p : undefined,
     })
@@ -304,18 +305,17 @@ export function Career() {
 
   return (
     <Shell>
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 24, fontWeight: 400, margin: 0, color: '#111111' }}>Career</h1>
-        <div style={{ display: 'flex', gap: 6 }}>
+      <CareerTabs active="timeline" right={
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {(Object.keys(KIND_LABELS) as EventKind[]).map(k => (
-            <button key={k} onClick={() => toggleKind(k)}
+            <button key={k} onClick={() => toggleKind(k)} aria-pressed={show[k]}
               style={{ padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 11,
                 background: show[k] ? '#111111' : '#F5F5F5', color: show[k] ? '#FFFFFF' : '#888888', fontWeight: show[k] ? 600 : 400 }}>
               {KIND_LABELS[k]}
             </button>
           ))}
         </div>
-      </div>
+      } />
 
       {isEmpty ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>

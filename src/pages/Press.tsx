@@ -6,6 +6,7 @@ import { Shell } from '../components/layout/Shell'
 import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer, isPdf } from '../components/ClippingViewer'
 import { pdfThumbnail } from '../lib/pdfThumb'
+import { CareerTabs } from '../components/CareerTabs'
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -324,16 +325,7 @@ export function Press() {
         onDrop={e => void onDrop(e)}
         style={{ minHeight: '70vh' }}>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div role="tablist" aria-label="Press and awards" style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
-          {(['press', 'award'] as Section[]).map(sct => (
-            <button key={sct} role="tab" aria-selected={section === sct} onClick={() => { setSection(sct); setTypeFilter(null) }}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Recoleta, serif', fontSize: 24, color: section === sct ? '#111111' : '#C8C8C8', display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              {SECTION_LABEL[sct]}
-              <span style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 10, color: section === sct ? '#999999' : '#D5D5D5' }}>{counts[sct]}</span>
-            </button>
-          ))}
-        </div>
+      <CareerTabs active="recognition" right={
         <div style={{ display: 'flex', gap: 8 }}>
           {entries.length === 0 && (
             <button onClick={() => void handleImportV1()}
@@ -346,19 +338,31 @@ export function Press() {
           <button onClick={() => importRef.current?.click()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: '#555555', cursor: 'pointer' }}>Import file</button>
           <button onClick={() => setEditing('new')} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
         </div>
-      </div>
+      } />
 
-      {/* Type filter */}
-      {usedTypes.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-          <button onClick={() => setTypeFilter(null)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === null ? '#111111' : '#F5F5F5', color: typeFilter === null ? '#FFFFFF' : '#888888' }}>All</button>
-          {usedTypes.map(t => (
-            <button key={t} onClick={() => setTypeFilter(typeFilter === t ? null : t)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === t ? '#111111' : '#F5F5F5', color: typeFilter === t ? '#FFFFFF' : '#888888' }}>
-              {t}
+      {/* Press / Awards switch and type filter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div role="tablist" aria-label="Press and awards" style={{ display: 'flex', background: '#EBEBEB', borderRadius: 999, padding: 3 }}>
+          {(['press', 'award'] as Section[]).map(sct => (
+            <button key={sct} role="tab" aria-selected={section === sct} onClick={() => { setSection(sct); setTypeFilter(null) }}
+              style={{ display: 'flex', alignItems: 'baseline', gap: 6, border: 'none', borderRadius: 999, padding: '6px 14px', fontSize: 12, cursor: 'pointer', background: section === sct ? '#FFFFFF' : 'transparent', color: section === sct ? '#111111' : '#777777', fontWeight: section === sct ? 600 : 400, boxShadow: section === sct ? '0 1px 4px rgba(0,0,0,.08)' : 'none' }}>
+              {SECTION_LABEL[sct]}
+              <span style={{ fontSize: 10, fontWeight: 400, color: '#AAAAAA' }}>{counts[sct]}</span>
             </button>
           ))}
         </div>
-      )}
+        {usedTypes.length > 0 && (
+          <>
+            <div style={{ width: 1, height: 18, background: '#E5E5E5' }} />
+            <button onClick={() => setTypeFilter(null)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === null ? '#111111' : '#F5F5F5', color: typeFilter === null ? '#FFFFFF' : '#888888' }}>All</button>
+            {usedTypes.map(t => (
+              <button key={t} onClick={() => setTypeFilter(typeFilter === t ? null : t)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === t ? '#111111' : '#F5F5F5', color: typeFilter === t ? '#FFFFFF' : '#888888' }}>
+                {t}
+              </button>
+            ))}
+          </>
+        )}
+      </div>
 
       {filtered.length === 0 ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
