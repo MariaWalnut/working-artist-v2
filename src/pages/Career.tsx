@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
@@ -46,7 +46,7 @@ const TOP = MONTH_BAR_H + 24
 const LANE_H = 72
 const HALF_LABEL = 40
 const LABEL_W_PX = 84
-const DEFAULT_GAP = 90
+const DEFAULT_GAP = 170 // safe for the 500px minimum width until the real width is known
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -56,15 +56,19 @@ function monthX(m: number): number {
 
 interface Placed { e: CareerEvent; mx: number; lx: number; lane: number }
 
+// Labels are packed into lanes by where they are actually drawn (edge labels are pulled inward),
+// so two labels in one lane are always at least a label width apart.
 function layoutYear(events: CareerEvent[], minGap: number): Placed[] {
-  const sorted = [...events].sort((a, b) => monthX(a.month) - monthX(b.month))
+  const sorted = [...events].sort((a, b) => monthX(a.month) - monthX(b.month) || a.label.localeCompare(b.label))
   const laneRight: number[] = []
   return sorted.map((e) => {
     const x = monthX(e.month)
-    let lane = laneRight.findIndex((r) => x - r >= minGap)
-    if (lane === -1) { lane = laneRight.length; laneRight.push(x) }
-    else laneRight[lane] = x
-    return { e, mx: x, lx: Math.max(HALF_LABEL, Math.min(1000 - HALF_LABEL, x)), lane }
+    const half = Math.max(HALF_LABEL, minGap / 2)
+    const lx = Math.max(half, Math.min(1000 - half, x))
+    let lane = laneRight.findIndex((r) => lx - r >= minGap)
+    if (lane === -1) { lane = laneRight.length; laneRight.push(lx) }
+    else laneRight[lane] = lx
+    return { e, mx: x, lx, lane }
   })
 }
 
@@ -147,14 +151,14 @@ function YearRow({ year, events, minGap, measureRef, collapsed, onToggle, onSele
                     <div style={{ position: 'absolute', left: `${mx / 10}%`, top: LINE_Y, width: 1, height: 5, background: '#DDDDDD' }} />
                     {/* Event label */}
                     <button onClick={() => onSelect(e)}
-                      style={{ position: 'absolute', left: `${lx / 10}%`, top: markerY(lane), transform: 'translateX(-50%)', width: 80, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'center' }}>
+                      style={{ position: 'absolute', left: `${lx / 10}%`, top: markerY(lane), transform: 'translateX(-50%)', width: 80, maxHeight: LANE_H - 10, overflow: 'hidden', background: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0 0 2px', textAlign: 'center', zIndex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: KIND_DOT[e.kind] }} />
                       </div>
                       <span style={{ display: '-webkit-box', fontSize: 9, fontWeight: 500, color: '#444444', lineHeight: 1.3, overflow: 'hidden', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {e.label}
                       </span>
-                      <span style={{ display: 'block', fontSize: 8, color: '#BBBBBB', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: 2 }}>
+                      <span style={{ display: 'block', fontSize: 8, color: '#BBBBBB', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {e.sub}
                       </span>
                     </button>
@@ -219,17 +223,16 @@ export function Career() {
   const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true, award: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
-  const chartRef = useRef<HTMLDivElement>(null)
   const [chartW, setChartW] = useState(0)
+  const observer = useRef<ResizeObserver | null>(null)
 
-  useLayoutEffect(() => {
-    const el = chartRef.current
+  // Measured whenever the timeline appears (it mounts only after data loads) and on resize.
+  const chartRef = useCallback((el: HTMLDivElement | null) => {
+    observer.current?.disconnect()
     if (!el) return
-    const measure = () => setChartW(el.clientWidth)
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
+    setChartW(el.clientWidth)
+    observer.current = new ResizeObserver(() => setChartW(el.clientWidth))
+    observer.current.observe(el)
   }, [])
 
   const minGap = chartW > 0 ? Math.min(500, (LABEL_W_PX / chartW) * 1000) : DEFAULT_GAP
