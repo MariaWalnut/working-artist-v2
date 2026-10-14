@@ -14,6 +14,22 @@ const RIGHT_BADGE: Record<string, React.CSSProperties> = {
   pending: { background: 'transparent', color: '#AAAAAA', border: '1px dashed #DDDDDD' },
 }
 
+const BOOK_FIELDS = [
+  { key: 'subtitle', label: 'Subtitle', placeholder: '' },
+  { key: 'publisher', label: 'Publisher', placeholder: '' },
+  { key: 'publishedDate', label: 'Published', placeholder: '2025-10' },
+  { key: 'isbn', label: 'ISBN', placeholder: '978…' },
+  { key: 'language', label: 'Language', placeholder: 'German' },
+  { key: 'credits', label: 'Credits', placeholder: 'Text by…, illustrated by…' },
+  { key: 'pages', label: 'Pages', placeholder: '32' },
+  { key: 'dimensions', label: 'Format', placeholder: '24 × 30 cm' },
+  { key: 'technique', label: 'Technique', placeholder: 'Gouache, pencil' },
+] as const
+type BookField = typeof BOOK_FIELDS[number]['key']
+const EMPTY_BOOK: Record<BookField, string> = { subtitle: '', publisher: '', publishedDate: '', isbn: '', language: '', credits: '', pages: '', dimensions: '', technique: '' }
+
+const fieldLabel: React.CSSProperties = { fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+
 function sectionLabel(text: string) {
   return <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 12px' }}>{text}</p>
 }
@@ -28,11 +44,7 @@ export function BookDetail() {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
-  const [publisher, setPublisher] = useState('')
-  const [publishedDate, setPublishedDate] = useState('')
-  const [isbn, setIsbn] = useState('')
-  const [language, setLanguage] = useState('')
-  const [credits, setCredits] = useState('')
+  const [fields, setFields] = useState<Record<BookField, string>>(EMPTY_BOOK)
   const [addingPress, setAddingPress] = useState(false)
   const [pressOutlet, setPressOutlet] = useState('')
   const [pressTitle, setPressTitle] = useState('')
@@ -70,16 +82,26 @@ export function BookDetail() {
   function startEdit() {
     setTitle(bk.title)
     setNotes(bk.notes ?? '')
-    setPublisher(bk.publisher ?? '')
-    setPublishedDate(bk.publishedDate ?? '')
-    setIsbn(bk.isbn ?? '')
-    setLanguage(bk.language ?? '')
-    setCredits(bk.credits ?? '')
+    setFields(Object.fromEntries(BOOK_FIELDS.map(f => [f.key, bk[f.key] != null ? String(bk[f.key]) : ''])) as Record<BookField, string>)
     setEditing(true)
   }
 
   async function saveEdit() {
-    await db.books.update(bid, { title: title.trim() || bk.title, notes, publisher, publishedDate, isbn, language, credits })
+    const text = (k: BookField) => fields[k].trim() || undefined
+    const pages = Number(fields.pages)
+    await db.books.update(bid, {
+      title: title.trim() || bk.title,
+      notes,
+      subtitle: text('subtitle'),
+      publisher: text('publisher'),
+      publishedDate: text('publishedDate'),
+      isbn: text('isbn'),
+      language: text('language'),
+      credits: text('credits'),
+      pages: fields.pages.trim() && Number.isFinite(pages) ? pages : undefined,
+      dimensions: text('dimensions'),
+      technique: text('technique'),
+    })
     setEditing(false)
   }
 
@@ -123,6 +145,7 @@ export function BookDetail() {
             ) : (
               <span style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: '#111111' }}>{bk.title}</span>
             )}
+            {!editing && bk.subtitle && <span style={{ fontSize: 13, color: '#999999' }}>{bk.subtitle}</span>}
             <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#666666', padding: '4px 10px', borderRadius: 6 }}>Book</span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
               {editing ? (
@@ -158,26 +181,24 @@ export function BookDetail() {
             <div style={{ ...card }}>
               {sectionLabel('Details')}
               {editing ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <input value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="Publisher" style={inp} />
-                  <input value={publishedDate} onChange={e => setPublishedDate(e.target.value)} placeholder="Published (2025-10)" style={inp} />
-                  <input value={isbn} onChange={e => setIsbn(e.target.value)} placeholder="ISBN" style={inp} />
-                  <input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Language" style={inp} />
-                  <input value={credits} onChange={e => setCredits(e.target.value)} placeholder="Credits" style={inp} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {BOOK_FIELDS.map(f => (
+                    <label key={f.key}>
+                      <span style={fieldLabel}>{f.label}</span>
+                      <input value={fields[f.key]} onChange={e => setFields(v => ({ ...v, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder} inputMode={f.key === 'pages' ? 'numeric' : undefined} style={inp} />
+                    </label>
+                  ))}
                 </div>
-              ) : (
-                [
-                  { label: 'Published', value: bk.publishedDate },
-                  { label: 'Publisher', value: bk.publisher },
-                  { label: 'ISBN', value: bk.isbn },
-                  { label: 'Credits', value: bk.credits },
-                  { label: 'Language', value: bk.language },
-                ].map(f => f.value ? (
-                  <div key={f.label} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
+              ) : BOOK_FIELDS.some(f => f.key !== 'subtitle' && bk[f.key]) ? (
+                BOOK_FIELDS.map(f => f.key !== 'subtitle' && bk[f.key] ? (
+                  <div key={f.key} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
                     <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{f.value}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{String(bk[f.key])}</div>
                   </div>
                 ) : null)
+              ) : (
+                <button onClick={startEdit} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#BBBBBB', fontStyle: 'italic', cursor: 'pointer' }}>Add details</button>
               )}
             </div>
           </div>

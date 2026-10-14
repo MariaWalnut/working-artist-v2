@@ -14,6 +14,17 @@ const RIGHT_BADGE: Record<string, React.CSSProperties> = {
   pending: { background: 'transparent', color: '#AAAAAA', border: '1px dashed #DDDDDD' },
 }
 
+const WORK_FIELDS = [
+  { key: 'year', label: 'Year', placeholder: '2024' },
+  { key: 'medium', label: 'Medium', placeholder: 'Oil on linen' },
+  { key: 'dimensions', label: 'Dimensions', placeholder: '120 × 90 cm' },
+  { key: 'location', label: 'Location', placeholder: 'City or venue' },
+  { key: 'collection', label: 'Collection', placeholder: 'Private collection' },
+] as const
+type WorkField = typeof WORK_FIELDS[number]['key']
+
+const fieldLabel: React.CSSProperties = { fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+
 function sectionLabel(text: string) {
   return <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 12px' }}>{text}</p>
 }
@@ -29,7 +40,7 @@ export function WorkDetail() {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
-  const [location, setLocation] = useState('')
+  const [fields, setFields] = useState<Record<WorkField, string>>({ year: '', medium: '', dimensions: '', location: '', collection: '' })
   const [addingPress, setAddingPress] = useState(false)
   const [pressOutlet, setPressOutlet] = useState('')
   const [pressTitle, setPressTitle] = useState('')
@@ -50,12 +61,21 @@ export function WorkDetail() {
   function startEdit() {
     setTitle(w.title)
     setNotes(w.notes ?? '')
-    setLocation(w.location ?? '')
+    setFields({ year: w.year ? String(w.year) : '', medium: w.medium ?? '', dimensions: w.dimensions ?? '', location: w.location ?? '', collection: w.collection ?? '' })
     setEditing(true)
   }
 
   async function saveEdit() {
-    await db.works.update(wid, { title: title.trim() || w.title, notes, location })
+    const year = Number(fields.year)
+    await db.works.update(wid, {
+      title: title.trim() || w.title,
+      notes,
+      year: fields.year.trim() && Number.isFinite(year) ? year : undefined,
+      medium: fields.medium.trim() || undefined,
+      dimensions: fields.dimensions.trim() || undefined,
+      location: fields.location.trim() || undefined,
+      collection: fields.collection.trim() || undefined,
+    })
     setEditing(false)
   }
 
@@ -112,9 +132,6 @@ export function WorkDetail() {
               )}
             </div>
           </div>
-          {editing && (
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, maxWidth: 260, marginTop: 4 }} />
-          )}
         </div>
 
         {/* 3-col grid */}
@@ -127,18 +144,26 @@ export function WorkDetail() {
             </div>
             <div style={{ ...card }}>
               {sectionLabel('Details')}
-              {[
-                { label: 'Year', value: w.year },
-                { label: 'Medium', value: w.medium },
-                { label: 'Dimensions', value: w.dimensions },
-                { label: 'Location', value: w.location },
-                { label: 'Collection', value: w.collection },
-              ].map(f => f.value ? (
-                <div key={f.label} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
-                  <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{String(f.value)}</div>
+              {editing ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {WORK_FIELDS.map(f => (
+                    <label key={f.key}>
+                      <span style={fieldLabel}>{f.label}</span>
+                      <input value={fields[f.key]} onChange={e => setFields(v => ({ ...v, [f.key]: e.target.value }))}
+                        placeholder={f.placeholder} inputMode={f.key === 'year' ? 'numeric' : undefined} style={inp} />
+                    </label>
+                  ))}
                 </div>
-              ) : null)}
+              ) : WORK_FIELDS.some(f => w[f.key]) ? (
+                WORK_FIELDS.map(f => w[f.key] ? (
+                  <div key={f.key} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
+                    <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{String(w[f.key])}</div>
+                  </div>
+                ) : null)
+              ) : (
+                <button onClick={startEdit} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#BBBBBB', fontStyle: 'italic', cursor: 'pointer' }}>Add details</button>
+              )}
             </div>
           </div>
 
