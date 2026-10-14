@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PressItem, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
-import { KIND_FIELDS, kindOf, type WorkKind } from '../lib/works'
+import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
 import { formatEventDate } from '../lib/eventDates'
 import { fileToDataUrl } from '../lib/images'
 
@@ -208,7 +208,7 @@ export function WorkDetail() {
                 shownFields.map(f => (
                   <div key={f.key} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
                     <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{String(w[f.key])}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{fieldDisplay(f.key, w[f.key])}</div>
                   </div>
                 ))
               ) : (

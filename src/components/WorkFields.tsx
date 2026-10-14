@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import type { Work } from '../db/db'
-import { KIND_FIELDS, NUMERIC_FIELDS, WORK_KINDS, type WorkField, type WorkKind } from '../lib/works'
+import { KIND_FIELDS, MONTH_NAMES, NUMERIC_FIELDS, WORK_KINDS, type WorkField, type WorkKind } from '../lib/works'
 
 export type FieldValues = Record<WorkField, string>
 
 const ALL_FIELDS: WorkField[] = [
-  'year', 'medium', 'dimensions', 'location', 'collection', 'subtitle', 'publisher', 'publishedDate',
+  'year', 'month', 'medium', 'dimensions', 'location', 'collection', 'subtitle', 'publisher', 'publishedDate',
   'isbn', 'language', 'credits', 'pages', 'technique', 'format', 'label',
 ]
 
@@ -115,6 +115,12 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
                 {lookup === 'loading' ? '…' : lookup === 'notfound' ? 'Not found' : lookup === 'error' ? 'Error' : 'Look up'}
               </button>
             </div>
+          ) : f.key === 'month' ? (
+            <select value={values.month} onChange={e => onChange({ ...values, month: e.target.value })}
+              style={{ ...inp, color: values.month ? '#111111' : '#999999' }}>
+              <option value="">Month…</option>
+              {MONTH_NAMES.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
+            </select>
           ) : (
             <input value={values[f.key]} onChange={e => onChange({ ...values, [f.key]: e.target.value })}
               placeholder={f.placeholder} inputMode={NUMERIC_FIELDS.includes(f.key) ? 'numeric' : undefined} style={inp} />

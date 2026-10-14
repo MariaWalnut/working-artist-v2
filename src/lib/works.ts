@@ -8,11 +8,18 @@ export const kindOf = (w: Pick<Work, 'kind'>): WorkKind =>
   (WORK_KINDS as readonly string[]).includes(w.kind ?? '') ? (w.kind as WorkKind) : 'Artwork'
 
 export type WorkField =
-  | 'year' | 'medium' | 'dimensions' | 'location' | 'collection'
+  | 'year' | 'month' | 'medium' | 'dimensions' | 'location' | 'collection'
   | 'subtitle' | 'publisher' | 'publishedDate' | 'isbn' | 'language' | 'credits' | 'pages' | 'technique'
   | 'format' | 'label'
 
-export const NUMERIC_FIELDS: WorkField[] = ['year', 'pages']
+export const NUMERIC_FIELDS: WorkField[] = ['year', 'month', 'pages']
+
+export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+export function fieldDisplay(key: WorkField, value: unknown) {
+  if (key === 'month' && typeof value === 'number') return MONTH_NAMES[value - 1] ?? String(value)
+  return String(value)
+}
 
 interface FieldSpec { key: WorkField; label: string; placeholder?: string }
 
@@ -21,11 +28,11 @@ const f = (key: WorkField, label: string, placeholder?: string): FieldSpec => ({
 // Which details each kind of work asks for, in display order.
 export const KIND_FIELDS: Record<WorkKind, FieldSpec[]> = {
   Artwork: [
-    f('year', 'Year', '2025'), f('medium', 'Medium', 'Oil on linen'), f('dimensions', 'Dimensions', '120 × 90 cm'),
+    f('year', 'Year', '2025'), f('month', 'Month'), f('medium', 'Medium', 'Oil on linen'), f('dimensions', 'Dimensions', '120 × 90 cm'),
     f('location', 'Location', 'City or venue'), f('collection', 'Collection', 'Private collection'),
   ],
   Illustration: [
-    f('year', 'Year', '2025'), f('publisher', 'Client or publication', 'The New Yorker'), f('publishedDate', 'Published', '2025-10'),
+    f('year', 'Year', '2025'), f('month', 'Month'), f('publisher', 'Client or publication', 'The New Yorker'), f('publishedDate', 'Published', '2025-10'),
     f('medium', 'Medium', 'Gouache, digital'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City'),
   ],
   Book: [
@@ -35,10 +42,10 @@ export const KIND_FIELDS: Record<WorkKind, FieldSpec[]> = {
     f('location', 'Location', 'City'),
   ],
   Release: [
-    f('year', 'Year', '2025'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
+    f('year', 'Year', '2025'), f('month', 'Month'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
   ],
   Other: [
-    f('year', 'Year', '2025'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'),
+    f('year', 'Year', '2025'), f('month', 'Month'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'),
   ],
 }
 

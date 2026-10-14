@@ -252,12 +252,13 @@ export function Career() {
   }
   if (show.work) {
     for (const w of works) {
-      // Published works sit on their publication month; others on their year.
-      const pub = w.publishedDate ? [parseInt(w.publishedDate.slice(0, 4), 10), parseInt(w.publishedDate.slice(5, 7), 10) || 0] : null
-      const year = pub?.[0] || w.year
+      // Published works sit on their publication month; others on their own year and month.
+      const pubYear = w.publishedDate ? parseInt(w.publishedDate.slice(0, 4), 10) || 0 : 0
+      const year = pubYear || w.year
       if (!year) continue
+      const month = pubYear ? parseInt(w.publishedDate!.slice(5, 7), 10) || 0 : w.month ?? 0
       const shownAt = events.filter(ev => (ev.workIds ?? []).includes(w.id!)).map(ev => ({ label: [ev.title, formatEventDate(ev.date, ev.endDate)].filter(Boolean).join(' · '), to: '/projects/events' }))
-      all.push({ key: `w${w.id}`, year, month: pub?.[0] ? pub[1] ?? 0 : 0, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`, linksTitle: 'Shown at', links: shownAt })
+      all.push({ key: `w${w.id}`, year, month, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`, linksTitle: 'Shown at', links: shownAt })
     }
   }
 

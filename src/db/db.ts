@@ -64,6 +64,7 @@ export interface Work {
   medium?: string
   dimensions?: string
   year?: number
+  month?: number // 1–12, optional
   location?: string
   collection?: string
   notes?: string
