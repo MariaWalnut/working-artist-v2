@@ -7,6 +7,8 @@ import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer, isPdf } from '../components/ClippingViewer'
 import { pdfThumbnail } from '../lib/pdfThumb'
 import { CareerTabs } from '../components/CareerTabs'
+import { DateFields } from '../components/DateFields'
+import { formatAnyDate, normalizeDate } from '../lib/eventDates'
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -109,7 +111,8 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
   const [outlet, setOutlet] = useState(entry?.outlet ?? '')
-  const [date, setDate] = useState(entry?.date ?? '')
+  const [date, setDate] = useState(normalizeDate(entry?.date) ?? '')
+  const unreadableDate = entry?.date && !normalizeDate(entry.date) ? entry.date : null
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [workId, setWorkId] = useState<number | undefined>(entry?.workId)
@@ -132,7 +135,7 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
 
   async function save() {
     if (!title.trim()) return
-    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date.trim() || undefined, url: url.trim() || undefined, notes: notes.trim() || undefined, workId, category, clipping: clipping?.data, clippingName: clipping?.name, clippingThumb: clipping?.thumb }
+    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date || (unreadableDate ?? undefined), url: url.trim() || undefined, notes: notes.trim() || undefined, workId, category, clipping: clipping?.data, clippingName: clipping?.name, clippingThumb: clipping?.thumb }
     if (entry?.id != null) await db.pressEntries.update(entry.id, data)
     else await db.pressEntries.add(data)
     onDone()
@@ -163,10 +166,12 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
 
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder={award ? 'Award or recognition' : 'Headline'} aria-label={award ? 'Award or recognition' : 'Headline'} style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={outlet} onChange={e => setOutlet(e.target.value)} placeholder={award ? 'Awarded by' : 'Outlet'} aria-label={award ? 'Awarded by' : 'Outlet'} style={{ ...inp, flex: 2 }} />
-          <input value={date} onChange={e => setDate(e.target.value)} placeholder="Date (e.g. Oct 2024)" style={{ ...inp, flex: 1 }} />
-        </div>
+        <input value={outlet} onChange={e => setOutlet(e.target.value)} placeholder={award ? 'Awarded by' : 'Outlet'} aria-label={award ? 'Awarded by' : 'Outlet'} style={{ ...inp, marginBottom: 12 }} />
+
+        <DateFields label="Date" value={date} onChange={setDate} inp={inp} />
+        {unreadableDate && !date && (
+          <p style={{ fontSize: 10, color: '#A86400', margin: '-4px 0 10px' }}>Previously typed as “{unreadableDate}”. Pick the date above to replace it.</p>
+        )}
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#999999' }}>
@@ -385,8 +390,8 @@ export function Press() {
                 )}
 
                 {/* Date */}
-                <div style={{ width: 70, flexShrink: 0, fontSize: 10, color: '#CCCCCC', fontWeight: 500 }}>
-                  {p.date ?? ''}
+                <div style={{ width: 84, flexShrink: 0, fontSize: 10, color: '#AAAAAA', fontWeight: 500 }}>
+                  {formatAnyDate(p.date)}
                 </div>
 
                 {/* Main */}

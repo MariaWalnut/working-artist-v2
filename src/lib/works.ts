@@ -1,5 +1,6 @@
 import type { Table } from 'dexie'
 import type { Book, PressEntry, Release, Work } from '../db/db'
+import { normalizeDate } from './eventDates'
 
 export const WORK_KINDS = ['Artwork', 'Illustration', 'Book', 'Release', 'Other'] as const
 export type WorkKind = typeof WORK_KINDS[number]
@@ -116,4 +117,20 @@ export function parseLooseDate(raw?: string): [number, number] | null {
   if (!year) return null
   const month = MONTH_KEYS.findIndex(m => s.includes(m)) + 1
   return [Number(year[1]), month]
+}
+
+// Press dates used to be typed freely. Converts every readable one to the menu format;
+// anything unreadable is left exactly as typed.
+export async function normalizePressDates(t: { works: Table<Work>; pressEntries: Table<PressEntry> }) {
+  await t.pressEntries.toCollection().modify(p => {
+    const n = normalizeDate(p.date)
+    if (n && n !== p.date) p.date = n
+  })
+  await t.works.toCollection().modify(w => {
+    if (!w.press?.length) return
+    w.press = w.press.map(item => {
+      const n = normalizeDate(item.date)
+      return n && n !== item.date ? { ...item, date: n } : item
+    })
+  })
 }

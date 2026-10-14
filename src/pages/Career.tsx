@@ -8,7 +8,7 @@ import { kindOf, parseLooseDate, workSubtitle } from '../lib/works'
 import { ClippingViewer } from '../components/ClippingViewer'
 import { CareerTabs } from '../components/CareerTabs'
 import type { PressEntry } from '../db/db'
-import { formatEventDate } from '../lib/eventDates'
+import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
@@ -288,7 +288,7 @@ export function Career() {
     const about = p.workId != null ? works.find(w => w.id === p.workId) : undefined
     all.push({
       key: `r${p.id}`, year: d[0], month: d[1], kind, label: p.title,
-      sub: [p.type, p.outlet].filter(Boolean).join(' · ') || (kind === 'award' ? 'Award' : 'Press'), dateLabel: p.date, open: '/career/recognition',
+      sub: [p.type, p.outlet].filter(Boolean).join(' · ') || (kind === 'award' ? 'Award' : 'Press'), dateLabel: formatAnyDate(p.date), open: '/career/recognition',
       groups: about ? [{ title: kind === 'award' ? 'For' : 'About', links: [{ label: about.title, to: `/studio/${about.id}` }] }] : [],
       clipping: p.clipping ? p : undefined,
     })

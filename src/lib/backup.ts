@@ -1,5 +1,5 @@
 import { db } from '../db/db'
-import { migrateLegacyWorks } from './works'
+import { migrateLegacyWorks, normalizePressDates } from './works'
 
 // A portable backup of the whole local database. Because the app is local-first
 // (data lives only in this browser), this is how data moves between browsers,
@@ -53,6 +53,7 @@ export async function importData(json: string): Promise<{ rows: number }> {
       }
     }
     await migrateLegacyWorks(db)
+    await normalizePressDates(db)
   })
   return { rows }
 }

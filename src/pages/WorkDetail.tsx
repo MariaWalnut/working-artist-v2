@@ -5,7 +5,8 @@ import { db, type PressItem, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
 import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
-import { formatEventDate } from '../lib/eventDates'
+import { formatAnyDate, formatEventDate } from '../lib/eventDates'
+import { DateFields } from '../components/DateFields'
 import { fileToDataUrl } from '../lib/images'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
@@ -229,10 +230,8 @@ export function WorkDetail() {
               {addingPress && (
                 <div style={{ background: '#F9F9F9', borderRadius: 10, padding: 12, marginBottom: 12 }}>
                   <input value={pressTitle} onChange={e => setPressTitle(e.target.value)} placeholder="Headline" style={{ ...inp, marginBottom: 6 }} />
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                    <input value={pressOutlet} onChange={e => setPressOutlet(e.target.value)} placeholder="Outlet" style={{ ...inp, flex: 2 }} />
-                    <input value={pressDate} onChange={e => setPressDate(e.target.value)} placeholder="Date" style={{ ...inp, flex: 1 }} />
-                  </div>
+                  <input value={pressOutlet} onChange={e => setPressOutlet(e.target.value)} placeholder="Outlet" aria-label="Outlet" style={{ ...inp, marginBottom: 8 }} />
+                  <DateFields label="Date" value={pressDate} onChange={setPressDate} inp={inp} />
                   <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                     <select value={pressType} onChange={e => setPressType(e.target.value)} style={{ ...inp, flex: 1, color: pressType ? '#111111' : '#AAAAAA' }}>
                       <option value="">Type…</option>
@@ -254,7 +253,7 @@ export function WorkDetail() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', lineHeight: 1.35 }}>{p.title}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[p.outlet, p.date].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[p.outlet, formatAnyDate(p.date)].filter(Boolean).join(' · ')}</div>
                   </div>
                   {p.type && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#888888', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{p.type}</span>}
                   {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" aria-label="Open article" style={{ fontSize: 12, color: '#AAAAAA', textDecoration: 'none', flexShrink: 0 }}>↗</a>}
@@ -346,7 +345,7 @@ export function WorkDetail() {
                   <button key={a.id} onClick={() => navigate('/career/recognition')}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '8px 0', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{a.title}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[a.type, a.outlet, a.date].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[a.type, a.outlet, formatAnyDate(a.date)].filter(Boolean).join(' · ')}</div>
                   </button>
                 ))}
               </div>
