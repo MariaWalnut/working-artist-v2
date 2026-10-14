@@ -1,14 +1,16 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { WorldMapPanel } from './WorldMap'
 import { kindOf, workSubtitle } from '../lib/works'
+import { formatEventDate } from '../lib/eventDates'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
-type EventKind = 'project' | 'work'
+type EventKind = 'project' | 'event' | 'work'
 
 interface CareerEvent {
   key: string
@@ -17,6 +19,10 @@ interface CareerEvent {
   kind: EventKind
   label: string
   sub: string
+  dateLabel?: string
+  open?: string // route for "Open"
+  linksTitle?: string
+  links?: Array<{ label: string; to: string }>
 }
 
 function projectDate(p: { projectType?: string; dateStart?: string; dateEnd?: string; publishedDate?: string; releaseDate?: string; awardYear?: string }): [number, number] | null {
@@ -64,11 +70,13 @@ function layoutYear(events: CareerEvent[], minGap: number): Placed[] {
 
 const KIND_DOT: Record<EventKind, string> = {
   project: '#111111',
+  event: '#E0A030',
   work: '#AAAAAA',
 }
 
 const KIND_LABELS: Record<EventKind, string> = {
   project: 'Projects',
+  event: 'Events',
   work: 'Works',
 }
 
@@ -158,16 +166,31 @@ function YearRow({ year, events, minGap, measureRef, collapsed, onToggle, onSele
 // ─── Event popup ─────────────────────────────────────────────────────────────
 
 function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
-  const monthLabel = e.month > 0
+  const navigate = useNavigate()
+  const monthLabel = e.dateLabel ?? (e.month > 0
     ? new Date(e.year, e.month - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
-    : String(e.year)
+    : String(e.year))
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={ev => ev.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px', maxWidth: 420, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,.18)' }}>
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 10px' }}>{e.kind} · {monthLabel}</p>
         <h2 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 6px', color: '#111111' }}>{e.label}</h2>
         <p style={{ fontSize: 13, color: '#888888', margin: 0 }}>{e.sub}</p>
-        <button onClick={onClose} style={{ marginTop: 24, background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Close</button>
+        {e.links && e.links.length > 0 && (
+          <div style={{ marginTop: 18 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 6px' }}>{e.linksTitle}</p>
+            {e.links.map(l => (
+              <button key={l.to + l.label} onClick={() => navigate(l.to)}
+                style={{ display: 'flex', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '9px 0', fontSize: 13, color: '#111111', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                {l.label}<span style={{ color: '#BBBBBB' }}>→</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+          {e.open && <button onClick={() => navigate(e.open!)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer' }}>Open</button>}
+          <button onClick={onClose} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Close</button>
+        </div>
       </div>
     </div>
   )
@@ -181,8 +204,9 @@ export function Career() {
 
   const projects = useLiveQuery(() => deptId == null ? [] : db.projects.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const events = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
-  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, work: true })
+  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
@@ -207,7 +231,23 @@ export function Career() {
       const d = projectDate(p)
       if (!d) continue
       const [y, m] = d
-      all.push({ key: `p${p.id}`, year: y, month: m, kind: 'project', label: p.title, sub: p.projectType ?? 'Project' })
+      all.push({ key: `p${p.id}`, year: y, month: m, kind: 'project', label: p.title, sub: p.projectType ?? 'Project', open: `/projects/${p.id}` })
+    }
+  }
+  if (show.event) {
+    for (const ev of events) {
+      if (!ev.date) continue
+      const y = parseInt(ev.date.slice(0, 4), 10)
+      if (!y) continue
+      const shown = (ev.workIds ?? []).flatMap(id => {
+        const w = works.find(x => x.id === id)
+        return w ? [{ label: w.title, to: `/studio/${w.id}` }] : []
+      })
+      all.push({
+        key: `e${ev.id}`, year: y, month: parseInt(ev.date.slice(5, 7), 10) || 0, kind: 'event', label: ev.title,
+        sub: [ev.type, ev.location].filter(Boolean).join(' · ') || 'Event', dateLabel: formatEventDate(ev.date, ev.endDate),
+        open: '/projects/events', linksTitle: 'Works shown', links: shown,
+      })
     }
   }
   if (show.work) {
@@ -216,7 +256,8 @@ export function Career() {
       const pub = w.publishedDate ? [parseInt(w.publishedDate.slice(0, 4), 10), parseInt(w.publishedDate.slice(5, 7), 10) || 0] : null
       const year = pub?.[0] || w.year
       if (!year) continue
-      all.push({ key: `w${w.id}`, year, month: pub?.[0] ? pub[1] ?? 0 : 0, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w) })
+      const shownAt = events.filter(ev => (ev.workIds ?? []).includes(w.id!)).map(ev => ({ label: [ev.title, formatEventDate(ev.date, ev.endDate)].filter(Boolean).join(' · '), to: '/projects/events' }))
+      all.push({ key: `w${w.id}`, year, month: pub?.[0] ? pub[1] ?? 0 : 0, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`, linksTitle: 'Shown at', links: shownAt })
     }
   }
 
@@ -245,7 +286,7 @@ export function Career() {
 
       {isEmpty ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
-          Add dated projects or works to build your career timeline.
+          Add dated projects, events or works to build your career timeline.
         </div>
       ) : (
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>

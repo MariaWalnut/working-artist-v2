@@ -44,7 +44,8 @@ export function WorkDetail() {
 
   const work = useLiveQuery(() => db.works.get(wid), [wid])
   const linkedPress = useLiveQuery(() => db.pressEntries.filter(p => p.workId === wid).toArray(), [wid]) ?? []
-  const appearedIn = useLiveQuery(() => db.eventEntries.filter(e => (e.workIds ?? []).includes(wid)).toArray(), [wid]) ?? []
+  const allEvents = useLiveQuery(() => db.eventEntries.toArray(), []) ?? []
+  const [linkingEvent, setLinkingEvent] = useState(false)
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
@@ -70,6 +71,24 @@ export function WorkDetail() {
   const press = w.press ?? []
   const rights = w.rights ?? []
   const wKind = kindOf(w)
+  const deptEvents = allEvents
+    .filter(e => e.departmentId === w.departmentId)
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  const shownAt = deptEvents.filter(e => (e.workIds ?? []).includes(wid))
+  const linkable = deptEvents.filter(e => !(e.workIds ?? []).includes(wid))
+
+  async function linkEvent(eventId: number) {
+    const ev = deptEvents.find(e => e.id === eventId)
+    if (!ev) return
+    await db.eventEntries.update(eventId, { workIds: [...(ev.workIds ?? []), wid] } as Partial<typeof ev>)
+    setLinkingEvent(false)
+  }
+
+  async function unlinkEvent(eventId: number) {
+    const ev = deptEvents.find(e => e.id === eventId)
+    if (!ev) return
+    await db.eventEntries.update(eventId, { workIds: (ev.workIds ?? []).filter(id => id !== wid) } as Partial<typeof ev>)
+  }
   const shownFields = KIND_FIELDS[wKind].filter(f => f.key !== 'subtitle' && w[f.key] != null && w[f.key] !== '')
 
   function startEdit() {
@@ -255,19 +274,34 @@ export function WorkDetail() {
             </div>
           </div>
 
-          {/* RIGHT: appeared in + rights + delete */}
+          {/* RIGHT: shown at + rights + delete */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {appearedIn.length > 0 && (
-              <div style={{ ...card }}>
-                {sectionLabel('Appeared in')}
-                {appearedIn.map(e => (
-                  <div key={e.id} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
+            <div style={{ ...card }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                {sectionLabel('Shown at')}
+                {linkable.length > 0 && (
+                  <button onClick={() => setLinkingEvent(v => !v)} style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer', marginTop: -12 }}>+ Add</button>
+                )}
+              </div>
+              {linkingEvent && (
+                <select autoFocus defaultValue="" aria-label="Event" onChange={e => { if (e.target.value) void linkEvent(Number(e.target.value)) }} style={{ ...inp, marginBottom: 10 }}>
+                  <option value="">Choose an event…</option>
+                  {linkable.map(e => <option key={e.id} value={e.id}>{[e.title, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')}</option>)}
+                </select>
+              )}
+              {shownAt.length === 0 && !linkingEvent && (
+                <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>{deptEvents.length === 0 ? 'Add events to link this work to them' : 'Not linked to any event'}</p>
+              )}
+              {shownAt.map(e => (
+                <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{e.title}</div>
                     <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[e.type, e.location, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')}</div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <button onClick={() => void unlinkEvent(e.id!)} aria-label={`Unlink ${e.title}`} style={{ background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer', flexShrink: 0 }}>×</button>
+                </div>
+              ))}
+            </div>
             <div style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 {sectionLabel('Rights')}
