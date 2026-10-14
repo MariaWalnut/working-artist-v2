@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { migrateLegacyWorks } from '../lib/works'
 
 export type Activity = 'visual_artist' | 'musician' | 'writer' | 'picture_book' | 'photographer' | 'designer' | 'performer' | 'other'
 
@@ -59,14 +60,31 @@ export interface Work {
   id?: number
   departmentId?: number
   title: string
+  kind?: string // Artwork (default) / Illustration / Book / Release / Other
   medium?: string
   dimensions?: string
   year?: number
   location?: string
   collection?: string
   notes?: string
+  image?: string // data URL
   press?: PressItem[]
   rights?: RightItem[]
+  // books and illustrations
+  subtitle?: string
+  publisher?: string
+  publishedDate?: string
+  isbn?: string
+  language?: string
+  credits?: string
+  pages?: number
+  technique?: string
+  // releases
+  format?: string
+  label?: string
+  // set when copied over from the old books / releases tables
+  legacyBookId?: number
+  legacyReleaseId?: number
 }
 
 export interface Book {
@@ -268,6 +286,25 @@ class AppDB extends Dexie {
       pressEntries: '++id, departmentId',
       eventEntries: '++id, departmentId',
     })
+    this.version(7).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
+      eventEntries: '++id, departmentId',
+    }).upgrade(tx => migrateLegacyWorks({
+      works: tx.table('works'),
+      books: tx.table('books'),
+      releases: tx.table('releases'),
+      pressEntries: tx.table('pressEntries'),
+    }))
   }
 }
 

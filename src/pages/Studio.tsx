@@ -1,179 +1,56 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useNavigate } from 'react-router-dom'
-import { db, type Work, type Book, type Release } from '../db/db'
+import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { getActivities } from '../lib/activities'
 import { Shell } from '../components/layout/Shell'
+import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
+import { WORK_KINDS, kindOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
 
-const MEDIUMS = ['Painting', 'Drawing', 'Print', 'Photography', 'Digital', 'Sculpture', 'Mixed media', 'Other']
-const FORMATS = ['Album', 'EP', 'Single', 'Track', 'Other']
+const NARROW = '(max-width: 760px)'
 
-function WorkForm({ work, onDone }: { work: Work | null; onDone: () => void }) {
+function useNarrow() {
+  const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW)
+    const onChange = () => setNarrow(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return narrow
+}
+
+function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (id?: number) => void }) {
   const dept = useActiveDept()
-  const [title, setTitle] = useState(work?.title ?? '')
-  const [medium, setMedium] = useState(work?.medium ?? 'Painting')
-  const [dimensions, setDimensions] = useState(work?.dimensions ?? '')
-  const [year, setYear] = useState(work?.year ?? new Date().getFullYear())
-  const [location, setLocation] = useState(work?.location ?? '')
+  const [title, setTitle] = useState('')
+  const [kind, setKind] = useState<WorkKind>(defaultKind)
+  const [fields, setFields] = useState(() => fieldsFromWork(null))
+  const [image, setImage] = useState<string | undefined>()
 
   async function save() {
     if (!title.trim()) return
-    const data = { departmentId: dept?.id, title: title.trim(), medium, dimensions, year, location }
-    if (work?.id != null) await db.works.update(work.id, data)
-    else await db.works.add(data)
-    onDone()
+    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, image, ...fieldsToPatch(fields) }) as number
+    onDone(id)
   }
 
-  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
+  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%', boxSizing: 'border-box' }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>{work ? 'Edit work' : 'Add work'}</p>
-        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <select value={medium} onChange={e => setMedium(e.target.value)} style={{ ...inp, flex: 2 }}>{MEDIUMS.map(m => <option key={m}>{m}</option>)}</select>
-          <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} style={{ ...inp, flex: 1 }} min={1900} max={2100} />
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20 }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>Add work</p>
+        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" aria-label="Title"
+          onKeyDown={e => { if (e.key === 'Enter') void save() }}
+          style={{ ...inp, marginBottom: 12, fontSize: 14 }} />
+        <div style={{ marginBottom: 12 }}>
+          <KindSelect value={kind} onChange={setKind} style={inp} />
         </div>
-        <input value={dimensions} onChange={e => setDimensions(e.target.value)} placeholder="Dimensions (e.g. 40 × 60 cm)" style={{ ...inp, marginBottom: 10 }} />
-        <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Location" style={{ ...inp, marginBottom: 16 }} />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{work ? 'Save' : 'Add'}</button>
-          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
-          {work && <button onClick={async () => { if (work.id) await db.works.delete(work.id); onDone() }}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const ISO_LANG: Record<string, string> = {
-  eng: 'English', ger: 'German', fre: 'French', spa: 'Spanish', ita: 'Italian',
-  por: 'Portuguese', dut: 'Dutch', jpn: 'Japanese', chi: 'Chinese', kor: 'Korean',
-  rus: 'Russian', pol: 'Polish', swe: 'Swedish', dan: 'Danish', fin: 'Finnish',
-  nor: 'Norwegian', tur: 'Turkish', ara: 'Arabic', heb: 'Hebrew', cze: 'Czech',
-  cat: 'Catalan', hrv: 'Croatian', hun: 'Hungarian', rum: 'Romanian', slo: 'Slovak',
-}
-
-function BookForm({ book, onDone }: { book: Book | null; onDone: () => void }) {
-  const dept = useActiveDept()
-  const [title, setTitle] = useState(book?.title ?? '')
-  const [publisher, setPublisher] = useState(book?.publisher ?? '')
-  const [publishedDate, setPublishedDate] = useState(book?.publishedDate ?? '')
-  const [isbn, setIsbn] = useState(book?.isbn ?? '')
-  const [language, setLanguage] = useState(book?.language ?? '')
-  const [credits, setCredits] = useState(book?.credits ?? '')
-  const [coverImage, setCoverImage] = useState(book?.coverImage ?? '')
-  const [lookup, setLookup] = useState<'idle' | 'loading' | 'done' | 'notfound' | 'error'>('idle')
-
-  async function lookupISBN() {
-    const q = isbn.trim().replace(/[^0-9Xx]/g, '')
-    if (q.length < 10) return
-    setLookup('loading')
-    try {
-      const res = await fetch(`https://openlibrary.org/search.json?isbn=${q}&fields=title,publisher,publish_date,language,author_name,cover_i`)
-      const data = await res.json() as { docs?: Array<Record<string, unknown>> }
-      const doc = data?.docs?.[0]
-      if (!doc) { setLookup('notfound'); return }
-      if (typeof doc.title === 'string') setTitle(doc.title)
-      const pub = Array.isArray(doc.publisher) ? doc.publisher[0] : null
-      if (typeof pub === 'string') setPublisher(pub)
-      const date = Array.isArray(doc.publish_date) ? doc.publish_date[0] : null
-      if (typeof date === 'string') setPublishedDate((date as string).slice(0, 7))
-      const lang = Array.isArray(doc.language) ? doc.language[0] : null
-      if (typeof lang === 'string') setLanguage(ISO_LANG[lang as string] ?? (lang as string))
-      if (Array.isArray(doc.author_name) && doc.author_name.length) setCredits((doc.author_name as string[]).join(', '))
-      if (typeof doc.cover_i === 'number') setCoverImage(`https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`)
-      setLookup('done')
-    } catch {
-      setLookup('error')
-    }
-  }
-
-  async function save() {
-    if (!title.trim()) return
-    const data = { departmentId: dept?.id, title: title.trim(), publisher, publishedDate, isbn, language, credits, coverImage: coverImage || undefined }
-    if (book?.id != null) await db.books.update(book.id, data)
-    else await db.books.add(data)
-    onDone()
-  }
-
-  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
-
-  const isbnReady = isbn.trim().replace(/[^0-9Xx]/g, '').length >= 10
-  const lookupBg = lookup === 'done' ? '#B8E0A4' : lookup === 'notfound' || lookup === 'error' ? '#E8C4B4' : '#F5F5F5'
-  const lookupLabel = lookup === 'loading' ? '…' : lookup === 'done' ? '✓ Found' : lookup === 'notfound' ? 'Not found' : lookup === 'error' ? 'Error' : 'Look up'
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 460, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>{book ? 'Edit book' : 'Add book'}</p>
-
-        {/* ISBN first — with Look up button */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={isbn} onChange={e => { setIsbn(e.target.value); setLookup('idle') }}
-            placeholder="ISBN" style={{ ...inp, flex: 1 }}
-            onKeyDown={e => { if (e.key === 'Enter' && isbnReady) void lookupISBN() }} />
-          <button onClick={() => void lookupISBN()} disabled={!isbnReady || lookup === 'loading'}
-            style={{ background: lookupBg, border: 'none', borderRadius: 8, padding: '0 14px', fontSize: 10, fontWeight: 600, color: '#444444', cursor: isbnReady ? 'pointer' : 'default', opacity: isbnReady ? 1 : 0.4, flexShrink: 0, whiteSpace: 'nowrap', transition: 'background 0.15s' }}>
-            {lookupLabel}
-          </button>
-        </div>
-
-        <input autoFocus={!isbnReady} value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={publisher} onChange={e => setPublisher(e.target.value)} placeholder="Publisher" style={{ ...inp, flex: 2 }} />
-          <input value={publishedDate} onChange={e => setPublishedDate(e.target.value)} placeholder="2025-10" style={{ ...inp, flex: 1 }} />
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={language} onChange={e => setLanguage(e.target.value)} placeholder="Language" style={{ ...inp, flex: 1 }} />
-          <input value={credits} onChange={e => setCredits(e.target.value)} placeholder="Credits / Authors" style={{ ...inp, flex: 2 }} />
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-          <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{book ? 'Save' : 'Add'}</button>
-          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
-          {book && <button onClick={async () => { if (book.id) await db.books.delete(book.id); onDone() }}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ReleaseForm({ release, onDone }: { release: Release | null; onDone: () => void }) {
-  const dept = useActiveDept()
-  const [title, setTitle] = useState(release?.title ?? '')
-  const [format, setFormat] = useState(release?.format ?? 'Album')
-  const [year, setYear] = useState(release?.year ?? new Date().getFullYear())
-  const [label, setLabel] = useState(release?.label ?? '')
-
-  async function save() {
-    if (!title.trim()) return
-    const data = { departmentId: dept?.id, title: title.trim(), format, year, label }
-    if (release?.id != null) await db.releases.update(release.id, data)
-    else await db.releases.add(data)
-    onDone()
-  }
-
-  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 400, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>{release ? 'Edit release' : 'Add release'}</p>
-        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <select value={format} onChange={e => setFormat(e.target.value)} style={{ ...inp, flex: 2 }}>{FORMATS.map(f => <option key={f}>{f}</option>)}</select>
-          <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} style={{ ...inp, flex: 1 }} min={1900} max={2100} />
-        </div>
-        <input value={label} onChange={e => setLabel(e.target.value)} placeholder="Label" style={{ ...inp, marginBottom: 16 }} />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{release ? 'Save' : 'Add'}</button>
-          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
-          {release && <button onClick={async () => { if (release.id) await db.releases.delete(release.id); onDone() }}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}
+        <WorkFields kind={kind} values={fields} onChange={setFields} inp={inp} columns={2}
+          onIsbnFound={r => { if (r.title && !title.trim()) setTitle(r.title); if (r.image) setImage(r.image) }} />
+        <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+          <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+          <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -183,171 +60,89 @@ function ReleaseForm({ release, onDone }: { release: Release | null; onDone: () 
 export function Studio() {
   const dept = useActiveDept()
   const navigate = useNavigate()
+  const narrow = useNarrow()
   const activities = getActivities(dept)
+  const defaultKind: WorkKind = activities.length === 1 && activities[0] === 'musician' ? 'Release'
+    : activities.length === 1 && activities[0] === 'writer' ? 'Book' : 'Artwork'
 
-  const hasFineArts = activities.includes('visual_artist') || activities.includes('photographer') || activities.includes('picture_book') || activities.includes('designer')
-  const hasBooks = activities.includes('writer') || activities.includes('picture_book')
-  const hasMusic = activities.includes('musician')
-
-  const [editWork, setEditWork] = useState<Work | 'new' | null>(null)
-  const [editBook, setEditBook] = useState<Book | 'new' | null>(null)
-  const [editRelease, setEditRelease] = useState<Release | 'new' | null>(null)
-  const [mediumFilter, setMediumFilter] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [kindFilter, setKindFilter] = useState<WorkKind | null>(null)
 
   const works = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const books = useLiveQuery(() => dept?.id == null ? [] : db.books.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const releases = useLiveQuery(() => dept?.id == null ? [] : db.releases.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-
-  const filteredWorks = works.filter(w => !mediumFilter || w.medium === mediumFilter).sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-  const usedMediums = [...new Set(works.map(w => w.medium).filter(Boolean))] as string[]
+  const usedKinds = WORK_KINDS.filter(k => works.some(w => kindOf(w) === k))
+  const shown = works
+    .filter(w => !kindFilter || kindOf(w) === kindFilter)
+    .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
   const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#AAAAAA' }}>{t}</span>
-  const sidePanel: React.CSSProperties = { background: '#FFFFFF', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
-  const sectionLbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', padding: '0 8px 8px' }
+  const filterBtn = (label: string, count: number, active: boolean, onClick: () => void) => (
+    <button key={label} onClick={onClick}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: narrow ? 'auto' : '100%', flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? '#F5F5F5' : 'none', color: active ? '#111111' : '#666666', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
+      <span>{label}</span>
+      <span style={{ fontSize: 10, color: '#AAAAAA', fontWeight: 400 }}>{count}</span>
+    </button>
+  )
+  const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
 
   return (
     <Shell>
-      {editWork !== null && <WorkForm work={editWork === 'new' ? null : editWork} onDone={() => setEditWork(null)} />}
-      {editBook !== null && <BookForm book={editBook === 'new' ? null : editBook} onDone={() => setEditBook(null)} />}
-      {editRelease !== null && <ReleaseForm release={editRelease === 'new' ? null : editRelease} onDone={() => setEditRelease(null)} />}
+      {adding && <NewWorkForm defaultKind={kindFilter ?? defaultKind} onDone={id => { setAdding(false); if (id != null) navigate(`/studio/${id}`) }} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '220px minmax(0, 1fr)', gap: 10 }}>
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {hasFineArts && usedMediums.length > 0 && (
-            <div style={sidePanel}>
-              <p style={sectionLbl}>Medium</p>
-              <button onClick={() => setMediumFilter(null)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: mediumFilter === null ? '#F5F5F5' : 'none', color: mediumFilter === null ? '#111111' : '#666666', fontSize: 12, fontWeight: mediumFilter === null ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
-                <span>All</span>
-                <span style={{ fontSize: 10, color: '#AAAAAA', fontWeight: 400 }}>{works.length}</span>
-              </button>
-              {usedMediums.map(m => (
-                <button key={m} onClick={() => setMediumFilter(mediumFilter === m ? null : m)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: mediumFilter === m ? '#F5F5F5' : 'none', color: mediumFilter === m ? '#111111' : '#666666', fontSize: 12, fontWeight: mediumFilter === m ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
-                  <span>{m}</span>
-                  <span style={{ fontSize: 10, color: '#AAAAAA', fontWeight: 400 }}>{works.filter(w => w.medium === m).length}</span>
-                </button>
-              ))}
+          {usedKinds.length > 1 && (
+            <div style={{ background: '#FFFFFF', borderRadius: 20, padding: narrow ? 10 : '18px 16px', display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 2, overflowX: narrow ? 'auto' : undefined }}>
+              {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', padding: '0 8px 8px', margin: 0 }}>Kind</p>}
+              {filterBtn('All', works.length, kindFilter === null, () => setKindFilter(null))}
+              {usedKinds.map(k => filterBtn(k, works.filter(w => kindOf(w) === k).length, kindFilter === k, () => setKindFilter(kindFilter === k ? null : k)))}
             </div>
           )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {hasFineArts && (
-              <button onClick={() => setEditWork('new')} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-                + Add work
-              </button>
-            )}
-            {hasBooks && (
-              <button onClick={() => setEditBook('new')} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-                + Add book
-              </button>
-            )}
-            {hasMusic && (
-              <button onClick={() => setEditRelease('new')} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-                + Add release
-              </button>
-            )}
-          </div>
+          {!narrow && (
+            <button onClick={() => setAdding(true)} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+              + Add work
+            </button>
+          )}
         </div>
 
-        {/* Main: stacked sections */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-          {hasFineArts && (
-            <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
-                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>Fine Arts</p>
-                <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#888888' }}>{filteredWorks.length}</span>
-                <button onClick={() => setEditWork('new')} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 10, color: '#AAAAAA', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
-              </div>
-              {filteredWorks.length === 0 ? (
-                <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 120px 130px 150px 80px', padding: '10px 24px', borderBottom: '1px solid #F5F5F5' }}>
-                    {['', 'Title', 'Medium', 'Dimensions', 'Location', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
-                  </div>
-                  {filteredWorks.map(w => (
-                    <div key={w.id} onClick={() => navigate(`/studio/${w.id}`)} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 120px 130px 150px 80px', padding: '12px 24px', borderBottom: '1px solid #F9F9F9', alignItems: 'center', cursor: 'pointer' }}>
-                      <div style={{ width: 32, height: 40, borderRadius: 6, background: 'linear-gradient(135deg, #EEEEEE 0%, #DDDDDD 100%)', flexShrink: 0 }} />
-                      <div>
-                        <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px' }}>{w.title}</p>
-                        <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{w.year}</p>
-                      </div>
-                      <span style={{ fontSize: 11, color: '#666666' }}>{w.medium ?? '—'}</span>
-                      <span style={{ fontSize: 11, color: '#AAAAAA' }}>{w.dimensions ?? '—'}</span>
-                      <span style={{ fontSize: 11, color: '#666666' }}>{w.location ?? '—'}</span>
-                      <span style={{ fontSize: 10, color: '#CCCCCC', textAlign: 'right' }}>{w.year ?? '—'}</span>
-                    </div>
-                  ))}
-                </>
+        {/* List */}
+        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
+            <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{kindFilter ? `${kindFilter}s` : 'Works'}</p>
+            <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#888888' }}>{shown.length}</span>
+            <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? '#F5E642' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : '#AAAAAA', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
+          </div>
+          {shown.length === 0 ? (
+            <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>
+          ) : (
+            <>
+              {!narrow && (
+                <div style={{ display: 'grid', gridTemplateColumns: columns, padding: '10px 24px', borderBottom: '1px solid #F5F5F5' }}>
+                  {['', 'Title', 'Kind', 'Location', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
+                </div>
               )}
-            </div>
-          )}
-
-          {hasBooks && (
-            <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
-                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>Books</p>
-                <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#888888' }}>{books.length}</span>
-                <button onClick={() => setEditBook('new')} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 10, color: '#AAAAAA', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
-              </div>
-              {books.length === 0 ? (
-                <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No books yet</p>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 160px 110px 110px', padding: '10px 24px', borderBottom: '1px solid #F5F5F5' }}>
-                    {['', 'Title', 'Publisher', 'Published', 'Language'].map(h => <span key={h}>{colH(h)}</span>)}
-                  </div>
-                  {books.map(b => (
-                    <div key={b.id} onClick={() => navigate(`/studio/books/${b.id}`)} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 160px 110px 110px', padding: '12px 24px', borderBottom: '1px solid #F9F9F9', alignItems: 'center', cursor: 'pointer' }}>
-                      <div style={{ width: 32, height: 40, borderRadius: 4, background: 'linear-gradient(135deg, #E8D8C0 0%, #D4C0A0 100%)', flexShrink: 0, overflow: 'hidden' }}>
-                        {b.coverImage && <img src={b.coverImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-                      </div>
-                      <div>
-                        <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px' }}>{b.title}</p>
-                        {b.subtitle && <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{b.subtitle}</p>}
-                      </div>
-                      <span style={{ fontSize: 11, color: '#666666' }}>{b.publisher ?? '—'}</span>
-                      <span style={{ fontSize: 11, color: '#AAAAAA' }}>{b.publishedDate ?? '—'}</span>
-                      <span style={{ fontSize: 11, color: '#666666' }}>{b.language ?? '—'}</span>
+              {shown.map(w => {
+                const sub = workSubtitle(w)
+                return (
+                  <button key={w.id} onClick={() => navigate(`/studio/${w.id}`)}
+                    style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: '1px solid #F9F9F9', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
+                    <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, #EEEEEE 0%, #DDDDDD 100%)', overflow: 'hidden' }}>
+                      {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
-                  ))}
-                </>
-              )}
-            </div>
-          )}
-
-          {hasMusic && (
-            <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
-                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>Music</p>
-                <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#888888' }}>{releases.length}</span>
-                <button onClick={() => setEditRelease('new')} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 10, color: '#AAAAAA', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
-              </div>
-              {releases.length === 0 ? (
-                <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No releases yet</p>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr 100px 160px 80px', padding: '10px 24px', borderBottom: '1px solid #F5F5F5' }}>
-                    {['', 'Title', 'Format', 'Label', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
-                  </div>
-                  {[...releases].sort((a, b) => (b.year ?? 0) - (a.year ?? 0)).map(r => (
-                    <div key={r.id} onClick={() => setEditRelease(r)} style={{ display: 'grid', gridTemplateColumns: '48px 1fr 100px 160px 80px', padding: '12px 24px', borderBottom: '1px solid #F9F9F9', alignItems: 'center', cursor: 'pointer' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 6, background: 'linear-gradient(135deg, #D8D0E8 0%, #C4B8D8 100%)', flexShrink: 0 }} />
-                      <div>
-                        <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px' }}>{r.title}</p>
-                        <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0 }}>{r.year}</p>
-                      </div>
-                      <span style={{ fontSize: 11, color: '#888888' }}>{r.format ?? '—'}</span>
-                      <span style={{ fontSize: 11, color: '#666666' }}>{r.label ?? '—'}</span>
-                      <span style={{ fontSize: 10, color: '#CCCCCC', textAlign: 'right' }}>{r.year ?? '—'}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
+                      <p style={{ fontSize: 10, color: '#AAAAAA', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {narrow ? [kindOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
+                      </p>
                     </div>
-                  ))}
-                </>
-              )}
-            </div>
+                    {!narrow && <span style={{ fontSize: 11, color: '#666666' }}>{kindOf(w)}</span>}
+                    {!narrow && <span style={{ fontSize: 11, color: '#888888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
+                    <span style={{ fontSize: 10, color: '#BBBBBB', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
+                  </button>
+                )
+              })}
+            </>
           )}
-
         </div>
       </div>
     </Shell>

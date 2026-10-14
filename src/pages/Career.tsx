@@ -4,10 +4,11 @@ import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { WorldMapPanel } from './WorldMap'
+import { kindOf, workSubtitle } from '../lib/works'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
-type EventKind = 'project' | 'work' | 'book' | 'release'
+type EventKind = 'project' | 'work'
 
 interface CareerEvent {
   key: string
@@ -64,15 +65,11 @@ function layoutYear(events: CareerEvent[], minGap: number): Placed[] {
 const KIND_DOT: Record<EventKind, string> = {
   project: '#111111',
   work: '#AAAAAA',
-  book: '#888888',
-  release: '#C0C0C0',
 }
 
 const KIND_LABELS: Record<EventKind, string> = {
   project: 'Projects',
   work: 'Works',
-  book: 'Books',
-  release: 'Releases',
 }
 
 // ─── YearRow ─────────────────────────────────────────────────────────────────
@@ -184,10 +181,8 @@ export function Career() {
 
   const projects = useLiveQuery(() => deptId == null ? [] : db.projects.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const books = useLiveQuery(() => deptId == null ? [] : db.books.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const releases = useLiveQuery(() => deptId == null ? [] : db.releases.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
-  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, work: true, book: true, release: true })
+  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, work: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
@@ -217,23 +212,11 @@ export function Career() {
   }
   if (show.work) {
     for (const w of works) {
-      if (!w.year) continue
-      all.push({ key: `w${w.id}`, year: w.year, month: 0, kind: 'work', label: w.title, sub: w.medium ?? 'Work' })
-    }
-  }
-  if (show.book) {
-    for (const b of books) {
-      if (!b.publishedDate) continue
-      const y = parseInt(b.publishedDate.slice(0, 4), 10)
-      const m = parseInt(b.publishedDate.slice(5, 7) ?? '0', 10) || 0
-      if (!y) continue
-      all.push({ key: `b${b.id}`, year: y, month: m, kind: 'book', label: b.title, sub: b.publisher ?? 'Book' })
-    }
-  }
-  if (show.release) {
-    for (const r of releases) {
-      if (!r.year) continue
-      all.push({ key: `r${r.id}`, year: r.year, month: 0, kind: 'release', label: r.title, sub: r.format ?? 'Release' })
+      // Published works sit on their publication month; others on their year.
+      const pub = w.publishedDate ? [parseInt(w.publishedDate.slice(0, 4), 10), parseInt(w.publishedDate.slice(5, 7), 10) || 0] : null
+      const year = pub?.[0] || w.year
+      if (!year) continue
+      all.push({ key: `w${w.id}`, year, month: pub?.[0] ? pub[1] ?? 0 : 0, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w) })
     }
   }
 
@@ -262,7 +245,7 @@ export function Career() {
 
       {isEmpty ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
-          Add dated projects, works, books or releases to build your career timeline.
+          Add dated projects or works to build your career timeline.
         </div>
       ) : (
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>

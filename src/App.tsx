@@ -8,8 +8,7 @@ import { Studio } from './pages/Studio'
 import { Account } from './pages/Account'
 import { Onboarding } from './pages/Onboarding'
 import { ProjectDetail } from './pages/ProjectDetail'
-import { WorkDetail } from './pages/WorkDetail'
-import { BookDetail } from './pages/BookDetail'
+import { WorkDetail, LegacyBookRedirect } from './pages/WorkDetail'
 import { AllEvents } from './pages/AllEvents'
 import { WorldMap } from './pages/WorldMap'
 import { VisionBoard } from './pages/VisionBoard'
@@ -32,7 +31,7 @@ function AppRoutes() {
       <Route path="/the-map/vision" element={<VisionBoard />} />
       <Route path="/studio" element={<Studio />} />
       <Route path="/studio/boards" element={<Navigate to="/the-map/vision" replace />} />
-      <Route path="/studio/books/:id" element={<BookDetail />} />
+      <Route path="/studio/books/:id" element={<LegacyBookRedirect />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
       <Route path="/career" element={<Career />} />
       <Route path="/press" element={<Press />} />
