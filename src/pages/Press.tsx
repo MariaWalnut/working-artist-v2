@@ -5,6 +5,7 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer, isPdf } from '../components/ClippingViewer'
+import { pdfThumbnail } from '../lib/pdfThumb'
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -36,7 +37,13 @@ async function importPressFromV1(deptId?: number): Promise<number> {
   })
 }
 
+type Section = 'press' | 'award'
+const sectionOf = (e: PressEntry): Section => e.category === 'award' ? 'award' : 'press'
+
 const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile']
+const AWARD_TYPES = ['Award', 'Prize', 'Shortlist', 'Nomination', 'Grant', 'Fellowship', 'Honour']
+const TYPES: Record<Section, string[]> = { press: PRESS_TYPES, award: AWARD_TYPES }
+const SECTION_LABEL: Record<Section, string> = { press: 'Press', award: 'Awards' }
 
 const TYPE_COLOR: Record<string, string> = {
   Interview: '#E8D4F0',
@@ -45,11 +52,18 @@ const TYPE_COLOR: Record<string, string> = {
   Review: '#F0EAD4',
   Mention: '#F0F0F0',
   Profile: '#F0D4D4',
+  Award: '#F3E7B8',
+  Prize: '#F3E7B8',
+  Shortlist: '#EDEDED',
+  Nomination: '#EDEDED',
+  Grant: '#DCEBDD',
+  Fellowship: '#DCEBDD',
+  Honour: '#F3E7B8',
 }
 
 // ─── Clippings ───────────────────────────────────────────────────────────────
 
-type Clipping = { data: string; name: string }
+type Clipping = { data: string; name: string; thumb?: string }
 const CLIPPING_ACCEPT = 'image/*,application/pdf'
 const MAX_CLIPPING_BYTES = 20 * 1024 * 1024
 const hasFiles = (e: React.DragEvent) => Array.from(e.dataTransfer.types).includes('Files')
@@ -64,24 +78,32 @@ async function readClipping(file: File): Promise<Clipping | null> {
     window.alert('That file is over 20 MB. Try a smaller scan or export.')
     return null
   }
-  const data = file.type === 'application/pdf' ? await readRaw(file) : await fileToDataUrl(file, 2400)
-  return { data, name: file.name }
+  if (file.type === 'application/pdf') {
+    const data = await readRaw(file)
+    return { data, name: file.name, thumb: (await pdfThumbnail(data)) ?? undefined }
+  }
+  return { data: await fileToDataUrl(file, 2400), name: file.name }
 }
 
-function ClippingThumb({ data, label, onOpen, size = 36 }: { data: string; label: string; onOpen: () => void; size?: number }) {
+function ClippingThumb({ data, thumb, label, onOpen, size = 36 }: { data: string; thumb?: string; label: string; onOpen: () => void; size?: number }) {
+  const pdf = isPdf(data)
+  const preview = pdf ? thumb : data
   return (
     <button onClick={e => { e.stopPropagation(); onOpen() }} aria-label={`View clipping: ${label}`}
-      style={{ width: size, height: Math.round(size * 1.28), flexShrink: 0, padding: 0, border: '1px solid #EEEEEE', borderRadius: 5, overflow: 'hidden', background: '#F7F7F7', cursor: 'zoom-in', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {isPdf(data)
-        ? <span style={{ fontSize: 8, fontWeight: 700, color: '#999999', letterSpacing: '0.08em' }}>PDF</span>
-        : <img src={data} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+      style={{ position: 'relative', width: size, height: Math.round(size * 1.28), flexShrink: 0, padding: 0, border: '1px solid #EEEEEE', borderRadius: 5, overflow: 'hidden', background: '#F7F7F7', cursor: 'zoom-in', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {preview
+        ? <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }} />
+        : <span style={{ fontSize: 8, fontWeight: 700, color: '#999999', letterSpacing: '0.08em' }}>PDF</span>}
+      {pdf && preview && (
+        <span style={{ position: 'absolute', right: 2, bottom: 2, fontSize: 6, fontWeight: 700, letterSpacing: '0.06em', color: '#FFFFFF', background: 'rgba(17,17,17,.7)', borderRadius: 2, padding: '1px 2px' }}>PDF</span>
+      )}
     </button>
   )
 }
 
 // ─── Form ────────────────────────────────────────────────────────────────────
 
-function PressForm({ entry, initialClipping, works, onDone }: { entry: PressEntry | null; initialClipping?: Clipping | null; works: Array<{ id?: number; title: string }>; onDone: () => void }) {
+function PressForm({ entry, section, initialClipping, works, onDone }: { entry: PressEntry | null; section: Section; initialClipping?: Clipping | null; works: Array<{ id?: number; title: string }>; onDone: () => void }) {
   const dept = useActiveDept()
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
@@ -90,9 +112,11 @@ function PressForm({ entry, initialClipping, works, onDone }: { entry: PressEntr
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [workId, setWorkId] = useState<number | undefined>(entry?.workId)
+  const [category, setCategory] = useState<Section>(entry ? sectionOf(entry) : section)
   const [clipping, setClipping] = useState<Clipping | null>(
-    entry?.clipping ? { data: entry.clipping, name: entry.clippingName ?? 'Clipping' } : initialClipping ?? null,
+    entry?.clipping ? { data: entry.clipping, name: entry.clippingName ?? 'Clipping', thumb: entry.clippingThumb } : initialClipping ?? null,
   )
+  const award = category === 'award'
   const [over, setOver] = useState(false)
   const [viewing, setViewing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -107,7 +131,7 @@ function PressForm({ entry, initialClipping, works, onDone }: { entry: PressEntr
 
   async function save() {
     if (!title.trim()) return
-    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date.trim() || undefined, url: url.trim() || undefined, notes: notes.trim() || undefined, workId, clipping: clipping?.data, clippingName: clipping?.name }
+    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date.trim() || undefined, url: url.trim() || undefined, notes: notes.trim() || undefined, workId, category, clipping: clipping?.data, clippingName: clipping?.name, clippingThumb: clipping?.thumb }
     if (entry?.id != null) await db.pressEntries.update(entry.id, data)
     else await db.pressEntries.add(data)
     onDone()
@@ -122,19 +146,31 @@ function PressForm({ entry, initialClipping, works, onDone }: { entry: PressEntr
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20 }}>
       {viewing && clipping && <ClippingViewer entry={{ title: title || clipping.name, outlet, date, url, clipping: clipping.data, clippingName: clipping.name }} onClose={() => setViewing(false)} />}
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 480, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 16px' }}>{entry ? 'Edit press item' : 'Add press'}</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 16px' }}>
+          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: 0 }}>
+            {entry ? (award ? 'Edit award' : 'Edit press item') : (award ? 'Add award' : 'Add press')}
+          </p>
+          <div role="group" aria-label="Kind" style={{ display: 'flex', background: '#F5F5F5', borderRadius: 999, padding: 2 }}>
+            {(['press', 'award'] as Section[]).map(c => (
+              <button key={c} type="button" onClick={() => { setCategory(c); if (type && !TYPES[c].includes(type)) setType('') }} aria-pressed={category === c}
+                style={{ border: 'none', borderRadius: 999, padding: '4px 10px', fontSize: 10, cursor: 'pointer', background: category === c ? '#FFFFFF' : 'transparent', color: category === c ? '#111111' : '#888888', fontWeight: category === c ? 600 : 400, boxShadow: category === c ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>
+                {c === 'press' ? 'Press' : 'Award'}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Headline" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
+        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder={award ? 'Award or recognition' : 'Headline'} aria-label={award ? 'Award or recognition' : 'Headline'} style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={outlet} onChange={e => setOutlet(e.target.value)} placeholder="Outlet" style={{ ...inp, flex: 2 }} />
+          <input value={outlet} onChange={e => setOutlet(e.target.value)} placeholder={award ? 'Awarded by' : 'Outlet'} aria-label={award ? 'Awarded by' : 'Outlet'} style={{ ...inp, flex: 2 }} />
           <input value={date} onChange={e => setDate(e.target.value)} placeholder="Date (e.g. Oct 2024)" style={{ ...inp, flex: 1 }} />
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#999999' }}>
             <option value="">Type…</option>
-            {PRESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            {TYPES[category].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <select value={workId ?? ''} onChange={e => setWorkId(e.target.value ? Number(e.target.value) : undefined)} style={{ ...inp, flex: 1, color: workId ? '#111111' : '#999999' }}>
             <option value="">Work…</option>
@@ -152,14 +188,14 @@ function PressForm({ entry, initialClipping, works, onDone }: { entry: PressEntr
           <input ref={fileRef} type="file" accept={CLIPPING_ACCEPT} hidden onChange={e => { void take(e.target.files?.[0]); e.target.value = '' }} />
           {clipping ? (
             <>
-              <ClippingThumb data={clipping.data} label={clipping.name} onOpen={() => setViewing(true)} />
+              <ClippingThumb data={clipping.data} thumb={clipping.thumb} label={clipping.name} onOpen={() => setViewing(true)} />
               <span style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#555555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clipping.name}</span>
               <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Replace</button>
               <button type="button" onClick={() => setClipping(null)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#BBBBBB', cursor: 'pointer' }}>Remove</button>
             </>
           ) : (
             <>
-              <span style={{ flex: 1, fontSize: 11, color: '#999999' }}>Drop a clipping here, image or PDF</span>
+              <span style={{ flex: 1, fontSize: 11, color: '#999999' }}>{award ? 'Drop a certificate or photo here, image or PDF' : 'Drop a clipping here, image or PDF'}</span>
               <button type="button" onClick={() => fileRef.current?.click()} style={{ background: '#FFFFFF', border: '1px solid #E5E5E5', borderRadius: 8, padding: '6px 12px', fontSize: 11, color: '#555555', cursor: 'pointer' }}>Choose file</button>
             </>
           )}
@@ -188,6 +224,7 @@ export function Press() {
   const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
+  const [section, setSection] = useState<Section>('press')
   const [editing, setEditing] = useState<PressEntry | null | 'new'>(null)
   const [newClipping, setNewClipping] = useState<Clipping | null>(null)
   const [viewing, setViewing] = useState<PressEntry | null>(null)
@@ -251,10 +288,20 @@ export function Press() {
     }
   }
 
-  const sorted = [...entries].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  // PDFs added before previews existed get their first-page preview now, one at a time.
+  const missingThumb = entries.find(e => isPdf(e.clipping) && !e.clippingThumb)
+  useEffect(() => {
+    if (!missingThumb?.id || !missingThumb.clipping) return
+    const id = missingThumb.id
+    void pdfThumbnail(missingThumb.clipping).then(thumb => db.pressEntries.update(id, { clippingThumb: thumb ?? '' }))
+  }, [missingThumb?.id, missingThumb?.clipping])
+
+  const inSection = entries.filter(e => sectionOf(e) === section)
+  const sorted = [...inSection].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
   const filtered = typeFilter ? sorted.filter(e => e.type === typeFilter) : sorted
 
-  const usedTypes = [...new Set(entries.map(e => e.type).filter(Boolean))] as string[]
+  const usedTypes = [...new Set(inSection.map(e => e.type).filter(Boolean))] as string[]
+  const counts: Record<Section, number> = { press: entries.filter(e => sectionOf(e) === 'press').length, award: entries.filter(e => sectionOf(e) === 'award').length }
   const anyClipping = filtered.some(e => e.clipping)
 
   return (
@@ -262,6 +309,7 @@ export function Press() {
       {editing != null && (
         <PressForm
           entry={editing === 'new' ? null : editing}
+          section={section}
           initialClipping={editing === 'new' ? newClipping : null}
           works={works}
           onDone={() => { setEditing(null); setNewClipping(null) }}
@@ -277,7 +325,15 @@ export function Press() {
         style={{ minHeight: '70vh' }}>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 24, fontWeight: 400, margin: 0, color: '#111111' }}>Press</h1>
+        <div role="tablist" aria-label="Press and awards" style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
+          {(['press', 'award'] as Section[]).map(sct => (
+            <button key={sct} role="tab" aria-selected={section === sct} onClick={() => { setSection(sct); setTypeFilter(null) }}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Recoleta, serif', fontSize: 24, color: section === sct ? '#111111' : '#C8C8C8', display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              {SECTION_LABEL[sct]}
+              <span style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: 10, color: section === sct ? '#999999' : '#D5D5D5' }}>{counts[sct]}</span>
+            </button>
+          ))}
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {entries.length === 0 && (
             <button onClick={() => void handleImportV1()}
@@ -306,7 +362,9 @@ export function Press() {
 
       {filtered.length === 0 ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
-          {entries.length === 0 ? 'No press items yet. Drop a clipping here to start.' : 'Nothing matches this filter.'}
+          {inSection.length > 0 ? 'Nothing matches this filter.'
+            : section === 'award' ? 'No awards yet. Drop a certificate or photo here to start.'
+            : 'No press items yet. Drop a clipping here to start.'}
         </div>
       ) : (
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
@@ -318,7 +376,7 @@ export function Press() {
 
                 {anyClipping && (
                   p.clipping
-                    ? <ClippingThumb data={p.clipping} label={p.title} onOpen={() => setViewing(p)} />
+                    ? <ClippingThumb data={p.clipping} thumb={p.clippingThumb} label={p.title} onOpen={() => setViewing(p)} />
                     : <div aria-hidden="true" style={{ width: 36, height: 46, flexShrink: 0, borderRadius: 5, border: '1px dashed #EEEEEE' }} />
                 )}
 
@@ -356,7 +414,7 @@ export function Press() {
 
       {dragging && (
         <div aria-live="polite" style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: '#111111', color: '#FFFFFF', borderRadius: 999, padding: '10px 18px', fontSize: 12, boxShadow: '0 6px 24px rgba(0,0,0,.2)', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-          {dropRow != null ? 'Drop to attach to this item' : 'Drop to add a new press item'}
+          {dropRow != null ? 'Drop to attach to this item' : section === 'award' ? 'Drop to add a new award' : 'Drop to add a new press item'}
         </div>
       )}
     </Shell>

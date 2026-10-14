@@ -142,8 +142,10 @@ export interface PressEntry {
   notes?: string
   bookId?: number // optional link to a book
   workId?: number // optional link to a work
+  category?: 'press' | 'award' // missing = press
   clipping?: string // data URL of an image or PDF
   clippingName?: string
+  clippingThumb?: string // first page of a PDF clipping, as a small JPEG
 }
 
 export interface PressItem {

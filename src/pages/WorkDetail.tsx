@@ -43,7 +43,9 @@ export function WorkDetail() {
   const imageRef = useRef<HTMLInputElement>(null)
 
   const work = useLiveQuery(() => db.works.get(wid), [wid])
-  const linkedPress = useLiveQuery(() => db.pressEntries.filter(p => p.workId === wid).toArray(), [wid]) ?? []
+  const linkedEntries = useLiveQuery(() => db.pressEntries.filter(p => p.workId === wid).toArray(), [wid]) ?? []
+  const linkedPress = linkedEntries.filter(p => p.category !== 'award')
+  const linkedAwards = linkedEntries.filter(p => p.category === 'award')
   const allEvents = useLiveQuery(() => db.eventEntries.toArray(), []) ?? []
   const [linkingEvent, setLinkingEvent] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -336,6 +338,19 @@ export function WorkDetail() {
                 </div>
               ))}
             </div>
+
+            {linkedAwards.length > 0 && (
+              <div style={{ ...card }}>
+                {sectionLabel('Awards')}
+                {linkedAwards.map(a => (
+                  <button key={a.id} onClick={() => navigate('/press')}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '8px 0', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{a.title}</div>
+                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[a.type, a.outlet, a.date].filter(Boolean).join(' · ')}</div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div style={{ ...card }}>
               {sectionLabel('Danger zone')}

@@ -12,7 +12,7 @@ import { formatEventDate } from '../lib/eventDates'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
-type EventKind = 'project' | 'event' | 'work' | 'press'
+type EventKind = 'project' | 'event' | 'work' | 'press' | 'award'
 
 interface CareerEvent {
   key: string
@@ -75,6 +75,7 @@ const KIND_DOT: Record<EventKind, string> = {
   event: '#E0A030',
   work: '#AAAAAA',
   press: '#9C86C4',
+  award: '#5FA897',
 }
 
 const KIND_LABELS: Record<EventKind, string> = {
@@ -82,6 +83,7 @@ const KIND_LABELS: Record<EventKind, string> = {
   event: 'Events',
   work: 'Works',
   press: 'Press',
+  award: 'Awards',
 }
 
 // ─── YearRow ─────────────────────────────────────────────────────────────────
@@ -214,7 +216,7 @@ export function Career() {
   const events = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const press = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
-  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true })
+  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true, award: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
@@ -266,26 +268,27 @@ export function Career() {
       if (!year) continue
       const month = pubYear ? parseInt(w.publishedDate!.slice(5, 7), 10) || 0 : w.month ?? 0
       const shownAt = events.filter(ev => (ev.workIds ?? []).includes(w.id!)).map(ev => ({ label: [ev.title, formatEventDate(ev.date, ev.endDate)].filter(Boolean).join(' · '), to: '/projects/events' }))
-      const pressAbout = press.filter(p => p.workId === w.id).map(p => ({ label: [p.title, p.outlet].filter(Boolean).join(' · '), to: '/press' }))
+      const about = press.filter(p => p.workId === w.id).map(p => ({ award: p.category === 'award', label: [p.title, p.outlet].filter(Boolean).join(' · '), to: '/press' }))
+      const pressAbout = about.filter(p => !p.award)
+      const awardsFor = about.filter(p => p.award)
       all.push({
         key: `w${w.id}`, year, month, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`,
-        groups: [{ title: 'Shown at', links: shownAt }, { title: 'Press', links: pressAbout }],
+        groups: [{ title: 'Shown at', links: shownAt }, { title: 'Press', links: pressAbout }, { title: 'Awards', links: awardsFor }],
       })
     }
   }
 
-  if (show.press) {
-    for (const p of press) {
-      const d = parseLooseDate(p.date)
-      if (!d) continue
-      const about = p.workId != null ? works.find(w => w.id === p.workId) : undefined
-      all.push({
-        key: `r${p.id}`, year: d[0], month: d[1], kind: 'press', label: p.title,
-        sub: [p.type, p.outlet].filter(Boolean).join(' · ') || 'Press', dateLabel: p.date, open: '/press',
-        groups: about ? [{ title: 'About', links: [{ label: about.title, to: `/studio/${about.id}` }] }] : [],
-        clipping: p.clipping ? p : undefined,
-      })
-    }
+  for (const p of press) {
+    const kind: EventKind = p.category === 'award' ? 'award' : 'press'
+    const d = parseLooseDate(p.date)
+    if (!show[kind] || !d) continue
+    const about = p.workId != null ? works.find(w => w.id === p.workId) : undefined
+    all.push({
+      key: `r${p.id}`, year: d[0], month: d[1], kind, label: p.title,
+      sub: [p.type, p.outlet].filter(Boolean).join(' · ') || (kind === 'award' ? 'Award' : 'Press'), dateLabel: p.date, open: '/press',
+      groups: about ? [{ title: kind === 'award' ? 'For' : 'About', links: [{ label: about.title, to: `/studio/${about.id}` }] }] : [],
+      clipping: p.clipping ? p : undefined,
+    })
   }
 
   const currentYear = new Date().getFullYear()
@@ -313,7 +316,7 @@ export function Career() {
 
       {isEmpty ? (
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
-          Add dated projects, events, works or press to build your career timeline.
+          Add dated projects, events, works, press or awards to build your career timeline.
         </div>
       ) : (
         <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
