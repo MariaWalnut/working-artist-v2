@@ -303,7 +303,7 @@ export function Press() {
   }, [missingThumb?.id, missingThumb?.clipping])
 
   const inSection = entries.filter(e => sectionOf(e) === section)
-  const sorted = [...inSection].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+  const sorted = [...inSection].sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
   const filtered = typeFilter ? sorted.filter(e => e.type === typeFilter) : sorted
 
   const usedTypes = [...new Set(inSection.map(e => e.type).filter(Boolean))] as string[]

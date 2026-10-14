@@ -106,8 +106,9 @@ export async function migrateLegacyWorks(t: {
 const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 // Press dates are typed freely ("Oct 2024", "2024-10", "12.10.2024", "October 2024"). Returns [year, month or 0].
-export function parseLooseDate(raw?: string): [number, number] | null {
-  if (!raw) return null
+export function parseLooseDate(raw?: unknown): [number, number] | null {
+  if (typeof raw === 'number') return Number.isInteger(raw) ? [raw, 0] : null
+  if (typeof raw !== 'string' || !raw.trim()) return null
   const s = raw.trim().toLowerCase()
   const dmy = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/)
   if (dmy) return [Number(dmy[3]), Number(dmy[2]) || 0]
@@ -120,17 +121,23 @@ export function parseLooseDate(raw?: string): [number, number] | null {
 }
 
 // Press dates used to be typed freely. Converts every readable one to the menu format;
-// anything unreadable is left exactly as typed.
+// anything unreadable is left exactly as typed. A row it can't handle is skipped, never fatal:
+// this runs while the database opens, and a throw here would keep the whole app from loading.
 export async function normalizePressDates(t: { works: Table<Work>; pressEntries: Table<PressEntry> }) {
   await t.pressEntries.toCollection().modify(p => {
-    const n = normalizeDate(p.date)
-    if (n && n !== p.date) p.date = n
+    try {
+      const n = normalizeDate(p.date)
+      if (n && n !== p.date) p.date = n
+    } catch { /* leave this row as it is */ }
   })
   await t.works.toCollection().modify(w => {
-    if (!w.press?.length) return
-    w.press = w.press.map(item => {
-      const n = normalizeDate(item.date)
-      return n && n !== item.date ? { ...item, date: n } : item
-    })
+    try {
+      if (!Array.isArray(w.press) || w.press.length === 0) return
+      w.press = w.press.map(item => {
+        if (!item || typeof item !== 'object') return item
+        const n = normalizeDate(item.date)
+        return n && n !== item.date ? { ...item, date: n } : item
+      })
+    } catch { /* leave this work as it is */ }
   })
 }

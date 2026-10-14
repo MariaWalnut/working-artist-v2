@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
@@ -14,8 +15,27 @@ import { WorldMap } from './pages/WorldMap'
 import { Career } from './pages/Career'
 import { Press } from './pages/Press'
 
+// Shown instead of a blank page if the local database can't be opened (e.g. an upgrade fails).
+function DataError({ detail }: { detail: string }) {
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F5F5F5' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '32px 36px', maxWidth: 440, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>Your data couldn't be opened</h1>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>Nothing has been deleted. Reload to try again.</p>
+        <button onClick={() => location.reload()} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reload</button>
+        <p style={{ fontSize: 10, color: '#AAAAAA', margin: '18px 0 0', wordBreak: 'break-word' }}>{detail}</p>
+      </div>
+    </div>
+  )
+}
+
 function AppRoutes() {
+  const [openError, setOpenError] = useState<string | null>(null)
+  useEffect(() => {
+    db.open().catch((e: unknown) => setOpenError(e instanceof Error ? `${e.name}: ${e.message}` : String(e)))
+  }, [])
   const depts = useLiveQuery(() => db.departments.toArray())
+  if (openError) return <DataError detail={openError} />
   if (depts === undefined) return null
   if (depts.length === 0) return <Onboarding />
 

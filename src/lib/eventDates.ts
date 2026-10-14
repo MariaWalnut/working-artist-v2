@@ -53,8 +53,9 @@ const okDay = (d: number) => d >= 1 && d <= 31
 
 // Turns a typed date ("Oct 2024", "12.10.2024", "2024-10", "12 October 2024") into
 // 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD'. Returns undefined when it can't be read safely.
-export function normalizeDate(raw?: string): string | undefined {
-  if (!raw) return undefined
+export function normalizeDate(raw?: unknown): string | undefined {
+  if (typeof raw === 'number') return Number.isInteger(raw) && raw >= 1800 && raw <= 2999 ? String(raw) : undefined
+  if (typeof raw !== 'string' || !raw.trim()) return undefined
   const s = raw.trim().toLowerCase()
   if (/^\d{4}(-\d{2}(-\d{2})?)?$/.test(s)) return s
   let m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/)
@@ -77,7 +78,7 @@ export function normalizeDate(raw?: string): string | undefined {
 }
 
 // For dates that may still be free text from before the date menus existed.
-export function formatAnyDate(raw?: string) {
+export function formatAnyDate(raw?: unknown) {
   const n = normalizeDate(raw)
-  return n ? formatEventDate(n) : raw ?? ''
+  return n ? formatEventDate(n) : raw == null ? '' : String(raw)
 }
