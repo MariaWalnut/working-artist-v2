@@ -242,7 +242,7 @@ export function Projects() {
     if (dept?.id == null) return []
     const today = new Date().toISOString().slice(0, 10)
     const all = await db.opportunities.where('departmentId').equals(dept.id).toArray()
-    return all.filter(o => o.deadline && o.deadline >= today && !['Won', 'Closed'].includes(o.status))
+    return all.filter(o => o.deadline && o.deadline >= today && (o.status === 'Active' || o.status === 'Draft'))
               .sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? '')).slice(0, 5)
   }, [dept?.id]) ?? []
 

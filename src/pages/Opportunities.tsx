@@ -147,9 +147,10 @@ export function Opportunities() {
             <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p>
           ) : filtered.map(o => {
             const today = new Date().toISOString().slice(0, 10)
-            const overdue = o.deadline && o.deadline < today && !['Won', 'Closed'].includes(o.status)
+            const notSent = o.status === 'Active' || o.status === 'Draft'
+            const overdue = notSent && !!o.deadline && o.deadline < today
             const isDraft = o.status === 'Draft'
-            const days = o.deadline && !overdue && !['Won','Closed'].includes(o.status)
+            const days = notSent && o.deadline && !overdue
               ? Math.round((new Date(o.deadline).setHours(0,0,0,0) - new Date(today).setHours(0,0,0,0)) / 86400000)
               : null
             const critical = days !== null && days <= 2
