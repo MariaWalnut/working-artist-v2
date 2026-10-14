@@ -5,6 +5,7 @@ import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 're
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
+import { CareerTabs } from '../components/CareerTabs'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -134,9 +135,9 @@ export function WorldMapPanel() {
   const zoomBtn: React.CSSProperties = { width: 32, height: 32, background: '#FFFFFF', border: 'none', borderRadius: 8, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontSize: 15, color: '#444444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }
 
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', overflow: 'hidden', minHeight: 380 }}>
-      {/* Map */}
-      <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+    <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 380 }}>
+      {/* Map; the city list drops below it on narrow screens */}
+      <div style={{ flex: '999 1 420px', minWidth: 0, position: 'relative' }}>
         <ComposableMap
           width={MAP_W}
           height={MAP_H}
@@ -214,7 +215,7 @@ export function WorldMapPanel() {
         </div>
 
         {/* Legend */}
-        <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(255,255,255,0.92)', borderRadius: 10, padding: '8px 12px', display: 'flex', gap: 14, backdropFilter: 'blur(4px)' }}>
+        <div style={{ position: 'absolute', bottom: 12, left: 12, maxWidth: 'calc(100% - 24px)', background: 'rgba(255,255,255,0.92)', borderRadius: 10, padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: '6px 14px', backdropFilter: 'blur(4px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#111111' }} />
             <span style={{ fontSize: 9, color: '#888888' }}>Event</span>
@@ -236,7 +237,7 @@ export function WorldMapPanel() {
       </div>
 
       {/* Right panel */}
-      <div style={{ width: 220, flexShrink: 0, borderLeft: '1px solid #F5F5F5', padding: '20px 18px', overflowY: 'auto' }}>
+      <div style={{ flex: '1 1 220px', borderLeft: '1px solid #F5F5F5', borderTop: '1px solid #F5F5F5', padding: '20px 18px', overflowY: 'auto' }}>
         <p style={{ fontSize: 9, fontWeight: 600, color: '#CCCCCC', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 14px' }}>By city</p>
         {cities.length === 0 ? (
           <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>Add locations to events or works to see them here.</p>
@@ -281,6 +282,7 @@ export function WorldMapPanel() {
 export function WorldMap() {
   return (
     <Shell>
+      <CareerTabs active="map" />
       <WorldMapPanel />
     </Shell>
   )

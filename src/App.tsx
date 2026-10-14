@@ -10,6 +10,7 @@ import { ProjectDetail } from './pages/ProjectDetail'
 import { WorkDetail, LegacyBookRedirect } from './pages/WorkDetail'
 import { AllEvents } from './pages/AllEvents'
 import { VisionBoard } from './pages/VisionBoard'
+import { WorldMap } from './pages/WorldMap'
 import { Career } from './pages/Career'
 import { Press } from './pages/Press'
 
@@ -27,12 +28,13 @@ function AppRoutes() {
       <Route path="/manifest" element={<VisionBoard />} />
       <Route path="/the-map" element={<Navigate to="/manifest" replace />} />
       <Route path="/the-map/vision" element={<Navigate to="/manifest" replace />} />
-      <Route path="/the-map/world" element={<Navigate to="/career" replace />} />
+      <Route path="/the-map/world" element={<Navigate to="/career/map" replace />} />
       <Route path="/studio" element={<Studio />} />
       <Route path="/studio/boards" element={<Navigate to="/manifest" replace />} />
       <Route path="/studio/books/:id" element={<LegacyBookRedirect />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
       <Route path="/career" element={<Career />} />
+      <Route path="/career/map" element={<WorldMap />} />
       <Route path="/career/recognition" element={<Press />} />
       <Route path="/press" element={<Navigate to="/career/recognition" replace />} />
       <Route path="/account" element={<Account />} />

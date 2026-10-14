@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 const TABS = [
   { key: 'timeline', label: 'Timeline', to: '/career' },
+  { key: 'map', label: 'Map', to: '/career/map' },
   { key: 'recognition', label: 'Recognition', to: '/career/recognition' },
 ] as const
 
