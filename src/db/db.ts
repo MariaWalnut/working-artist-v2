@@ -108,6 +108,7 @@ export interface EventEntry {
   notes?: string
   url?: string
   workIds?: number[]
+  goals?: string // one per line
 }
 
 export interface PressEntry {

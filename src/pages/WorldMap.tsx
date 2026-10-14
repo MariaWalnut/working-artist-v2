@@ -1,5 +1,7 @@
+import { useState } from 'react'
+import { geoEqualEarth } from 'd3-geo'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps'
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
@@ -73,6 +75,28 @@ function getCityCoords(city: string): [number, number] | null {
 }
 
 type CityItem = { title: string; kind: 'event' | 'work'; date?: string }
+type View = { center: [number, number]; zoom: number }
+
+const MAP_W = 800
+const MAP_H = 420
+const MAX_ZOOM = 16
+const WORLD: View = { center: [10, 15], zoom: 1 }
+
+// Same projection the map draws with, so the fit is measured in real map pixels.
+const projection = geoEqualEarth().scale(140).translate([MAP_W / 2, MAP_H / 2])
+
+// Closest view that still shows every location, with room for labels and the legend.
+function fitView(coords: Array<[number, number]>): View {
+  const pts = coords.map(c => projection(c)).filter((p): p is [number, number] => p != null)
+  if (pts.length === 0) return WORLD
+  const xs = pts.map(p => p[0])
+  const ys = pts.map(p => p[1])
+  const minX = Math.min(...xs), maxX = Math.max(...xs)
+  const minY = Math.min(...ys), maxY = Math.max(...ys)
+  const zoom = Math.min((MAP_W * 0.7) / Math.max(maxX - minX, 30), (MAP_H * 0.55) / Math.max(maxY - minY, 20))
+  const center = projection.invert?.([(minX + maxX) / 2, (minY + maxY) / 2 + 6]) ?? WORLD.center
+  return { center: [center[0], center[1]], zoom: Math.min(10, Math.max(1, zoom)) }
+}
 
 export function WorldMapPanel() {
   const dept = useActiveDept()
@@ -94,17 +118,42 @@ export function WorldMapPanel() {
 
   const cities = Object.entries(byCity).sort((a, b) => b[1].length - a[1].length)
   const total = Object.values(byCity).flat().length
+  const located = cities.flatMap(([city, items]) => {
+    const coords = getCityCoords(city)
+    return coords ? [{ city, items, coords }] : []
+  })
+  const fit = fitView(located.map(l => l.coords))
+  const fitKey = located.map(l => l.city).sort().join('|')
+
+  // The view refits itself whenever the set of places changes.
+  const [saved, setSaved] = useState<View & { key: string }>({ ...WORLD, key: '' })
+  const [movingZoom, setMovingZoom] = useState<number | null>(null)
+  const view: View = saved.key === fitKey ? saved : fit
+  const setView = (v: View) => setSaved({ ...v, key: fitKey })
+  const markerScale = 1 / (movingZoom ?? view.zoom)
+  const zoomBtn: React.CSSProperties = { width: 32, height: 32, background: '#FFFFFF', border: 'none', borderRadius: 8, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontSize: 15, color: '#444444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }
 
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', overflow: 'hidden', minHeight: 380 }}>
       {/* Map */}
       <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
         <ComposableMap
-          width={800}
-          height={420}
-          projectionConfig={{ scale: 140, center: [10, 10] }}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          width={MAP_W}
+          height={MAP_H}
+          projectionConfig={{ scale: 140 }}
+          style={{ width: '100%', height: 'auto', display: 'block', cursor: 'grab' }}
         >
+          <ZoomableGroup
+            center={view.center}
+            zoom={view.zoom}
+            minZoom={1}
+            maxZoom={MAX_ZOOM}
+            onMove={({ zoom }) => { if (zoom) setMovingZoom(zoom) }}
+            onMoveEnd={({ coordinates, zoom }) => {
+              setMovingZoom(null)
+              if (coordinates && zoom) setView({ center: coordinates, zoom })
+            }}
+          >
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>
               geographies.map(geo => (
@@ -113,22 +162,21 @@ export function WorldMapPanel() {
                   geography={geo}
                   fill="#EFEFEF"
                   stroke="#FAFAFA"
-                  strokeWidth={0.5}
+                  strokeWidth={0.5 * markerScale}
                   style={{ outline: 'none' }}
                 />
               ))
             }
           </Geographies>
 
-          {cities.map(([city, items]) => {
-            const coords = getCityCoords(city)
-            if (!coords) return null
+          {located.map(({ city, items, coords }) => {
             const total = items.length
             const isHub = total >= 3
             const hasWork = items.some(i => i.kind === 'work')
             const hasEvent = items.some(i => i.kind === 'event')
             return (
               <Marker key={city} coordinates={coords}>
+                <g transform={`scale(${markerScale})`}>
                 <circle
                   r={isHub ? 9 : 5}
                   fill={isHub ? '#F5E642' : hasWork && !hasEvent ? '#F5E642' : '#111111'}
@@ -151,10 +199,19 @@ export function WorldMapPanel() {
                 >
                   {city.slice(0, 12).toUpperCase()}
                 </text>
+                </g>
               </Marker>
             )
           })}
+          </ZoomableGroup>
         </ComposableMap>
+
+        {/* Zoom controls */}
+        <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <button aria-label="Zoom in" onClick={() => setView({ ...view, zoom: Math.min(MAX_ZOOM, view.zoom * 1.6) })} style={zoomBtn}>+</button>
+          <button aria-label="Zoom out" onClick={() => setView({ ...view, zoom: Math.max(1, view.zoom / 1.6) })} style={zoomBtn}>−</button>
+          <button onClick={() => setView(fit)} style={{ ...zoomBtn, width: 'auto', padding: '0 10px', fontSize: 10, fontWeight: 600 }}>Fit</button>
+        </div>
 
         {/* Legend */}
         <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(255,255,255,0.92)', borderRadius: 10, padding: '8px 12px', display: 'flex', gap: 14, backdropFilter: 'blur(4px)' }}>

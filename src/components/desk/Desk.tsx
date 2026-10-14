@@ -6,31 +6,37 @@ import { isActive, projectDate, projectSubtitle } from '../../lib/projects'
 
 type DeskType = 'project' | 'tasks' | 'list' | 'submission' | 'comingup' | 'note' | 'quote' | 'image' | 'title'
 type Picker = 'project' | 'submission' | 'earlier' | null
-interface Rect { x: number; y: number; w: number; h: number }
-interface Live extends Rect { id: number }
-interface DragData { id: number; mode: 'move' | 'resize'; sx: number; sy: number; ox: number; oy: number; ow: number; oh: number; moved: boolean }
+type DragMode = 'move' | 'resize'
+interface Slot { col: number; span: number; y: number; h: number }
+interface Box { left: number; top: number; width: number; height: number }
+interface Live extends Box { id: number; mode: DragMode }
+interface DragData extends Box { id: number; mode: DragMode; sx: number; sy: number; moved: boolean }
 interface ListData { title: string; items: Array<{ id: string; text: string; done: boolean }> }
 
+// Desk blocks store their column in x (0 to 3) and their width in columns in w (1 to 4).
 const GRID = 24
-const NARROW = '(max-width: 720px)'
+const COLS = 4
+const PAD = 24
+const GAP = 24
+const NARROW = '(max-width: 900px)'
 const INTERACTIVE = 'input,textarea,button,a,label,select,[data-nodrag]'
 const TEXT_TYPES: DeskType[] = ['note', 'quote', 'title']
 const CONFIRM_TYPES: DeskType[] = ['list', 'note', 'quote', 'image', 'title']
 
-const SIZE: Record<DeskType, { w: number; h: number }> = {
-  project: { w: 240, h: 176 },
-  tasks: { w: 264, h: 320 },
-  list: { w: 240, h: 200 },
-  submission: { w: 264, h: 112 },
-  comingup: { w: 720, h: 56 },
-  note: { w: 216, h: 96 },
-  quote: { w: 216, h: 112 },
-  image: { w: 216, h: 168 },
-  title: { w: 264, h: 56 },
+const SPAN: Record<DeskType, { span: number; h: number }> = {
+  project: { span: 1, h: 176 },
+  tasks: { span: 1, h: 320 },
+  list: { span: 1, h: 200 },
+  submission: { span: 1, h: 112 },
+  comingup: { span: 3, h: 56 },
+  note: { span: 1, h: 96 },
+  quote: { span: 1, h: 112 },
+  image: { span: 1, h: 200 },
+  title: { span: 1, h: 56 },
 }
 
 const EVENT_DOT: Record<string, string> = {
-  Reading: '#8CB4D4', Exhibition: '#111111', 'Book Fair': '#F0C878', Talk: '#B8C8A8',
+  Reading: '#8CB4D4', Exhibition: '#111111', 'Book Fair': '#F0C878', Market: '#C8A88C', Talk: '#B8C8A8',
   Performance: '#D4A8C8', Screening: '#A8B4D4', Award: '#F5E642', Residency: '#888888', Other: '#DDDDDD',
 }
 
@@ -87,15 +93,16 @@ function parseList(content: string): ListData {
   }
 }
 
-function findFreeSpot(rects: Rect[], w: number, h: number, maxW: number) {
-  const limit = Math.max(w + GRID, maxW - GRID)
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
+
+function findFreeSlot(slots: Slot[], span: number, h: number) {
   for (let y = GRID; y < 8000; y += GRID) {
-    for (let x = GRID; x + w <= limit; x += GRID) {
-      const clash = rects.some(r => x < r.x + r.w + GRID && x + w + GRID > r.x && y < r.y + r.h + GRID && y + h + GRID > r.y)
-      if (!clash) return { x, y }
+    for (let col = 0; col + span <= COLS; col++) {
+      const clash = slots.some(o => col < o.col + o.span && col + span > o.col && y < o.y + o.h + GRID && y + h + GRID > o.y)
+      if (!clash) return { col, y }
     }
   }
-  return { x: GRID, y: GRID }
+  return { col: 0, y: GRID }
 }
 
 function readRaw(file: File): Promise<string> {
@@ -386,7 +393,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   const [hovered, setHovered] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [picker, setPicker] = useState<Picker>(null)
-  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 600 })
+  const [canvasH, setCanvasH] = useState(600)
+  const [deskW, setDeskW] = useState(0)
   const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches)
   const [minimised, setMinimised] = useState(() => {
     try { return localStorage.getItem('desk-toolbar-min') === '1' } catch { return false }
@@ -398,6 +406,21 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
+
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el || narrow) return
+    const ro = new ResizeObserver(() => setDeskW(el.clientWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [narrow])
+
+  const colW = Math.max(120, (deskW - 2 * PAD - (COLS - 1) * GAP) / COLS)
+  const colLeft = (c: number) => PAD + c * (colW + GAP)
+  const spanWidth = (n: number) => n * colW + (n - 1) * GAP
+  const colAt = (left: number, span: number) => clamp(Math.round((left - PAD) / (colW + GAP)), 0, COLS - span)
+  const spanFor = (width: number, col: number) => clamp(Math.round((width + GAP) / (colW + GAP)), 1, COLS - col)
+  const isLegacy = (i: BoardItem) => i.w > COLS
 
   const board = useLiveQuery(
     async () => (await db.boards.where('departmentId').equals(deptId).filter(b => b.boardType === 'desk').first()) ?? null,
@@ -413,13 +436,10 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   const opps = useLiveQuery(() => db.opportunities.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const events = useLiveQuery(() => db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
-  function measuredRects(list: BoardItem[]): Rect[] {
-    return list.map(i => {
-      const el = canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${i.id}"]`)
-      return { x: i.x, y: i.y, w: i.w, h: el ? el.offsetHeight : i.h }
-    })
+  function slotOf(i: BoardItem): Slot {
+    const el = canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${i.id}"]`)
+    return { col: i.x, span: i.w, y: i.y, h: el && !narrow ? el.offsetHeight : i.h }
   }
-  const canvasWidth = () => Math.max(600, canvasRef.current?.clientWidth ?? 1000)
 
   // First visit: create the desk with Coming up, Tasks and every active project.
   useEffect(() => {
@@ -430,15 +450,28 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       const id = await db.boards.add({ departmentId: deptId, name: 'Desk', boardType: 'desk', createdAt: Date.now() }) as number
       const now = Date.now()
       const seed: BoardItem[] = [
-        { boardId: id, itemType: 'comingup', content: '', x: 24, y: 24, w: 720, h: 56, createdAt: now },
-        { boardId: id, itemType: 'tasks', content: 'week', x: 552, y: 104, w: 264, h: 320, createdAt: now },
+        { boardId: id, itemType: 'comingup', content: '', x: 0, y: 24, w: 3, h: 56, createdAt: now },
+        { boardId: id, itemType: 'tasks', content: 'week', x: 2, y: 104, w: 1, h: 320, createdAt: now },
       ]
       projects.filter(isActive).forEach((p, i) => {
-        seed.push({ boardId: id, itemType: 'project', content: String(p.id), x: 24 + (i % 2) * 264, y: 104 + Math.floor(i / 2) * 200, w: 240, h: 176, createdAt: now })
+        seed.push({ boardId: id, itemType: 'project', content: String(p.id), x: i % 2, y: 104 + Math.floor(i / 2) * 200, w: 1, h: 176, createdAt: now })
       })
       await db.boardItems.bulkAdd(seed)
     })
   }, [board, projects, deptId])
+
+  // Desks laid out before columns existed: move each block to its nearest column.
+  useEffect(() => {
+    if (!items || deskW === 0 || narrow) return
+    const legacy = items.filter(isLegacy)
+    if (legacy.length === 0) return
+    void db.transaction('rw', db.boardItems, async () => {
+      for (const i of legacy) {
+        const col = colAt(i.x, 1)
+        await db.boardItems.update(i.id!, { x: col, w: spanFor(i.w, col) })
+      }
+    })
+  }, [items, deskW, narrow])
 
   // Keep the desk in step with projects: new active ones get a card, deleted ones lose theirs.
   useEffect(() => {
@@ -453,32 +486,28 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       if (orphans.length) await db.boardItems.bulkDelete(orphans.map(o => o.id!))
       const current = await db.boardItems.where('boardId').equals(deskId).toArray()
       const have = new Set(current.filter(i => i.itemType === 'project').map(i => i.content))
-      const rects = measuredRects(current)
+      const slots = current.filter(i => !isLegacy(i)).map(slotOf)
       for (const p of missing) {
         if (have.has(String(p.id))) continue
-        const pos = findFreeSpot(rects, 240, 176, canvasWidth())
-        rects.push({ ...pos, w: 240, h: 176 })
-        await db.boardItems.add({ boardId: deskId, itemType: 'project', content: String(p.id), ...pos, w: 240, h: 176, createdAt: Date.now() })
+        const pos = findFreeSlot(slots, 1, 176)
+        slots.push({ col: pos.col, span: 1, y: pos.y, h: 176 })
+        await db.boardItems.add({ boardId: deskId, itemType: 'project', content: String(p.id), x: pos.col, y: pos.y, w: 1, h: 176, createdAt: Date.now() })
       }
     })
   }, [board, items, projects])
 
-  // The canvas grows to fit its lowest and widest block.
+  // The canvas grows to fit its lowest block.
   useLayoutEffect(() => {
     const el = canvasRef.current
     if (!el || narrow) return
     let bottom = 0
-    let right = 0
-    el.querySelectorAll<HTMLElement>('[data-block-id]').forEach(b => {
-      bottom = Math.max(bottom, b.offsetTop + b.offsetHeight)
-      right = Math.max(right, b.offsetLeft + b.offsetWidth)
-    })
+    el.querySelectorAll<HTMLElement>('[data-block-id]').forEach(b => { bottom = Math.max(bottom, b.offsetTop + b.offsetHeight) })
     const h = Math.max(560, bottom + 160)
-    const w = right + GRID
-    if (h !== canvasSize.h || w !== canvasSize.w) setCanvasSize({ w, h })
+    if (h !== canvasH) setCanvasH(h)
   })
 
   const visible = (items ?? []).filter(i => {
+    if (!narrow && isLegacy(i)) return false
     if (i.itemType === 'project') {
       const p = projects?.find(x => String(x.id) === i.content)
       return !!p && isActive(p)
@@ -495,9 +524,9 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   async function addBlock(type: DeskType, content = '', extra: Partial<BoardItem> = {}) {
     if (board?.id == null || !items) return
-    const { w, h } = SIZE[type]
-    const pos = findFreeSpot(measuredRects(items), w, h, canvasWidth())
-    const id = await db.boardItems.add({ boardId: board.id, itemType: type, content, ...pos, w, h, createdAt: Date.now(), ...extra }) as number
+    const { span, h } = SPAN[type]
+    const pos = findFreeSlot(items.filter(i => !isLegacy(i)).map(slotOf), span, h)
+    const id = await db.boardItems.add({ boardId: board.id, itemType: type, content, x: pos.col, y: pos.y, w: span, h, createdAt: Date.now(), ...extra }) as number
     if (TEXT_TYPES.includes(type)) setEditingId(id)
     requestAnimationFrame(() => {
       canvasRef.current?.querySelector(`[data-block-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -539,22 +568,26 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   }
 
   // ── dragging and resizing ─────────────────────────────────────────────────
-  function onPointerDown(e: React.PointerEvent<HTMLElement>, item: BoardItem, mode: 'move' | 'resize') {
+  // The block itself holds the pointer, so a resize keeps going even when the handle moves away.
+  function onPointerDown(e: React.PointerEvent<HTMLElement>, item: BoardItem, mode: DragMode) {
     if (narrow || e.button !== 0 || item.id == null || editingId === item.id) return
     if (mode === 'move' && (e.target as HTMLElement).closest(INTERACTIVE)) return
     e.stopPropagation()
     e.preventDefault()
-    e.currentTarget.setPointerCapture(e.pointerId)
-    const el = canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${item.id}"]`)
-    dragRef.current = { id: item.id, mode, sx: e.clientX, sy: e.clientY, ox: item.x, oy: item.y, ow: item.w, oh: el?.offsetHeight ?? item.h, moved: false }
+    const block = e.currentTarget.closest<HTMLElement>('[data-block-id]') ?? e.currentTarget
+    block.setPointerCapture(e.pointerId)
+    dragRef.current = {
+      id: item.id, mode, sx: e.clientX, sy: e.clientY, moved: false,
+      left: colLeft(item.x), top: item.y, width: spanWidth(item.w), height: block.offsetHeight,
+    }
   }
 
   function geometry(d: DragData, e: React.PointerEvent): Live {
     const dx = e.clientX - d.sx
     const dy = e.clientY - d.sy
     return d.mode === 'move'
-      ? { id: d.id, x: Math.max(0, d.ox + dx), y: Math.max(0, d.oy + dy), w: d.ow, h: d.oh }
-      : { id: d.id, x: d.ox, y: d.oy, w: Math.max(144, d.ow + dx), h: Math.max(72, d.oh + dy) }
+      ? { id: d.id, mode: d.mode, left: Math.max(0, d.left + dx), top: Math.max(0, d.top + dy), width: d.width, height: d.height }
+      : { id: d.id, mode: d.mode, left: d.left, top: d.top, width: Math.max(colW, d.width + dx), height: Math.max(72, d.height + dy) }
   }
 
   function onPointerMove(e: React.PointerEvent) {
@@ -575,7 +608,13 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       return
     }
     const g = geometry(d, e)
-    await db.boardItems.update(d.id, d.mode === 'move' ? { x: snap(g.x), y: snap(g.y) } : { w: snap(g.w), h: snap(g.h) })
+    if (d.mode === 'move') {
+      await db.boardItems.update(d.id, { x: colAt(g.left, item.w), y: snap(g.top) })
+    } else {
+      const upd: Partial<BoardItem> = { w: spanFor(g.width, item.x) }
+      if (item.itemType === 'image') upd.h = snap(g.height)
+      await db.boardItems.update(d.id, upd)
+    }
     setLive(null)
   }
 
@@ -636,13 +675,18 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   function renderBlock(item: BoardItem) {
     const t = item.itemType as DeskType
-    const dragging = live?.id === item.id
-    const g = dragging && live ? live : item
+    const mine = live?.id === item.id ? live : null
     const shell = blockShell(t)
-    const showChrome = (hovered === item.id || narrow) && !dragging && editingId !== item.id
+    const showRemove = (hovered === item.id || narrow) && !mine && editingId !== item.id
+    const showHandle = !narrow && editingId !== item.id && ((hovered === item.id && !mine) || mine?.mode === 'resize')
+    const imageHeight = mine ? mine.height : item.h
     const wrapper: React.CSSProperties = narrow
       ? { position: 'relative' }
-      : { position: 'absolute', left: g.x, top: g.y, width: g.w, zIndex: dragging ? 30 : 1, cursor: editingId === item.id ? 'auto' : dragging ? 'grabbing' : 'grab', touchAction: 'none' }
+      : {
+          position: 'absolute', left: mine ? mine.left : colLeft(item.x), top: mine ? mine.top : item.y,
+          width: mine ? mine.width : spanWidth(item.w), zIndex: mine ? 30 : 1, touchAction: 'none',
+          cursor: editingId === item.id ? 'auto' : mine?.mode === 'move' ? 'grabbing' : 'grab',
+        }
 
     return (
       <div key={item.id} data-block-id={item.id} style={wrapper}
@@ -653,30 +697,39 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         onPointerEnter={() => setHovered(item.id!)}
         onPointerLeave={() => setHovered(h => (h === item.id ? null : h))}
         onClick={narrow ? e => { if (!(e.target as HTMLElement).closest(INTERACTIVE)) onBlockClick(item) } : undefined}>
-        <div style={{ ...shell, height: t === 'image' && !narrow ? g.h : undefined, boxShadow: dragging ? '0 12px 32px rgba(0,0,0,.14)' : shell.boxShadow }}>
+        <div style={{ ...shell, height: t === 'image' && !narrow ? imageHeight : undefined, boxShadow: mine ? '0 12px 32px rgba(0,0,0,.14)' : shell.boxShadow }}>
           {blockContent(item)}
         </div>
-        {showChrome && (
+        {showRemove && (
           <button aria-label="Remove block" onClick={() => void removeBlock(item)}
             style={{ position: 'absolute', top: -8, right: -8, width: narrow ? 18 : 22, height: narrow ? 18 : 22, borderRadius: 999, background: '#FFFFFF', border: '1px solid #E5E5E5', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.45 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, zIndex: 2 }}>
             <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="#888888" strokeWidth="1.4" strokeLinecap="round" /></svg>
           </button>
         )}
-        {showChrome && !narrow && (
-          <div aria-hidden="true"
-            onPointerDown={e => onPointerDown(e, item, 'resize')}
-            onPointerMove={onPointerMove}
-            onPointerUp={e => void onPointerUp(e, item)}
-            onPointerCancel={onPointerCancel}
-            style={{ position: 'absolute', right: -5, bottom: -5, width: 10, height: 10, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 2, cursor: 'nwse-resize', touchAction: 'none', zIndex: 2 }} />
+        {showHandle && (
+          <div aria-hidden="true" onPointerDown={e => onPointerDown(e, item, 'resize')}
+            style={t === 'image'
+              ? { position: 'absolute', right: -5, bottom: -5, width: 10, height: 10, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 2, cursor: 'nwse-resize', touchAction: 'none', zIndex: 2 }
+              : { position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 28, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 2 }} />
         )}
       </div>
     )
   }
 
+  // Where a dragged block will land.
+  const liveItem = live ? visible.find(i => i.id === live.id) : undefined
+  const preview = live && liveItem ? (() => {
+    if (live.mode === 'move') {
+      const col = colAt(live.left, liveItem.w)
+      return { left: colLeft(col), top: snap(live.top), width: spanWidth(liveItem.w), height: live.height }
+    }
+    const span = spanFor(live.width, liveItem.x)
+    return { left: colLeft(liveItem.x), top: liveItem.y, width: spanWidth(span), height: liveItem.itemType === 'image' ? snap(live.height) : live.height }
+  })() : null
+
   const earlierButton = pastProjects.length > 0 && (
     <button onClick={() => setPicker('earlier')}
-      style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1px solid #EEEEEE', borderRadius: 999, padding: '9px 14px', fontSize: 11, color: '#666666', cursor: 'pointer', fontFamily: 'inherit', width: 'fit-content', ...(narrow ? {} : { position: 'absolute', left: GRID, bottom: 20 }) }}>
+      style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1px solid #EEEEEE', borderRadius: 999, padding: '9px 14px', fontSize: 11, color: '#666666', cursor: 'pointer', fontFamily: 'inherit', width: 'fit-content', ...(narrow ? {} : { position: 'absolute', left: PAD, bottom: 20 }) }}>
       Earlier work
       <span style={{ fontSize: 9, fontWeight: 600, color: '#888888', background: '#F5F5F5', borderRadius: 999, padding: '2px 6px' }}>{pastProjects.length}</span>
     </button>
@@ -704,20 +757,21 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
           {earlierButton}
         </div>
       ) : (
-        <div style={{ overflowX: 'auto', borderRadius: 20 }}>
-          <div ref={canvasRef}
-            style={{
-              position: 'relative', height: canvasSize.h, minWidth: canvasSize.w || undefined,
-              background: '#FAFAFA', border: '1px solid #EEEEEE', borderRadius: 20,
-              backgroundImage: 'radial-gradient(circle, #D9D9D9 1px, transparent 1.4px)',
-              backgroundSize: `${GRID}px ${GRID}px`, backgroundPosition: `-${GRID / 2}px -${GRID / 2}px`,
-            }}>
-            {ordered.map(renderBlock)}
-            {loaded && visible.length === 0 && (
-              <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#BBBBBB' }}>Nothing on the desk</p>
-            )}
-            {earlierButton}
-          </div>
+        <div ref={canvasRef}
+          style={{ position: 'relative', height: canvasH, background: '#FAFAFA', border: '1px solid #EEEEEE', borderRadius: 20 }}>
+          {live && Array.from({ length: COLS }, (_, c) => (
+            <div key={c} aria-hidden="true"
+              style={{ position: 'absolute', top: 12, bottom: 12, left: colLeft(c), width: colW, borderRadius: 12, background: 'rgba(0,0,0,.025)', pointerEvents: 'none' }} />
+          ))}
+          {preview && (
+            <div aria-hidden="true"
+              style={{ position: 'absolute', ...preview, borderRadius: 16, border: '1.5px dashed #D8D8D8', background: 'rgba(245,230,66,.08)', pointerEvents: 'none' }} />
+          )}
+          {deskW > 0 && ordered.map(renderBlock)}
+          {loaded && visible.length === 0 && (
+            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#BBBBBB' }}>Nothing on the desk</p>
+          )}
+          {earlierButton}
         </div>
       )}
 

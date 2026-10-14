@@ -4,12 +4,15 @@ import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 
-const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Talk', 'Performance', 'Screening', 'Award', 'Residency', 'Other']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Award', 'Residency', 'Other']
 
 const TYPE_DOT: Record<string, string> = {
   Reading:     '#8CB4D4',
   Exhibition:  '#111111',
   'Book Fair': '#F0C878',
+  Market:      '#C8A88C',
   Talk:        '#B8C8A8',
   Performance: '#D4A8C8',
   Screening:   '#A8B4D4',
@@ -45,7 +48,17 @@ function EventForm({ entry, works, onDone }: {
   const [date, setDate] = useState(entry?.date ?? '')
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
+  const [goals, setGoals] = useState(entry?.goals ?? '')
   const [workIds, setWorkIds] = useState<number[]>(entry?.workIds ?? [])
+  const [year, month] = date.split('-')
+  const thisYear = new Date().getFullYear()
+  const years = Array.from({ length: thisYear + 4 - 1980 }, (_, i) => thisYear + 3 - i)
+  const upcoming = !date || date.slice(0, 7) >= new Date().toISOString().slice(0, 7)
+
+  function setDatePart(y: string | undefined, m: string | undefined) {
+    if (!y) { setDate(''); return }
+    setDate(m ? `${y}-${m}` : y)
+  }
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F9F9F9', padding: '8px 10px', fontSize: 12, color: '#111111', outline: 'none', width: '100%' }
 
@@ -63,6 +76,7 @@ function EventForm({ entry, works, onDone }: {
       date: date || undefined,
       url: url.trim() || undefined,
       notes: notes.trim() || undefined,
+      goals: goals.trim() || undefined,
       workIds: workIds.length > 0 ? workIds : undefined,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
@@ -89,7 +103,14 @@ function EventForm({ entry, works, onDone }: {
             <option value="">Type…</option>
             {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <input type="month" value={date} onChange={e => setDate(e.target.value)} style={{ ...inp, flex: 1 }} />
+          <select aria-label="Month" value={month ?? ''} onChange={e => setDatePart(year || String(thisYear), e.target.value || undefined)} style={{ ...inp, flex: 1, color: month ? '#111111' : '#999999' }}>
+            <option value="">Month…</option>
+            {MONTHS.map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
+          </select>
+          <select aria-label="Year" value={year ?? ''} onChange={e => setDatePart(e.target.value || undefined, month)} style={{ ...inp, flex: 1, color: year ? '#111111' : '#999999' }}>
+            <option value="">Year…</option>
+            {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
+          </select>
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -97,7 +118,16 @@ function EventForm({ entry, works, onDone }: {
           <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" style={{ ...inp, flex: 1 }} />
         </div>
 
-        {works.length > 0 && (
+        {(upcoming || goals) && (
+          <div style={{ marginBottom: 10 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 8px' }}>Goals</p>
+            <textarea value={goals} onChange={e => setGoals(e.target.value)} rows={3} aria-label="Goals"
+              placeholder={'One per line, e.g.\nMeet two publishers\nSell 20 books'}
+              style={{ ...inp, resize: 'vertical' }} />
+          </div>
+        )}
+
+        {works.length > 0 && !upcoming && (
           <div style={{ marginBottom: 10 }}>
             <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 8px' }}>Works shown</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto' }}>
