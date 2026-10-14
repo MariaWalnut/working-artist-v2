@@ -633,7 +633,7 @@ function BoardList({ onSelect }: { onSelect: (b: Board) => void }) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
   const boards = useLiveQuery(
-    () => dept?.id == null ? [] : db.boards.where('departmentId').equals(dept.id).toArray(),
+    () => dept?.id == null ? [] : db.boards.where('departmentId').equals(dept.id).filter(b => b.boardType !== 'desk').toArray(),
     [dept?.id],
   ) ?? []
 

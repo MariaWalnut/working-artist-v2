@@ -166,12 +166,14 @@ export interface Board {
   name: string
   boardType?: string
   createdAt: number
+  hiddenProjectIds?: number[] // desk only: projects the user took off the desk
 }
 
 export interface BoardItem {
   id?: number
   boardId: number
   itemType: 'text' | 'note' | 'color' | 'quote' | 'tag' | 'image' | 'arrow' | 'title'
+    | 'project' | 'tasks' | 'list' | 'submission' | 'comingup'
   content: string
   x: number
   y: number
