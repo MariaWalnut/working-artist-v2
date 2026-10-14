@@ -4,7 +4,7 @@ import { db, type Opportunity } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 
-const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Press', 'Commission']
+const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Press', 'Commission']
 const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Closed']
 
 const BADGE: Record<string, string> = {
