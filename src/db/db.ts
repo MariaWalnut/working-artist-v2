@@ -142,6 +142,8 @@ export interface PressEntry {
   notes?: string
   bookId?: number // optional link to a book
   workId?: number // optional link to a work
+  clipping?: string // data URL of an image or PDF
+  clippingName?: string
 }
 
 export interface PressItem {
