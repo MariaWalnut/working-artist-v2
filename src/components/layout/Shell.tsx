@@ -8,7 +8,7 @@ const NAV = [
   { label: 'Submissions', to: '/opportunities' },
   { label: 'Manifest', to: '/manifest' },
   { label: 'Career', to: '/career' },
-  { label: 'Press', to: '/press' },
+  { label: 'Recognition', to: '/press' },
   { label: 'Works', to: '/studio' },
   { label: 'Account', to: '/account' },
 ]
@@ -31,7 +31,7 @@ export function Shell({ children }: { children: ReactNode }) {
         >
           {wordmark}
         </button>
-        <nav className="hidden items-baseline gap-7 sm:flex">
+        <nav className="hidden items-baseline gap-7 lg:flex">
           {NAV.map((item) => {
             const active = isActive(item.to)
             return (
@@ -56,7 +56,7 @@ export function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <button
-          className="flex items-center justify-center sm:hidden"
+          className="flex items-center justify-center lg:hidden"
           aria-label={menuOpen ? 'Close menu' : 'Menu'}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(v => !v)}
@@ -71,7 +71,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       {menuOpen && (
-        <nav className="sm:hidden" style={{ background: '#FFFFFF', borderRadius: 20, padding: '8px 20px', marginTop: -16, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
+        <nav className="lg:hidden" style={{ background: '#FFFFFF', borderRadius: 20, padding: '8px 20px', marginTop: -16, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
           {NAV.map((item, i) => {
             const active = isActive(item.to)
             return (
