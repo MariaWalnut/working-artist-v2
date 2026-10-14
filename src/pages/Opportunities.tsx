@@ -149,16 +149,28 @@ export function Opportunities() {
             const today = new Date().toISOString().slice(0, 10)
             const overdue = o.deadline && o.deadline < today && !['Won', 'Closed'].includes(o.status)
             const isDraft = o.status === 'Draft'
+            const days = o.deadline && !overdue && !['Won','Closed'].includes(o.status)
+              ? Math.round((new Date(o.deadline).setHours(0,0,0,0) - new Date(today).setHours(0,0,0,0)) / 86400000)
+              : null
+            const critical = days !== null && days <= 2
+            const urgent = days !== null && days <= 7
+            const rowBg = critical ? 'rgba(224,82,82,0.04)' : urgent ? 'rgba(240,160,32,0.05)' : 'transparent'
+            const deadlineColor = overdue ? '#E05252' : critical ? '#E05252' : urgent ? '#F0A020' : (isDraft ? '#CCCCCC' : '#AAAAAA')
             return (
-              <div key={o.id} onClick={() => setEditing(o)} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid #F5F5F5', alignItems: 'center', cursor: 'pointer' }}>
+              <div key={o.id} onClick={() => setEditing(o)} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid #F5F5F5', alignItems: 'center', cursor: 'pointer', background: rowBg, borderLeft: critical ? '3px solid #E05252' : urgent ? '3px solid #F0A020' : '3px solid transparent' }}>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? '#888888' : '#111111', margin: '0 0 2px' }}>{o.title}</p>
                   {o.organisation && <p style={{ fontSize: 10, color: isDraft ? '#CCCCCC' : '#AAAAAA', margin: 0 }}>{o.organisation}</p>}
                 </div>
                 <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? '#CCCCCC' : '#666666' }}>{o.opportunityType ?? '—'}</span>
-                <span style={{ fontSize: 10, color: overdue ? '#E05252' : (isDraft ? '#CCCCCC' : '#AAAAAA') }}>
-                  {o.deadline ? new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: deadlineColor }}>
+                    {o.deadline ? new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
+                  </span>
+                  {overdue && <span style={{ fontSize: 8, fontWeight: 700, color: '#E05252', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>overdue</span>}
+                  {!overdue && critical && <span style={{ fontSize: 8, fontWeight: 700, color: '#E05252', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days === 0 ? 'today' : days === 1 ? '1d' : `${days}d`}</span>}
+                  {!overdue && !critical && urgent && <span style={{ fontSize: 8, fontWeight: 700, color: '#F0A020', background: 'rgba(240,160,32,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days}d</span>}
+                </div>
                 <span className={badge(o.status)}>{o.status}</span>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: o.status === 'Shortlisted' || o.status === 'Won' ? '#F5E642' : (isDraft ? '#EEEEEE' : '#DDDDDD'), margin: 'auto' }} />
               </div>

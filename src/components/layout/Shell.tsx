@@ -20,7 +20,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const wordmark = dept?.name?.trim() || 'Working Artist'
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[1080px] flex-col px-5 pb-16 pt-6 sm:px-9 sm:pt-8">
+    <div className="mx-auto flex min-h-screen max-w-[1280px] flex-col px-5 pb-16 pt-6 sm:px-9 sm:pt-8">
       {/* Top bar */}
       <header className="mb-8 flex items-baseline justify-between">
         <button

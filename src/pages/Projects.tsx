@@ -211,6 +211,17 @@ function PastRow({ p, onClick }: { p: Project; onClick: () => void }) {
   )
 }
 
+const EVENT_DOT: Record<string, string> = {
+  Reading: '#8CB4D4', Exhibition: '#111111', 'Book Fair': '#F0C878', Talk: '#B8C8A8',
+  Performance: '#D4A8C8', Screening: '#A8B4D4', Award: '#F5E642', Residency: '#888888', Other: '#DDDDDD',
+}
+
+function daysUntil(dateStr: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const d = new Date(dateStr); d.setHours(0, 0, 0, 0)
+  return Math.round((d.getTime() - today.getTime()) / 86400000)
+}
+
 export function Projects() {
   const dept = useActiveDept()
   const navigate = useNavigate()
@@ -219,6 +230,23 @@ export function Projects() {
   const projects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const active = projects.filter(isActive).sort((a, b) => (b.dateStart ?? '').localeCompare(a.dateStart ?? ''))
   const past = projects.filter(p => !isActive(p)).sort((a, b) => (b.dateEnd ?? '').localeCompare(a.dateEnd ?? ''))
+
+  const upcomingEvents = useLiveQuery(async () => {
+    if (dept?.id == null) return []
+    const tm = new Date().toISOString().slice(0, 7)
+    const all = await db.eventEntries.where('departmentId').equals(dept.id).toArray()
+    return all.filter(e => (e.date ?? '') >= tm).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).slice(0, 6)
+  }, [dept?.id]) ?? []
+
+  const upcomingSubs = useLiveQuery(async () => {
+    if (dept?.id == null) return []
+    const today = new Date().toISOString().slice(0, 10)
+    const all = await db.opportunities.where('departmentId').equals(dept.id).toArray()
+    return all.filter(o => o.deadline && o.deadline >= today && !['Won', 'Closed'].includes(o.status))
+              .sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? '')).slice(0, 5)
+  }, [dept?.id]) ?? []
+
+  const hasUpcoming = upcomingEvents.length > 0 || upcomingSubs.length > 0
 
   return (
     <Shell>
@@ -230,6 +258,42 @@ export function Projects() {
           <button onClick={() => setAdding(v => !v)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ New</button>
         </div>
       </div>
+
+      {hasUpcoming && (
+        <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto' }}>
+          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#CCCCCC', flexShrink: 0 }}>Coming up</span>
+          <div style={{ width: 1, height: 16, background: '#F0F0F0', flexShrink: 0 }} />
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+            {upcomingEvents.map(e => {
+              const [y, m] = (e.date ?? '').split('-')
+              const label = y && m ? new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : e.date
+              return (
+                <button key={`ev-${e.id}`} onClick={() => navigate('/projects/events')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F9F9F9', border: 'none', borderRadius: 999, padding: '5px 12px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: EVENT_DOT[e.type ?? ''] ?? '#DDDDDD', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, color: '#444444', fontWeight: 500 }}>{e.title}</span>
+                  <span style={{ fontSize: 10, color: '#AAAAAA' }}>{label}</span>
+                </button>
+              )
+            })}
+            {upcomingSubs.map(o => {
+              const days = o.deadline ? daysUntil(o.deadline) : null
+              const urgent = days !== null && days <= 7
+              const critical = days !== null && days <= 2
+              const dotColor = critical ? '#E05252' : urgent ? '#F0A020' : '#DDDDDD'
+              const dayLabel = days === 0 ? 'today' : days === 1 ? 'tomorrow' : days !== null ? `${days}d` : ''
+              return (
+                <button key={`sub-${o.id}`} onClick={() => navigate('/opportunities')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: critical ? '#FEF2F2' : urgent ? '#FFFBEB' : '#F9F9F9', border: 'none', borderRadius: 999, padding: '5px 12px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, color: '#444444', fontWeight: 500 }}>{o.title}</span>
+                  {dayLabel && <span style={{ fontSize: 10, color: dotColor, fontWeight: 600 }}>{dayLabel}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {active.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 28 }}>
