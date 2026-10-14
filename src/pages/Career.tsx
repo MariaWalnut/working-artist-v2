@@ -92,12 +92,13 @@ const KIND_LABELS: Record<EventKind, string> = {
 
 // ─── YearRow ─────────────────────────────────────────────────────────────────
 
-function YearRow({ year, events, minGap, measureRef, collapsed, onToggle, onSelect }: {
+function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, onSelect }: {
   year: number
   events: CareerEvent[]
   minGap: number
   measureRef?: React.Ref<HTMLDivElement>
   collapsed: boolean
+  last: boolean
   onToggle: () => void
   onSelect: (e: CareerEvent) => void
 }) {
@@ -108,16 +109,16 @@ function YearRow({ year, events, minGap, measureRef, collapsed, onToggle, onSele
   const markerY = (lane: number) => TOP + lane * LANE_H
 
   return (
-    <div style={{ borderBottom: '1px solid #F5F5F5' }}>
+    <div style={{ borderBottom: last ? 'none' : '1px solid #F5F5F5' }}>
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
         {/* Year label */}
         <button
           onClick={hasEvents ? onToggle : undefined}
-          style={{ width: 58, flexShrink: 0, background: 'none', border: 'none', borderRight: '1px solid #F5F5F5', cursor: hasEvents ? 'pointer' : 'default', minHeight: MONTH_BAR_H, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 8 }}
+          style={{ width: 58, flexShrink: 0, background: 'none', border: 'none', borderRight: '1px solid #F5F5F5', cursor: hasEvents ? 'pointer' : 'default', minHeight: MONTH_BAR_H, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0 }}
         >
-          <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: hasEvents ? '#999999' : '#DDDDDD', fontWeight: 400 }}>{year}</span>
+          <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, lineHeight: `${MONTH_BAR_H}px`, color: hasEvents ? '#999999' : '#DDDDDD', fontWeight: 400 }}>{year}</span>
           {hasEvents && (
-            <span style={{ fontSize: 7, color: '#DDDDDD', marginLeft: 3, marginTop: 4 }}>{collapsed ? '▶' : '▼'}</span>
+            <span style={{ fontSize: 7, lineHeight: `${MONTH_BAR_H}px`, color: '#DDDDDD', marginLeft: 3 }}>{collapsed ? '▶' : '▼'}</span>
           )}
         </button>
 
@@ -321,7 +322,7 @@ export function Career() {
           Add dated projects, events, works, press or awards to build your career timeline.
         </div>
       ) : (
-        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)', padding: '10px 6px' }}>
           {years.map((year, i) => (
             <YearRow
               key={year}
@@ -329,6 +330,7 @@ export function Career() {
               events={all.filter(e => e.year === year)}
               minGap={minGap}
               measureRef={i === 0 ? chartRef : undefined}
+              last={i === years.length - 1}
               collapsed={collapsed.has(year)}
               onToggle={() => toggleYear(year)}
               onSelect={setSelected}
