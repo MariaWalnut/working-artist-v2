@@ -3,14 +3,12 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
 import { Projects } from './pages/Projects'
 import { Opportunities } from './pages/Opportunities'
-import { TheMap } from './pages/TheMap'
 import { Studio } from './pages/Studio'
 import { Account } from './pages/Account'
 import { Onboarding } from './pages/Onboarding'
 import { ProjectDetail } from './pages/ProjectDetail'
 import { WorkDetail, LegacyBookRedirect } from './pages/WorkDetail'
 import { AllEvents } from './pages/AllEvents'
-import { WorldMap } from './pages/WorldMap'
 import { VisionBoard } from './pages/VisionBoard'
 import { Career } from './pages/Career'
 import { Press } from './pages/Press'
@@ -26,11 +24,12 @@ function AppRoutes() {
       <Route path="/projects/events" element={<AllEvents />} />
       <Route path="/projects/:id" element={<ProjectDetail />} />
       <Route path="/opportunities" element={<Opportunities />} />
-      <Route path="/the-map" element={<TheMap />} />
-      <Route path="/the-map/world" element={<WorldMap />} />
-      <Route path="/the-map/vision" element={<VisionBoard />} />
+      <Route path="/manifest" element={<VisionBoard />} />
+      <Route path="/the-map" element={<Navigate to="/manifest" replace />} />
+      <Route path="/the-map/vision" element={<Navigate to="/manifest" replace />} />
+      <Route path="/the-map/world" element={<Navigate to="/career" replace />} />
       <Route path="/studio" element={<Studio />} />
-      <Route path="/studio/boards" element={<Navigate to="/the-map/vision" replace />} />
+      <Route path="/studio/boards" element={<Navigate to="/manifest" replace />} />
       <Route path="/studio/books/:id" element={<LegacyBookRedirect />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
       <Route path="/career" element={<Career />} />

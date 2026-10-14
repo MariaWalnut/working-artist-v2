@@ -6,7 +6,7 @@ const NAV = [
   { label: 'On My Desk', to: '/projects' },
   { label: 'Events', to: '/projects/events' },
   { label: 'Submissions', to: '/opportunities' },
-  { label: 'The Map', to: '/the-map' },
+  { label: 'Manifest', to: '/manifest' },
   { label: 'Career', to: '/career' },
   { label: 'Press', to: '/press' },
   { label: 'Works', to: '/studio' },

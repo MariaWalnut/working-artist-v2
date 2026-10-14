@@ -639,7 +639,7 @@ function BoardList({ onSelect }: { onSelect: (b: Board) => void }) {
 
   async function createBoard() {
     if (!newName.trim()) return
-    const id = await db.boards.add({ departmentId: dept?.id, name: newName.trim(), boardType: 'Vision board', createdAt: Date.now() })
+    const id = await db.boards.add({ departmentId: dept?.id, name: newName.trim(), boardType: 'Board', createdAt: Date.now() })
     setNewName(''); setAdding(false)
     const board = await db.boards.get(id)
     if (board) onSelect(board)
@@ -647,6 +647,7 @@ function BoardList({ onSelect }: { onSelect: (b: Board) => void }) {
 
   return (
     <Shell>
+      <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 24, fontWeight: 400, margin: '0 0 20px', color: '#111111' }}>Manifest</h1>
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 10 }}>
         {/* Sidebar */}
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -680,8 +681,8 @@ function BoardList({ onSelect }: { onSelect: (b: Board) => void }) {
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
           {boards.length === 0 ? (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: '#111', marginBottom: 8 }}>Vision boards</p>
-              <p style={{ fontSize: 13, color: '#AAA', marginBottom: 24 }}>A freeform space for references, quotes and ideas.</p>
+              <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: '#111', marginBottom: 8 }}>No boards yet</p>
+              <p style={{ fontSize: 13, color: '#AAA', marginBottom: 24 }}>Images, quotes and intentions on a free canvas.</p>
               <button onClick={() => setAdding(true)} style={{ background: '#F5E642', border: 'none', borderRadius: 10, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Create your first board</button>
             </div>
           ) : (
