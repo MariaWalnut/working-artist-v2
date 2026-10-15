@@ -58,6 +58,16 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
+// Natural size of an image, so its frame can match its proportions instead of cropping it.
+function imageSize(src: string): Promise<{ w: number; h: number } | null> {
+  return new Promise(resolve => {
+    const img = new Image()
+    img.onload = () => resolve(img.naturalWidth && img.naturalHeight ? { w: img.naturalWidth, h: img.naturalHeight } : null)
+    img.onerror = () => resolve(null)
+    img.src = src
+  })
+}
+
 function scatter(cx: number, cy: number, w: number, h: number) {
   return {
     x: cx - w / 2 + (Math.random() - 0.5) * 60,
@@ -262,10 +272,12 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
     const cy = dropY ?? (el ? el.clientHeight / 2 - h / 2 : 100)
 
     const addItem = async (name: string, imageData: string) => {
+      const natural = await imageSize(imageData)
+      const frameH = natural ? Math.round(w * natural.h / natural.w) : h
       await db.boardItems.add({
         boardId: board.id!, itemType: 'image', content: name, imageData,
         x: cx + (Math.random() - 0.5) * 30, y: cy + (Math.random() - 0.5) * 20,
-        w, h, createdAt: Date.now(),
+        w, h: frameH, createdAt: Date.now(),
       })
     }
 
@@ -312,7 +324,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
     setDrag({ itemId: item.id, startX: e.clientX, startY: e.clientY, origX: item.x, origY: item.y })
   }, [])
 
-  // Images scale from their bottom-right corner, keeping proportions (hold Shift to change them).
+  // Images scale from their bottom-right corner and always keep the picture's own proportions.
   const onResizeMouseDown = useCallback((e: React.MouseEvent, item: BoardItem) => {
     if (!item.id || e.button !== 0) return
     e.preventDefault(); e.stopPropagation()
@@ -321,9 +333,9 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
 
   const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (resizing) {
-      const dx = e.clientX - resizing.startX, dy = e.clientY - resizing.startY
+      const dx = e.clientX - resizing.startX
       const w = Math.max(60, Math.round(resizing.origW + dx))
-      const h = e.shiftKey ? Math.max(60, Math.round(resizing.origH + dy)) : Math.round(w * resizing.origH / resizing.origW)
+      const h = Math.round(w * resizing.origH / resizing.origW)
       void db.boardItems.update(resizing.itemId, { w, h })
       return
     }
@@ -558,14 +570,20 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
                 zIndex: 2,
               }}>
               {isImg && mode !== 'arrow' && (hoverId === item.id || isEdit || resizing?.itemId === item.id) && (
-                <div aria-hidden="true" title="Drag to scale, hold Shift to change proportions"
+                <div aria-hidden="true" title="Drag to scale"
                   onMouseDown={e => onResizeMouseDown(e, item)}
                   style={{ position: 'absolute', right: -6, bottom: -6, width: 14, height: 14, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 3, cursor: 'nwse-resize', zIndex: 3, boxShadow: '0 1px 4px rgba(0,0,0,.15)' }} />
               )}
               {isImg ? (
                 item.imageData
                   ? <img src={item.imageData} alt={item.content} draggable={false}
-                      style={{ width: item.w, height: item.h, objectFit: 'cover', borderRadius: 14, display: 'block', boxShadow: '0 2px 12px rgba(0,0,0,.10)' }} />
+                      onLoad={e => {
+                        // Older frames were a fixed shape that cropped the picture: fit them to it once.
+                        const { naturalWidth: nw, naturalHeight: nh } = e.currentTarget
+                        const fitH = nw && nh ? Math.round(item.w * nh / nw) : item.h
+                        if (Math.abs(fitH - item.h) > 1 && resizing?.itemId !== item.id) void db.boardItems.update(item.id!, { h: fitH })
+                      }}
+                      style={{ width: item.w, height: item.h, objectFit: 'contain', borderRadius: 14, display: 'block', boxShadow: '0 2px 12px rgba(0,0,0,.10)' }} />
                   : <div style={{ width: item.w, height: item.h, background: '#F0F0F0', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: 10, color: '#AAAAAA' }}>Image</span>
                     </div>
