@@ -30,7 +30,7 @@ function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (
 
   async function save() {
     if (!title.trim()) return
-    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, image, ...fieldsToPatch(fields) }) as number
+    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, image, ...fieldsToPatch(fields, kind) }) as number
     onDone(id)
   }
 

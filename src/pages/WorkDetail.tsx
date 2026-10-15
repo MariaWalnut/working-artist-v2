@@ -105,7 +105,7 @@ export function WorkDetail() {
 
   async function saveEdit() {
     await db.works.update(wid, {
-      ...fieldsToPatch(fields),
+      ...fieldsToPatch(fields, kind),
       title: title.trim() || w.title,
       notes,
       kind,
@@ -211,7 +211,7 @@ export function WorkDetail() {
                 shownFields.map(f => (
                   <div key={f.key} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
                     <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{fieldDisplay(f.key, w[f.key])}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{fieldDisplay(f.key, w[f.key], w)}</div>
                   </div>
                 ))
               ) : (

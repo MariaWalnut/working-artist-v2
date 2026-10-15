@@ -7,16 +7,17 @@ const fieldLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSp
 function daysIn(y: string, m: string) { return new Date(Number(y), Number(m), 0).getDate() }
 
 // Year is required for a date; month and day are optional and narrow it down.
-export function DateFields({ label, value, onChange, inp, action }: {
+export function DateFields({ label, value, onChange, inp, action, showDay = true }: {
   label: string
   value: string
   onChange: (v: string) => void
   inp: React.CSSProperties
   action?: ReactNode
+  showDay?: boolean
 }) {
   const [y, m, d] = value ? value.split('-') : []
   const thisYear = new Date().getFullYear()
-  const years = Array.from({ length: thisYear + 4 - 1980 }, (_, i) => thisYear + 3 - i)
+  const years = Array.from({ length: thisYear + 4 - 1950 }, (_, i) => thisYear + 3 - i)
   const dayCount = y && m ? daysIn(y, m) : 31
 
   function set(ny?: string, nm?: string, nd?: string) {
@@ -33,11 +34,13 @@ export function DateFields({ label, value, onChange, inp, action }: {
         {action}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <select aria-label={`${label} day`} value={d ?? ''} disabled={!m} onChange={e => set(y, m, e.target.value || undefined)}
-          style={{ ...inp, flex: 0.8, color: d ? '#111111' : '#999999', opacity: m ? 1 : 0.6 }}>
-          <option value="">Day…</option>
-          {Array.from({ length: dayCount }, (_, i) => String(i + 1).padStart(2, '0')).map(v => <option key={v} value={v}>{Number(v)}</option>)}
-        </select>
+        {showDay && (
+          <select aria-label={`${label} day`} value={d ?? ''} disabled={!m} onChange={e => set(y, m, e.target.value || undefined)}
+            style={{ ...inp, flex: 0.8, color: d ? '#111111' : '#999999', opacity: m ? 1 : 0.6 }}>
+            <option value="">Day…</option>
+            {Array.from({ length: dayCount }, (_, i) => String(i + 1).padStart(2, '0')).map(v => <option key={v} value={v}>{Number(v)}</option>)}
+          </select>
+        )}
         <select aria-label={`${label} month`} value={m ?? ''} onChange={e => set(y || String(thisYear), e.target.value || undefined, d)}
           style={{ ...inp, flex: 1.2, color: m ? '#111111' : '#999999' }}>
           <option value="">Month…</option>

@@ -1,6 +1,6 @@
 import type { Table } from 'dexie'
 import type { Book, PressEntry, Release, Work } from '../db/db'
-import { normalizeDate } from './eventDates'
+import { formatAnyDate, normalizeDate } from './eventDates'
 
 export const WORK_KINDS = ['Artwork', 'Illustration', 'Book', 'Release', 'Other'] as const
 export type WorkKind = typeof WORK_KINDS[number]
@@ -17,10 +17,15 @@ export const NUMERIC_FIELDS: WorkField[] = ['year', 'month', 'pages']
 
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-export function fieldDisplay(key: WorkField, value: unknown) {
+export function fieldDisplay(key: WorkField, value: unknown, w?: Work) {
+  if (key === 'year' && w?.month) return `${MONTH_NAMES[w.month - 1] ?? ''} ${String(value)}`.trim()
   if (key === 'month' && typeof value === 'number') return MONTH_NAMES[value - 1] ?? String(value)
+  if (key === 'publishedDate') return formatAnyDate(value)
   return String(value)
 }
+
+// Kinds dated by their publication: their year and month always follow that date.
+export const usesPublishedDate = (kind: WorkKind) => KIND_FIELDS[kind].some(f => f.key === 'publishedDate')
 
 interface FieldSpec { key: WorkField; label: string; placeholder?: string }
 
@@ -29,24 +34,24 @@ const f = (key: WorkField, label: string, placeholder?: string): FieldSpec => ({
 // Which details each kind of work asks for, in display order.
 export const KIND_FIELDS: Record<WorkKind, FieldSpec[]> = {
   Artwork: [
-    f('year', 'Year', '2025'), f('month', 'Month'), f('medium', 'Medium', 'Oil on linen'), f('dimensions', 'Dimensions', '120 × 90 cm'),
+    f('year', 'Date'), f('medium', 'Medium', 'Oil on linen'), f('dimensions', 'Dimensions', '120 × 90 cm'),
     f('location', 'Location', 'City or venue'), f('collection', 'Collection', 'Private collection'),
   ],
   Illustration: [
-    f('year', 'Year', '2025'), f('month', 'Month'), f('publisher', 'Client or publication', 'The New Yorker'), f('publishedDate', 'Published', '2025-10'),
+    f('publishedDate', 'Date'), f('publisher', 'Client or publication', 'The New Yorker'),
     f('medium', 'Medium', 'Gouache, digital'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City'),
   ],
   Book: [
-    f('subtitle', 'Subtitle'), f('publisher', 'Publisher'), f('publishedDate', 'Published', '2025-10'),
+    f('subtitle', 'Subtitle'), f('publisher', 'Publisher'), f('publishedDate', 'Published'),
     f('isbn', 'ISBN', '978…'), f('language', 'Language', 'German'), f('credits', 'Credits', 'Text by…, illustrated by…'),
     f('pages', 'Pages', '32'), f('dimensions', 'Size', '24 × 30 cm'), f('technique', 'Technique', 'Gouache, pencil'),
     f('location', 'Location', 'City'),
   ],
   Release: [
-    f('year', 'Year', '2025'), f('month', 'Month'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
+    f('year', 'Date'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
   ],
   Other: [
-    f('year', 'Year', '2025'), f('month', 'Month'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'),
+    f('year', 'Date'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'),
   ],
 }
 
@@ -61,7 +66,8 @@ export function workSubtitle(w: Work) {
 }
 
 export function workYear(w: Work) {
-  return w.year ?? (w.publishedDate ? parseInt(w.publishedDate.slice(0, 4), 10) || undefined : undefined)
+  const pub = normalizeDate(w.publishedDate)
+  return (pub ? Number(pub.slice(0, 4)) : undefined) ?? w.year
 }
 
 // Books and releases used to live in their own tables. Copies them into works once (safe to run

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { Work } from '../db/db'
-import { KIND_FIELDS, MONTH_NAMES, NUMERIC_FIELDS, WORK_KINDS, type WorkField, type WorkKind } from '../lib/works'
+import { KIND_FIELDS, NUMERIC_FIELDS, WORK_KINDS, usesPublishedDate, type WorkField, type WorkKind } from '../lib/works'
+import { normalizeDate } from '../lib/eventDates'
+import { DateFields } from './DateFields'
 
 export type FieldValues = Record<WorkField, string>
 
@@ -14,7 +16,7 @@ export function fieldsFromWork(w: Partial<Work> | null): FieldValues {
 }
 
 // Every field is written back, so details from a previous kind survive a kind change.
-export function fieldsToPatch(v: FieldValues): Partial<Work> {
+export function fieldsToPatch(v: FieldValues, kind: WorkKind): Partial<Work> {
   const patch: Record<string, string | number | undefined> = {}
   for (const k of ALL_FIELDS) {
     const raw = v[k].trim()
@@ -25,8 +27,12 @@ export function fieldsToPatch(v: FieldValues): Partial<Work> {
       patch[k] = raw || undefined
     }
   }
-  if (patch.year == null && typeof patch.publishedDate === 'string') {
-    patch.year = parseInt(patch.publishedDate.slice(0, 4), 10) || undefined
+  // A published work is dated by its publication, so a stale year can never contradict it.
+  const pub = normalizeDate(v.publishedDate)
+  if (pub) patch.publishedDate = pub
+  if (usesPublishedDate(kind) && pub) {
+    patch.year = Number(pub.slice(0, 4))
+    patch.month = pub.length >= 7 ? Number(pub.slice(5, 7)) : undefined
   }
   return patch as Partial<Work>
 }
@@ -50,7 +56,8 @@ async function lookupIsbn(isbn: string): Promise<IsbnResult | null> {
   const publisher = first(doc.publisher)
   if (publisher) fields.publisher = publisher
   const date = first(doc.publish_date)
-  if (date) fields.publishedDate = date.slice(0, 7)
+  const pubDate = date ? normalizeDate(date) : undefined
+  if (pubDate) fields.publishedDate = pubDate
   const lang = first(doc.language)
   if (lang) fields.language = ISO_LANG[lang] ?? lang
   if (Array.isArray(doc.author_name) && doc.author_name.length) fields.credits = (doc.author_name as string[]).join(', ')
@@ -103,7 +110,25 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 10 }}>
-      {KIND_FIELDS[kind].map(f => (
+      {KIND_FIELDS[kind].map(f => f.key === 'year' ? (
+        <div key={f.key} style={{ gridColumn: '1 / -1' }}>
+          <DateFields label={f.label} showDay={false} inp={inp}
+            value={values.year ? (values.month ? `${values.year}-${values.month.padStart(2, '0')}` : values.year) : ''}
+            onChange={v => {
+              const [y, m] = v ? v.split('-') : []
+              onChange({ ...values, year: y ?? '', month: m ? String(Number(m)) : '' })
+            }} />
+        </div>
+      ) : f.key === 'publishedDate' ? (
+        <div key={f.key} style={{ gridColumn: '1 / -1' }}>
+          <DateFields label={f.label} inp={inp}
+            value={normalizeDate(values.publishedDate) ?? ''}
+            onChange={v => onChange({ ...values, publishedDate: v })} />
+          {values.publishedDate && !normalizeDate(values.publishedDate) && (
+            <p style={{ fontSize: 10, color: '#A86400', margin: '-4px 0 0' }}>Previously typed as “{values.publishedDate}”. Pick the date above to replace it.</p>
+          )}
+        </div>
+      ) : (
         <label key={f.key}>
           <span style={label}>{f.label}</span>
           {f.key === 'isbn' ? (
@@ -115,12 +140,6 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
                 {lookup === 'loading' ? '…' : lookup === 'notfound' ? 'Not found' : lookup === 'error' ? 'Error' : 'Look up'}
               </button>
             </div>
-          ) : f.key === 'month' ? (
-            <select value={values.month} onChange={e => onChange({ ...values, month: e.target.value })}
-              style={{ ...inp, color: values.month ? '#111111' : '#999999' }}>
-              <option value="">Month…</option>
-              {MONTH_NAMES.map((m, i) => <option key={m} value={String(i + 1)}>{m}</option>)}
-            </select>
           ) : (
             <input value={values[f.key]} onChange={e => onChange({ ...values, [f.key]: e.target.value })}
               placeholder={f.placeholder} inputMode={NUMERIC_FIELDS.includes(f.key) ? 'numeric' : undefined} style={inp} />
