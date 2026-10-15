@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type PressItem, type RightItem } from '../db/db'
+import { db, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
 import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
@@ -128,13 +128,20 @@ export function WorkDetail() {
 
   async function addPress() {
     if (!pressTitle.trim()) return
-    const item: PressItem = { id: uid(), outlet: pressOutlet.trim(), title: pressTitle.trim(), date: pressDate || undefined, url: pressUrl.trim() || undefined, type: pressType || undefined }
-    await db.works.update(wid, { press: [...press, item] })
+    await db.pressEntries.add({
+      departmentId: w.departmentId, category: 'press', workId: wid, title: pressTitle.trim(),
+      outlet: pressOutlet.trim() || undefined, date: pressDate || undefined, url: pressUrl.trim() || undefined, type: pressType || undefined,
+    })
     setPressOutlet(''); setPressTitle(''); setPressDate(''); setPressUrl(''); setPressType(''); setAddingPress(false)
   }
 
   async function removePress(pid: string) {
     await db.works.update(wid, { press: press.filter(p => p.id !== pid) })
+  }
+
+  // Takes a press item off this work; it stays in the press list under Recognition.
+  async function unlinkPress(id: number) {
+    await db.pressEntries.update(id, { workId: undefined })
   }
 
   async function addRight() {
@@ -158,7 +165,7 @@ export function WorkDetail() {
   const chip: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#666666', padding: '4px 10px', borderRadius: 6 }
   const pressRows = [
     ...press.map(p => ({ key: p.id, title: p.title, outlet: p.outlet, date: p.date, url: p.url, type: p.type, remove: () => void removePress(p.id) })),
-    ...linkedPress.map(p => ({ key: `lp${p.id}`, title: p.title, outlet: p.outlet ?? '', date: p.date, url: p.url, type: p.type, remove: undefined })),
+    ...linkedPress.map(p => ({ key: `lp${p.id}`, title: p.title, outlet: p.outlet ?? '', date: p.date, url: p.url, type: p.type, remove: () => void unlinkPress(p.id!) })),
   ]
 
   return (

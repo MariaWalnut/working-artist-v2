@@ -147,3 +147,25 @@ export async function normalizePressDates(t: { works: Table<Work>; pressEntries:
     } catch { /* leave this work as it is */ }
   })
 }
+
+// Press used to be stored inside each work. Moves every item to the shared press list, linked to its
+// work, so it shows under Recognition and on the timeline. Items it can't read stay where they are.
+export async function movePressToEntries(t: { works: Table<Work>; pressEntries: Table<PressEntry> }) {
+  const works = await t.works.toArray()
+  for (const w of works) {
+    if (w.id == null || !Array.isArray(w.press) || w.press.length === 0) continue
+    const kept: NonNullable<Work['press']> = []
+    for (const item of w.press) {
+      try {
+        if (!item || typeof item !== 'object' || !String(item.title ?? '').trim()) { if (item) kept.push(item); continue }
+        await t.pressEntries.add({
+          departmentId: w.departmentId, category: 'press', workId: w.id,
+          title: String(item.title).trim(), outlet: item.outlet ? String(item.outlet) : undefined,
+          date: normalizeDate(item.date) ?? (item.date ? String(item.date) : undefined),
+          url: item.url || undefined, type: item.type || undefined,
+        })
+      } catch { kept.push(item) }
+    }
+    await t.works.update(w.id, { press: kept.length ? kept : undefined } as Partial<Work>)
+  }
+}

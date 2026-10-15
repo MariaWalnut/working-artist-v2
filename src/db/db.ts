@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import { migrateLegacyWorks, normalizePressDates } from '../lib/works'
+import { migrateLegacyWorks, movePressToEntries, normalizePressDates } from '../lib/works'
 
 export type Activity = 'visual_artist' | 'musician' | 'writer' | 'picture_book' | 'photographer' | 'designer' | 'performer' | 'other'
 
@@ -350,6 +350,23 @@ class AppDB extends Dexie {
       pressEntries: '++id, departmentId',
       eventEntries: '++id, departmentId',
     }).upgrade(tx => normalizePressDates({
+      works: tx.table('works'),
+      pressEntries: tx.table('pressEntries'),
+    }))
+    this.version(9).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
+      eventEntries: '++id, departmentId',
+    }).upgrade(tx => movePressToEntries({
       works: tx.table('works'),
       pressEntries: tx.table('pressEntries'),
     }))
