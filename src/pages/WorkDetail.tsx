@@ -164,7 +164,7 @@ export function WorkDetail() {
   const card: React.CSSProperties = { background: '#FFFFFF', borderRadius: 16, padding: '18px 20px' }
   const chip: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#666666', padding: '4px 10px', borderRadius: 6 }
   const pressRows = [
-    ...press.map(p => ({ key: p.id, title: p.title, outlet: p.outlet, date: p.date, url: p.url, type: p.type, remove: () => void removePress(p.id) })),
+    ...press.filter(Boolean).map(p => ({ key: p.id, title: p.title, outlet: p.outlet ?? '', date: p.date, url: p.url, type: p.type, remove: () => void removePress(p.id) })),
     ...linkedPress.map(p => ({ key: `lp${p.id}`, title: p.title, outlet: p.outlet ?? '', date: p.date, url: p.url, type: p.type, remove: () => void unlinkPress(p.id!) })),
   ]
 
@@ -264,7 +264,7 @@ export function WorkDetail() {
               {pressRows.map(p => (
                 <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #F5F5F5' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F3F3F3', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 7, fontWeight: 700, color: '#999999', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>{p.outlet.slice(0, 4).toUpperCase() || '···'}</span>
+                    <span style={{ fontSize: 7, fontWeight: 700, color: '#999999', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>{String(p.outlet ?? '').slice(0, 4).toUpperCase() || '···'}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', lineHeight: 1.35 }}>{p.title}</div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
@@ -63,10 +63,36 @@ function AppRoutes() {
   )
 }
 
+// If a page crashes, show what went wrong instead of a blank screen. Data is never touched here.
+class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null; where: string }> {
+  state = { error: null as Error | null, where: '' }
+  static getDerivedStateFromError(error: Error) { return { error, where: location.pathname } }
+  componentDidCatch(error: Error, info: ErrorInfo) { console.error('[Working Artist]', error, info.componentStack) }
+  render() {
+    const { error, where } = this.state
+    if (!error) return this.props.children
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F5F5F5' }}>
+        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '32px 36px', maxWidth: 460, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+          <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>This page hit a problem</h1>
+          <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>Your data is safe. Go back to your desk, or reload to try again.</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { location.href = '/projects' }} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>On My Desk</button>
+            <button onClick={() => location.reload()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
+          </div>
+          <p style={{ fontSize: 10, color: '#AAAAAA', margin: '18px 0 0', wordBreak: 'break-word' }}>{where} · {error.name}: {error.message}</p>
+        </div>
+      </div>
+    )
+  }
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <PageErrorBoundary>
+        <AppRoutes />
+      </PageErrorBoundary>
     </BrowserRouter>
   )
 }
