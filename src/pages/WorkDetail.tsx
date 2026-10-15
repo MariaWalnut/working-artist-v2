@@ -7,6 +7,7 @@ import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues
 import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
+import { ContractCard, money, parseAmount } from '../components/ContractCard'
 import { fileToDataUrl } from '../lib/images'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
@@ -66,6 +67,10 @@ export function WorkDetail() {
   const [rightPub, setRightPub] = useState('')
   const [rightYear, setRightYear] = useState('')
   const [rightStatus, setRightStatus] = useState<RightItem['status']>('live')
+  const [rightAdvance, setRightAdvance] = useState('')
+  const [rightRoyalty, setRightRoyalty] = useState('')
+  const [rightRun, setRightRun] = useState('')
+  const [rightPrice, setRightPrice] = useState('')
 
   if (work === undefined) return null
   if (!work) { navigate('/studio', { replace: true }); return null }
@@ -134,9 +139,12 @@ export function WorkDetail() {
 
   async function addRight() {
     if (!rightLang.trim()) return
-    const item: RightItem = { id: uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined, status: rightStatus }
+    const item: RightItem = {
+      id: uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined, status: rightStatus,
+      advance: parseAmount(rightAdvance), royaltyRate: parseAmount(rightRoyalty), printRun: parseAmount(rightRun), price: parseAmount(rightPrice),
+    }
     await db.works.update(wid, { rights: [...rights, item] })
-    setRightLang(''); setRightPub(''); setRightYear(''); setRightStatus('live'); setAddingRight(false)
+    setRightLang(''); setRightPub(''); setRightYear(''); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice(''); setAddingRight(false)
   }
 
   async function deleteWork() {
@@ -303,6 +311,7 @@ export function WorkDetail() {
                 </div>
               ))}
             </div>
+            {(wKind === 'Book' || w.contract) && <ContractCard key={w.id} work={w} />}
             <div style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 {sectionLabel('Rights')}
@@ -314,6 +323,12 @@ export function WorkDetail() {
                   <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                     <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder="Publisher" style={{ ...inp, flex: 2 }} />
                     <input type="number" value={rightYear} onChange={e => setRightYear(e.target.value)} placeholder="Year" style={{ ...inp, flex: 1 }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
+                    <input value={rightAdvance} onChange={e => setRightAdvance(e.target.value)} placeholder="Advance" aria-label="Advance" inputMode="decimal" style={inp} />
+                    <input value={rightRoyalty} onChange={e => setRightRoyalty(e.target.value)} placeholder="Royalty %" aria-label="Royalty %" inputMode="decimal" style={inp} />
+                    <input value={rightRun} onChange={e => setRightRun(e.target.value)} placeholder="Print run" aria-label="Print run" inputMode="numeric" style={inp} />
+                    <input value={rightPrice} onChange={e => setRightPrice(e.target.value)} placeholder="Price" aria-label="Price" inputMode="decimal" style={inp} />
                   </div>
                   <select value={rightStatus} onChange={e => setRightStatus(e.target.value as RightItem['status'])} style={{ ...inp, marginBottom: 8 }}>
                     {RIGHT_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
@@ -330,6 +345,11 @@ export function WorkDetail() {
                   <div>
                     <div style={{ fontSize: 11.5, fontWeight: 500, color: '#111111' }}>{r.language}</div>
                     <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 1 }}>{[r.publisher, r.year].filter(Boolean).join(' · ')}</div>
+                    {(r.advance != null || r.royaltyRate != null || r.printRun != null || r.price != null) && (
+                      <div style={{ fontSize: 10, color: '#888888', marginTop: 2 }}>
+                        {[r.advance != null ? `Advance ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                   </div>
                   <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, ...(RIGHT_BADGE[r.status] ?? {}) }}>
                     {r.status.charAt(0).toUpperCase() + r.status.slice(1)}

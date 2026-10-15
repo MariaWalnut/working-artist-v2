@@ -83,6 +83,7 @@ export interface Work {
   // releases
   format?: string
   label?: string
+  contract?: BookContract
   // set when copied over from the old books / releases tables
   legacyBookId?: number
   legacyReleaseId?: number
@@ -163,6 +164,31 @@ export interface RightItem {
   publisher?: string
   year?: number
   status: 'live' | 'sold' | 'pending'
+  advance?: number
+  royaltyRate?: number // percent
+  printRun?: number
+  price?: number
+}
+
+// Terms of the publishing contract for a book (amounts in `currency`).
+export interface BookContract {
+  currency?: string // '€', '$', '£', 'R$'
+  price?: number // retail price of one copy
+  binding?: string // Hardcover / Paperback / Board book / Other
+  printRun?: number // first print run
+  authorCopies?: number
+  advance?: number
+  advancePaid?: 'no' | 'part' | 'full'
+  royaltyRate?: number // percent
+  royaltyBase?: 'retail' | 'net' // on the retail price or on the publisher's net receipts
+  royaltySteps?: string // e.g. "8% from 5,000 copies"
+  subRightsShare?: number // percent of rights the publisher licenses on (translations etc.)
+  territory?: string
+  term?: string // e.g. "10 years", "until out of print"
+  signed?: string // YYYY, YYYY-MM or YYYY-MM-DD
+  agent?: string
+  agentCommission?: number // percent
+  notes?: string
 }
 
 export interface DayLog {
