@@ -220,7 +220,7 @@ function EditPopup({
 
 // ── BoardCanvas ───────────────────────────────────────────────────────────────
 
-function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
+function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
   const allItems = useLiveQuery(
     () => db.boardItems.where('boardId').equals(board.id!).toArray(),
     [board.id],
@@ -419,9 +419,8 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500 }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, gap: 10 }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0 }}>← Boards</button>
-        <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111' }}>{board.name}</span>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8, gap: 10 }}>
+        {tabs}
         {/* Toolbar */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 1, background: '#FFFFFF', borderRadius: 999, padding: '4px 6px', boxShadow: '0 2px 12px rgba(0,0,0,.10)' }}>
           {(['text', 'note', 'quote', 'tag'] as const).map(t => (
@@ -669,98 +668,83 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   )
 }
 
-// ── BoardList ─────────────────────────────────────────────────────────────────
+// ── BoardTabs ─────────────────────────────────────────────────────────────────
 
-function BoardList({ onSelect }: { onSelect: (b: Board) => void }) {
-  const dept = useActiveDept()
+const LAST_BOARD = 'manifest-board'
+
+function BoardTabs({ boards, activeId, onSelect, onCreate }: {
+  boards: Board[]; activeId?: number; onSelect: (id: number) => void; onCreate: (name: string) => void
+}) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
-  const boards = useLiveQuery(
-    () => dept?.id == null ? [] : db.boards.where('departmentId').equals(dept.id).filter(b => b.boardType !== 'desk').toArray(),
-    [dept?.id],
-  ) ?? []
-
-  async function createBoard() {
-    if (!newName.trim()) return
-    const id = await db.boards.add({ departmentId: dept?.id, name: newName.trim(), boardType: 'Board', createdAt: Date.now() })
-    setNewName(''); setAdding(false)
-    const board = await db.boards.get(id)
-    if (board) onSelect(board)
-  }
-
+  const create = () => { if (newName.trim()) { onCreate(newName.trim()); setNewName(''); setAdding(false) } }
   return (
-    <Shell>
-      <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 24, fontWeight: 400, margin: '0 0 20px', color: '#111111' }}>Manifest</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 10 }}>
-        {/* Sidebar */}
-        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 10px', padding: '0 8px' }}>Boards</p>
-          {boards.map(b => (
-            <button key={b.id} onClick={() => onSelect(b)}
-              style={{ padding: '9px 10px', borderRadius: 10, border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ fontSize: 11.5, fontWeight: 500, color: '#111111' }}>{b.name}</div>
-              <div style={{ fontSize: 9, color: '#AAAAAA', marginTop: 1 }}>{b.boardType ?? 'Board'}</div>
-            </button>
-          ))}
-          {adding ? (
-            <div style={{ padding: '8px 10px' }}>
-              <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Board name"
-                onKeyDown={e => { if (e.key === 'Enter') void createBoard(); if (e.key === 'Escape') setAdding(false) }}
-                style={{ width: '100%', borderRadius: 8, border: '1px solid #EEE', background: '#F5F5F5', padding: '7px 10px', fontSize: 12, outline: 'none', marginBottom: 6, boxSizing: 'border-box' }} />
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => void createBoard()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Create</button>
-                <button onClick={() => setAdding(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAA', cursor: 'pointer' }}>Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setAdding(true)}
-              style={{ padding: '9px 10px', borderRadius: 10, border: '1px dashed #DDD', background: 'none', cursor: 'pointer', color: '#CCC', fontSize: 11 }}>
-              + New board
-            </button>
-          )}
-        </div>
-
-        {/* Main grid */}
-        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-          {boards.length === 0 ? (
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: '#111', marginBottom: 8 }}>No boards yet</p>
-              <p style={{ fontSize: 13, color: '#AAA', marginBottom: 24 }}>Images, quotes and intentions on a free canvas.</p>
-              <button onClick={() => setAdding(true)} style={{ background: '#F5E642', border: 'none', borderRadius: 10, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Create your first board</button>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, width: '100%' }}>
-              {boards.map(b => (
-                <div key={b.id} onClick={() => onSelect(b)}
-                  style={{ background: '#F5F5F5', borderRadius: 14, padding: '22px 20px', cursor: 'pointer', minHeight: 120, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                  <p style={{ fontFamily: 'Recoleta, serif', fontSize: 14, margin: 0, color: '#111' }}>{b.name}</p>
-                  <p style={{ fontSize: 10, color: '#AAA', margin: '4px 0 0' }}>{b.boardType ?? 'Board'}</p>
-                </div>
-              ))}
-              <div onClick={() => setAdding(true)}
-                style={{ border: '1px dashed #DDD', borderRadius: 14, padding: '22px 20px', cursor: 'pointer', minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 12, color: '#CCC' }}>+ New board</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </Shell>
+    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+      {boards.map(b => {
+        const active = b.id === activeId
+        return (
+          <button key={b.id} onClick={() => onSelect(b.id!)}
+            style={{ padding: '6px 14px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit',
+              background: active ? '#FFFFFF' : 'none', color: active ? '#111111' : '#999999', fontWeight: active ? 600 : 400,
+              boxShadow: active ? '0 2px 12px rgba(0,0,0,.06)' : 'none' }}>
+            {b.name}
+          </button>
+        )
+      })}
+      {adding ? (
+        <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Board name"
+          onKeyDown={e => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setAdding(false) }}
+          onBlur={() => { if (newName.trim()) create(); else setAdding(false) }}
+          style={{ width: 140, borderRadius: 999, border: '1px solid #EEE', background: '#FFFFFF', padding: '6px 12px', fontSize: 12, outline: 'none' }} />
+      ) : (
+        <button onClick={() => setAdding(true)}
+          style={{ padding: '6px 12px', borderRadius: 999, border: '1px dashed #DDD', background: 'none', cursor: 'pointer', color: '#AAAAAA', fontSize: 11, fontFamily: 'inherit' }}>
+          + New board
+        </button>
+      )}
+    </div>
   )
 }
 
 // ── export ────────────────────────────────────────────────────────────────────
 
 export function VisionBoard() {
-  const [activeBoard, setActiveBoard] = useState<Board | null>(null)
+  const dept = useActiveDept()
+  const boards = useLiveQuery(
+    async () => dept?.id == null ? undefined : await db.boards.where('departmentId').equals(dept.id).filter(b => b.boardType !== 'desk').toArray(),
+    [dept?.id],
+  )
+  const [activeId, setActiveId] = useState<number | undefined>(() => {
+    try { const v = Number(localStorage.getItem(LAST_BOARD)); return v || undefined } catch { return undefined }
+  })
 
-  if (activeBoard) {
-    return (
-      <Shell>
-        <BoardCanvas board={activeBoard} onBack={() => setActiveBoard(null)} />
-      </Shell>
-    )
+  // Open the last board used, or the first one.
+  const active = boards?.find(b => b.id === activeId) ?? boards?.[0]
+
+  function select(id: number) {
+    setActiveId(id)
+    try { localStorage.setItem(LAST_BOARD, String(id)) } catch { /* private mode */ }
   }
 
-  return <BoardList onSelect={setActiveBoard} />
+  async function create(name: string) {
+    const id = await db.boards.add({ departmentId: dept?.id, name, boardType: 'Board', createdAt: Date.now() }) as number
+    select(id)
+  }
+
+  if (boards === undefined) return <Shell>{null}</Shell>
+
+  const tabs = <BoardTabs boards={boards} activeId={active?.id} onSelect={select} onCreate={name => void create(name)} />
+
+  return (
+    <Shell>
+      {active ? <BoardCanvas key={active.id} board={active} tabs={tabs} /> : (
+        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: '#111', marginBottom: 20 }}>No boards yet</p>
+            <button onClick={() => void create('Manifest')} style={{ background: '#F5E642', border: 'none', borderRadius: 10, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Start a board</button>
+          </div>
+        </div>
+      )}
+    </Shell>
+  )
 }
