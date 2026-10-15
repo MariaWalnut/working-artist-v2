@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Opportunity } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
@@ -76,11 +76,79 @@ function FilterItem({ label, active, count, onClick }: { label: string; active: 
   )
 }
 
+// ─── Import ──────────────────────────────────────────────────────────────────
+
+// Minimal CSV reader: quoted fields, doubled quotes, commas, semicolons or tabs, line breaks inside quotes.
+function parseCsv(text: string): string[][] {
+  const clean = text.replace(/^\uFEFF/, '')
+  const firstLine = clean.split(/\r?\n/, 1)[0] ?? ''
+  const sep = [';', '\t', ','].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0]
+  const rows: string[][] = []
+  let row: string[] = [], cell = '', quoted = false
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i]
+    if (quoted) {
+      if (ch === '"' && clean[i + 1] === '"') { cell += '"'; i++ }
+      else if (ch === '"') quoted = false
+      else cell += ch
+    } else if (ch === '"') quoted = true
+    else if (ch === sep) { row.push(cell); cell = '' }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && clean[i + 1] === '\n') i++
+      row.push(cell); rows.push(row); row = []; cell = ''
+    } else cell += ch
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row) }
+  return rows.filter(r => r.some(c => c.trim()))
+}
+
+type Incoming = Pick<Opportunity, 'title' | 'opportunityType' | 'organisation' | 'deadline' | 'status' | 'notes'>
+
+// Reads a CSV (Title, Type, Organisation, Deadline, Status, Notes) or a JSON list with the same fields.
+function readSubmissions(text: string): Incoming[] {
+  const trimmed = text.trim()
+  if (trimmed.startsWith('[')) {
+    return (JSON.parse(trimmed) as Array<Record<string, unknown>>).map(r => ({
+      title: String(r.title ?? ''), opportunityType: r.type ? String(r.type) : r.opportunityType ? String(r.opportunityType) : undefined,
+      organisation: r.organisation ? String(r.organisation) : undefined, deadline: r.deadline ? String(r.deadline) : undefined,
+      status: r.status ? String(r.status) : 'Active', notes: r.notes ? String(r.notes) : undefined,
+    }))
+  }
+  const [header, ...rows] = parseCsv(text)
+  const col = (name: string) => header.findIndex(h => h.trim().toLowerCase() === name)
+  const at = (r: string[], name: string) => { const i = col(name); return i >= 0 ? r[i]?.trim() || undefined : undefined }
+  return rows.map(r => ({
+    title: at(r, 'title') ?? '', opportunityType: at(r, 'type'), organisation: at(r, 'organisation'),
+    deadline: at(r, 'deadline'), status: at(r, 'status') ?? 'Active', notes: at(r, 'notes'),
+  }))
+}
+
 export function Opportunities() {
   const dept = useActiveDept()
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState('Active')
   const [editing, setEditing] = useState<Opportunity | 'new' | null>(null)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
+  const importRef = useRef<HTMLInputElement>(null)
+
+  // Adds entries; never replaces. Skips anything already here with the same title and deadline.
+  async function importFile(file?: File) {
+    if (!file || dept?.id == null) return
+    try {
+      const incoming = readSubmissions(await file.text()).filter(o => o.title.trim())
+      const seen = new Set(opps.map(o => `${o.title.trim().toLowerCase()}|${o.deadline ?? ''}`))
+      const fresh = incoming.filter(o => !seen.has(`${o.title.trim().toLowerCase()}|${o.deadline ?? ''}`))
+      const valid = (d?: string) => d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : undefined
+      await db.opportunities.bulkAdd(fresh.map(o => ({
+        departmentId: dept.id, title: o.title.trim(), opportunityType: o.opportunityType, organisation: o.organisation,
+        deadline: valid(o.deadline), status: OPP_STATUSES.includes(o.status) ? o.status : 'Active', notes: o.notes,
+      })))
+      const skipped = incoming.length - fresh.length
+      setImportMsg(`Added ${fresh.length}${skipped ? `, skipped ${skipped} already here` : ''}.`)
+    } catch {
+      setImportMsg('That file could not be read. Use a CSV with Title, Type, Organisation, Deadline, Status, Notes.')
+    }
+  }
 
   const opps = useLiveQuery(() => dept?.id == null ? [] : db.opportunities.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
 
@@ -132,6 +200,11 @@ export function Opportunities() {
           <button onClick={() => setEditing('new')} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
             + Add
           </button>
+          <input ref={importRef} type="file" accept=".csv,.json,text/csv,application/json" hidden onChange={e => { void importFile(e.target.files?.[0]); e.target.value = '' }} />
+          <button onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ background: '#FFFFFF', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid #EEEEEE', color: '#666666', cursor: 'pointer' }}>
+            Import
+          </button>
+          {importMsg && <p role="status" style={{ fontSize: 11, color: '#666666', margin: '2px 8px 0', textAlign: 'center' }}>{importMsg}</p>}
         </div>
 
         {/* Right */}
