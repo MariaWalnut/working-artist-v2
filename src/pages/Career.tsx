@@ -6,7 +6,7 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { kindOf, parseLooseDate, workSubtitle } from '../lib/works'
 import { ClippingViewer } from '../components/ClippingViewer'
-import { CareerTabs } from '../components/CareerTabs'
+import { CareerFrame } from '../components/CareerTabs'
 import type { PressEntry } from '../db/db'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 
@@ -305,7 +305,7 @@ export function Career() {
 
   return (
     <Shell>
-      <CareerTabs active="timeline" right={
+      <CareerFrame active="timeline" right={
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {(Object.keys(KIND_LABELS) as EventKind[]).map(k => (
             <button key={k} onClick={() => toggleKind(k)} aria-pressed={show[k]}
@@ -315,14 +315,14 @@ export function Career() {
             </button>
           ))}
         </div>
-      } />
+      }>
 
       {isEmpty ? (
-        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
+        <div style={{ padding: '64px 20px', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
           Add dated projects, events, works, press or awards to build your career timeline.
         </div>
       ) : (
-        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)', padding: '10px 6px' }}>
+        <div style={{ padding: '10px 6px' }}>
           {years.map((year, i) => (
             <YearRow
               key={year}
@@ -338,6 +338,7 @@ export function Career() {
           ))}
         </div>
       )}
+      </CareerFrame>
 
       {selected && <EventPopup e={selected} onClose={() => setSelected(null)} />}
 

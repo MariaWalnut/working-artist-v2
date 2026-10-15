@@ -162,7 +162,6 @@ export function Projects() {
           </div>
         </div>
       )}
-      <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, margin: '0 0 16px' }}>On My Desk</p>
       {dept?.id != null && <Desk deptId={dept.id} onNewProject={() => setAdding(true)} />}
     </Shell>
   )

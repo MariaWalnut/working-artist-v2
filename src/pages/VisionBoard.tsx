@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
+import { FrameHeader, FrameTabs } from '../components/FrameHeader'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -416,13 +417,11 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500, background: '#FFFFFF', borderRadius: 20 }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8, gap: 10 }}>
-        {tabs}
-        {/* Toolbar */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 1, background: '#FFFFFF', borderRadius: 999, padding: '4px 6px', boxShadow: '0 2px 12px rgba(0,0,0,.10)' }}>
+      {/* Header: board names on the left, toolbar on the right */}
+      <FrameHeader right={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {(['text', 'note', 'quote', 'tag'] as const).map(t => (
             <button key={t} onClick={() => { setMode('select'); setAdding(p => p === t ? null : t) }}
               style={{ padding: '5px 11px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 500,
@@ -442,18 +441,20 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
             Arrow
           </button>
         </div>
-      </div>
+      }>
+        {tabs}
+      </FrameHeader>
 
       {/* Arrow hint */}
       {mode === 'arrow' && (
-        <div style={{ background: '#F5E642', borderRadius: 8, padding: '6px 14px', marginBottom: 8, fontSize: 11, color: '#111', textAlign: 'center' }}>
+        <div style={{ background: '#F5E642', borderRadius: 8, padding: '6px 14px', margin: '8px 12px', fontSize: 11, color: '#111', textAlign: 'center' }}>
           {arrowSrc === null ? 'Click the source element — then click the target' : 'Now click the target element'}
         </div>
       )}
 
       {/* Add form */}
       {adding && (
-        <div style={{ background: '#FFFFFF', borderRadius: 14, padding: '12px 14px', marginBottom: 8 }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid #F0F0F0' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
               {adding === 'quote' ? (
@@ -497,13 +498,13 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
         style={{
           flex: 1, position: 'relative', overflow: 'visible',
           background: dropOver ? '#EFF7FF' : '#FAFAFA',
-          borderRadius: 20, border: dropOver ? '2px dashed #78AECB' : '1px solid #EEEEEE',
+          borderRadius: '0 0 20px 20px', border: dropOver ? '2px dashed #78AECB' : 'none',
           cursor: resizing ? 'nwse-resize' : drag ? 'grabbing' : mode === 'arrow' ? 'crosshair' : 'default',
           transition: 'background 0.1s, border 0.1s',
         }}>
 
         {/* Dot grid — clipped inside the rounded rect via clipPath */}
-        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, borderRadius: 20, pointerEvents: 'none', overflow: 'hidden', opacity: 0.5 }}>
+        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, borderRadius: '0 0 20px 20px', pointerEvents: 'none', overflow: 'hidden', opacity: 0.5 }}>
           <defs>
             <pattern id={`dots-${board.id}`} x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
               <circle cx="12" cy="12" r="1" fill="#CCCCCC" />
@@ -636,7 +637,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
             style={{
               position: 'absolute', inset: 0, zIndex: 300,
               background: 'rgba(250,250,250,0.94)',
-              borderRadius: 20,
+              borderRadius: '0 0 20px 20px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
             }}>
             <div style={{
@@ -679,26 +680,16 @@ function BoardTabs({ boards, activeId, onSelect, onCreate }: {
   const [newName, setNewName] = useState('')
   const create = () => { if (newName.trim()) { onCreate(newName.trim()); setNewName(''); setAdding(false) } }
   return (
-    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-      {boards.map(b => {
-        const active = b.id === activeId
-        return (
-          <button key={b.id} onClick={() => onSelect(b.id!)}
-            style={{ padding: '6px 14px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit',
-              background: active ? '#FFFFFF' : 'none', color: active ? '#111111' : '#999999', fontWeight: active ? 600 : 400,
-              boxShadow: active ? '0 2px 12px rgba(0,0,0,.06)' : 'none' }}>
-            {b.name}
-          </button>
-        )
-      })}
+    <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 14, rowGap: 4 }}>
+      <FrameTabs label="Boards" tabs={boards.map(b => ({ key: b.id!, label: b.name }))} active={activeId} onSelect={onSelect} />
       {adding ? (
         <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Board name"
           onKeyDown={e => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setAdding(false) }}
           onBlur={() => { if (newName.trim()) create(); else setAdding(false) }}
-          style={{ width: 140, borderRadius: 999, border: '1px solid #EEE', background: '#FFFFFF', padding: '6px 12px', fontSize: 12, outline: 'none' }} />
+          style={{ width: 140, border: 'none', borderBottom: '2px solid #F5E642', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
       ) : (
         <button onClick={() => setAdding(true)}
-          style={{ padding: '6px 12px', borderRadius: 999, border: '1px dashed #DDD', background: 'none', cursor: 'pointer', color: '#AAAAAA', fontSize: 11, fontFamily: 'inherit' }}>
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#AAAAAA', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }}>
           + New board
         </button>
       )}

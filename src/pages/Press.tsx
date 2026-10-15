@@ -6,7 +6,7 @@ import { Shell } from '../components/layout/Shell'
 import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer, isPdf } from '../components/ClippingViewer'
 import { pdfThumbnail } from '../lib/pdfThumb'
-import { CareerTabs } from '../components/CareerTabs'
+import { CareerFrame } from '../components/CareerTabs'
 import { DateFields } from '../components/DateFields'
 import { formatAnyDate, normalizeDate } from '../lib/eventDates'
 
@@ -330,7 +330,7 @@ export function Press() {
         onDrop={e => void onDrop(e)}
         style={{ minHeight: '70vh' }}>
 
-      <CareerTabs active="recognition" right={
+      <CareerFrame active="recognition" right={
         <div style={{ display: 'flex', gap: 8 }}>
           {entries.length === 0 && (
             <button onClick={() => void handleImportV1()}
@@ -343,10 +343,10 @@ export function Press() {
           <button onClick={() => importRef.current?.click()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: '#555555', cursor: 'pointer' }}>Import file</button>
           <button onClick={() => setEditing('new')} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
         </div>
-      } />
+      }>
 
       {/* Press / Awards switch and type filter */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', borderBottom: '1px solid #F5F5F5', flexWrap: 'wrap' }}>
         <div role="tablist" aria-label="Press and awards" style={{ display: 'flex', background: '#EBEBEB', borderRadius: 999, padding: 3 }}>
           {(['press', 'award'] as Section[]).map(sct => (
             <button key={sct} role="tab" aria-selected={section === sct} onClick={() => { setSection(sct); setTypeFilter(null) }}
@@ -370,13 +370,13 @@ export function Press() {
       </div>
 
       {filtered.length === 0 ? (
-        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '64px 0', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
+        <div style={{ padding: '64px 20px', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
           {inSection.length > 0 ? 'Nothing matches this filter.'
             : section === 'award' ? 'No awards yet. Drop a certificate or photo here to start.'
             : 'No press items yet. Drop a clipping here to start.'}
         </div>
       ) : (
-        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+        <div>
           {filtered.map((p, i) => {
             const work = p.workId ? works.find(w => w.id === p.workId) : null
             return (
@@ -419,6 +419,7 @@ export function Press() {
           })}
         </div>
       )}
+      </CareerFrame>
       </div>
 
       {dragging && (

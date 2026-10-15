@@ -5,7 +5,7 @@ import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 're
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
-import { CareerTabs } from '../components/CareerTabs'
+import { CareerFrame } from '../components/CareerTabs'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
@@ -282,8 +282,9 @@ export function WorldMapPanel() {
 export function WorldMap() {
   return (
     <Shell>
-      <CareerTabs active="map" />
-      <WorldMapPanel />
+      <CareerFrame active="map">
+        <WorldMapPanel />
+      </CareerFrame>
     </Shell>
   )
 }
