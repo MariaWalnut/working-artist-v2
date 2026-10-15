@@ -7,6 +7,7 @@ import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer, isPdf } from '../components/ClippingViewer'
 import { pdfThumbnail } from '../lib/pdfThumb'
 import { CareerFrame } from '../components/CareerTabs'
+import { FrameTabs } from '../components/FrameHeader'
 import { DateFields } from '../components/DateFields'
 import { formatAnyDate, normalizeDate } from '../lib/eventDates'
 
@@ -347,15 +348,9 @@ export function Press() {
 
       {/* Press / Awards switch and type filter */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', borderBottom: '1px solid #F5F5F5', flexWrap: 'wrap' }}>
-        <div role="tablist" aria-label="Press and awards" style={{ display: 'flex', background: '#EBEBEB', borderRadius: 999, padding: 3 }}>
-          {(['press', 'award'] as Section[]).map(sct => (
-            <button key={sct} role="tab" aria-selected={section === sct} onClick={() => { setSection(sct); setTypeFilter(null) }}
-              style={{ display: 'flex', alignItems: 'baseline', gap: 6, border: 'none', borderRadius: 999, padding: '6px 14px', fontSize: 12, cursor: 'pointer', background: section === sct ? '#FFFFFF' : 'transparent', color: section === sct ? '#111111' : '#777777', fontWeight: section === sct ? 600 : 400, boxShadow: section === sct ? '0 1px 4px rgba(0,0,0,.08)' : 'none' }}>
-              {SECTION_LABEL[sct]}
-              <span style={{ fontSize: 10, fontWeight: 400, color: '#AAAAAA' }}>{counts[sct]}</span>
-            </button>
-          ))}
-        </div>
+        <FrameTabs label="Press and awards" active={section}
+          tabs={(['press', 'award'] as Section[]).map(sct => ({ key: sct, label: SECTION_LABEL[sct], count: counts[sct] }))}
+          onSelect={sct => { setSection(sct); setTypeFilter(null) }} />
         {usedTypes.length > 0 && (
           <>
             <div style={{ width: 1, height: 18, background: '#E5E5E5' }} />
