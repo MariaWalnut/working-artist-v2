@@ -8,6 +8,7 @@ import { Shell } from '../components/layout/Shell'
 
 type Mode = 'select' | 'arrow'
 interface DragState { itemId: number; startX: number; startY: number; origX: number; origY: number }
+interface ResizeState { itemId: number; startX: number; startY: number; origW: number; origH: number }
 interface ArrowData { fromId: number; toId: number }
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -224,6 +225,8 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
   const [addText, setAddText]       = useState('')
   const [addColor, setAddColor]     = useState('#FFFFFF')
   const [drag, setDrag]             = useState<DragState | null>(null)
+  const [resizing, setResizing]     = useState<ResizeState | null>(null)
+  const [hoverId, setHoverId]       = useState<number | null>(null)
   const [editingId, setEditingId]   = useState<number | null>(null)
   const [dropOver, setDropOver]     = useState(false)
   const [addingImage, setAddingImage]       = useState(false)
@@ -309,14 +312,29 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
     setDrag({ itemId: item.id, startX: e.clientX, startY: e.clientY, origX: item.x, origY: item.y })
   }, [])
 
+  // Images scale from their bottom-right corner, keeping proportions (hold Shift to change them).
+  const onResizeMouseDown = useCallback((e: React.MouseEvent, item: BoardItem) => {
+    if (!item.id || e.button !== 0) return
+    e.preventDefault(); e.stopPropagation()
+    setResizing({ itemId: item.id, startX: e.clientX, startY: e.clientY, origW: item.w, origH: item.h })
+  }, [])
+
   const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    if (resizing) {
+      const dx = e.clientX - resizing.startX, dy = e.clientY - resizing.startY
+      const w = Math.max(60, Math.round(resizing.origW + dx))
+      const h = e.shiftKey ? Math.max(60, Math.round(resizing.origH + dy)) : Math.round(w * resizing.origH / resizing.origW)
+      void db.boardItems.update(resizing.itemId, { w, h })
+      return
+    }
     if (!drag) return
     const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY
     if (!movedRef.current && Math.hypot(dx, dy) > 4) movedRef.current = true
     if (movedRef.current) void db.boardItems.update(drag.itemId, { x: drag.origX + dx, y: drag.origY + dy })
-  }, [drag])
+  }, [drag, resizing])
 
   const onCanvasMouseUp = useCallback(() => {
+    if (resizing) { setResizing(null); return }
     if (drag && !movedRef.current) {
       const item = allItems.find(i => i.id === drag.itemId)
       if (item) {
@@ -325,7 +343,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
       }
     }
     setDrag(null)
-  }, [drag, mode, allItems])
+  }, [drag, resizing, mode, allItems])
 
   // background click: close popup, cancel arrow selection
   const onCanvasBgMouseDown = useCallback(() => {
@@ -459,7 +477,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
       <div ref={canvasRef}
         onMouseMove={onCanvasMouseMove}
         onMouseUp={onCanvasMouseUp}
-        onMouseLeave={() => setDrag(null)}
+        onMouseLeave={() => { setDrag(null); setResizing(null) }}
         onMouseDown={onCanvasBgMouseDown}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
@@ -469,7 +487,7 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
           flex: 1, position: 'relative', overflow: 'visible',
           background: dropOver ? '#EFF7FF' : '#FAFAFA',
           borderRadius: 20, border: dropOver ? '2px dashed #78AECB' : '1px solid #EEEEEE',
-          cursor: drag ? 'grabbing' : mode === 'arrow' ? 'crosshair' : 'default',
+          cursor: resizing ? 'nwse-resize' : drag ? 'grabbing' : mode === 'arrow' ? 'crosshair' : 'default',
           transition: 'background 0.1s, border 0.1s',
         }}>
 
@@ -520,6 +538,8 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
           return (
             <div key={item.id}
               onMouseDown={e => onItemMouseDown(e, item)}
+              onMouseEnter={() => setHoverId(item.id ?? null)}
+              onMouseLeave={() => setHoverId(h => (h === item.id ? null : h))}
               style={{
                 position: 'absolute', left: item.x, top: item.y,
                 width: item.w, height: isImg ? item.h : undefined,
@@ -537,6 +557,11 @@ function BoardCanvas({ board, onBack }: { board: Board; onBack: () => void }) {
                 overflow: isImg ? 'visible' : 'hidden',
                 zIndex: 2,
               }}>
+              {isImg && mode !== 'arrow' && (hoverId === item.id || isEdit || resizing?.itemId === item.id) && (
+                <div aria-hidden="true" title="Drag to scale, hold Shift to change proportions"
+                  onMouseDown={e => onResizeMouseDown(e, item)}
+                  style={{ position: 'absolute', right: -6, bottom: -6, width: 14, height: 14, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 3, cursor: 'nwse-resize', zIndex: 3, boxShadow: '0 1px 4px rgba(0,0,0,.15)' }} />
+              )}
               {isImg ? (
                 item.imageData
                   ? <img src={item.imageData} alt={item.content} draggable={false}

@@ -292,7 +292,7 @@ export function AllEvents() {
           </div>
 
           {!narrow && (
-            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', padding: '10px 20px', borderBottom: '1px solid #F0F0F0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', columnGap: 16, padding: '10px 20px', borderBottom: '1px solid #F0F0F0' }}>
               {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
             </div>
           )}
@@ -303,7 +303,7 @@ export function AllEvents() {
             </p>
           ) : visible.map((e, i) => (
             <div key={e.id} onClick={() => setEditing(e)}
-              style={{ display: 'grid', gridTemplateColumns: narrow ? '72px 1fr' : '110px 1fr 130px 110px', padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
+              style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? '#111111' : '#999999' }}>{formatEventDate(e.date, e.endDate)}</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
