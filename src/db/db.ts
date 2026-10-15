@@ -375,6 +375,14 @@ class AppDB extends Dexie {
 
 export const db = new AppDB()
 
+// When a newer version of the app opens the data in another tab, this tab steps aside and reloads,
+// so it never blocks that update and picks up the new version itself.
+db.on('versionchange', () => {
+  db.close()
+  location.reload()
+  return false
+})
+
 // Ask the browser to keep our data rather than evicting it under storage pressure.
 // Without this, IndexedDB is "best-effort" and Safari can clear it silently.
 if (typeof navigator !== 'undefined' && navigator.storage?.persist) {

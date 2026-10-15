@@ -29,14 +29,40 @@ function DataError({ detail }: { detail: string }) {
   )
 }
 
+// Shown while the data takes long to open, e.g. an update waiting for another tab to let go of it.
+function OpeningData({ blocked }: { blocked: boolean }) {
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F5F5F5' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '32px 36px', maxWidth: 440, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>
+          {blocked ? 'Another tab is holding your data' : 'Still opening your data'}
+        </h1>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>
+          {blocked
+            ? 'Working Artist is updating your data and needs every other Working Artist tab or window closed. Close them, and this page continues by itself.'
+            : 'If this takes long, close any other Working Artist tabs or windows, then reload.'}
+        </p>
+        <button onClick={() => location.reload()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
+      </div>
+    </div>
+  )
+}
+
 function AppRoutes() {
   const [openError, setOpenError] = useState<string | null>(null)
+  const [waiting, setWaiting] = useState<'no' | 'slow' | 'blocked'>('no')
   useEffect(() => {
-    db.open().catch((e: unknown) => setOpenError(e instanceof Error ? `${e.name}: ${e.message}` : String(e)))
+    const onBlocked = () => setWaiting('blocked')
+    db.on('blocked', onBlocked)
+    const slow = setTimeout(() => setWaiting(w => (w === 'no' ? 'slow' : w)), 4000)
+    db.open()
+      .then(() => { clearTimeout(slow); setWaiting('no') })
+      .catch((e: unknown) => setOpenError(e instanceof Error ? `${e.name}: ${e.message}` : String(e)))
+    return () => { clearTimeout(slow); db.on('blocked').unsubscribe(onBlocked) }
   }, [])
   const depts = useLiveQuery(() => db.departments.toArray())
   if (openError) return <DataError detail={openError} />
-  if (depts === undefined) return null
+  if (depts === undefined) return waiting === 'no' ? null : <OpeningData blocked={waiting === 'blocked'} />
   if (depts.length === 0) return <Onboarding />
 
   return (
