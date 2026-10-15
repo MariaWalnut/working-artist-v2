@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import { migrateLegacyWorks, movePressToEntries, normalizePressDates } from '../lib/works'
+import { studioDbName } from '../lib/mode'
 
 export type Activity = 'visual_artist' | 'musician' | 'writer' | 'picture_book' | 'photographer' | 'designer' | 'performer' | 'other'
 
@@ -235,7 +236,7 @@ export interface BoardItem {
   createdAt: number
 }
 
-class AppDB extends Dexie {
+export class AppDB extends Dexie {
   departments!: Table<Department>
   projects!: Table<Project>
   opportunities!: Table<Opportunity>
@@ -249,8 +250,8 @@ class AppDB extends Dexie {
   pressEntries!: Table<PressEntry>
   eventEntries!: Table<EventEntry>
 
-  constructor() {
-    super('WorkingArtistV2')
+  constructor(name: string) {
+    super(name)
     this.version(1).stores({
       departments: '++id',
       projects: '++id, departmentId',
@@ -373,7 +374,7 @@ class AppDB extends Dexie {
   }
 }
 
-export const db = new AppDB()
+export const db = new AppDB(studioDbName)
 
 // When a newer version of the app opens the data in another tab, this tab steps aside and reloads,
 // so it never blocks that update and picks up the new version itself.

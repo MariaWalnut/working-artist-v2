@@ -1,7 +1,46 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db, type Activity } from '../db/db'
+import Dexie from 'dexie'
+import { AppDB, db, type Activity } from '../db/db'
 import { PRACTICE_OPTIONS } from '../lib/activities'
+import { LEGACY_DB, userId } from '../lib/mode'
+import { exportData, importData } from '../lib/backup'
+
+// For a new, empty account: bring in a studio kept in this browser before accounts existed, or a backup file.
+function BringIn() {
+  const [legacy, setLegacy] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    void (async () => {
+      if (!(await Dexie.exists(LEGACY_DB))) return
+      const old = new AppDB(LEGACY_DB)
+      try { setLegacy((await old.departments.count()) > 0) } catch { /* unreadable: don't offer it */ } finally { old.close() }
+    })()
+  }, [])
+
+  async function run(load: () => Promise<string>) {
+    setBusy(true); setErr(null)
+    try { await importData(await load()) } catch (e) { setErr(e instanceof Error ? e.message : 'Could not bring it in.'); setBusy(false) }
+  }
+
+  async function fromLegacy() {
+    const old = new AppDB(LEGACY_DB)
+    try { return await exportData(old) } finally { old.close() }
+  }
+
+  const btn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#666666', cursor: 'pointer', borderBottom: '1px solid #DDDDDD', fontFamily: 'inherit' }
+  return (
+    <div style={{ marginTop: 20, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+      {legacy && <button disabled={busy} onClick={() => void run(fromLegacy)} style={{ ...btn, color: '#111111', fontWeight: 600 }}>Move the studio saved in this browser into your account</button>}
+      <button disabled={busy} onClick={() => fileRef.current?.click()} style={btn}>{busy ? 'Bringing it in' : 'Restore a backup file'}</button>
+      <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={e => { const f = e.target.files?.[0]; if (f) void run(() => f.text()); e.target.value = '' }} />
+      {err && <p role="alert" style={{ fontSize: 11, color: '#C0392B', margin: 0 }}>{err}</p>}
+    </div>
+  )
+}
 
 export function Onboarding() {
   const [selected, setSelected] = useState<Activity[]>(['visual_artist'])
@@ -59,6 +98,7 @@ export function Onboarding() {
           style={{ width: '100%', borderRadius: 12, background: '#111111', color: '#FFFFFF', padding: '13px', fontSize: 13, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', border: 'none', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
           Get started
         </button>
+        {userId && <BringIn />}
       </div>
     </div>
   )

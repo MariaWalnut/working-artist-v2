@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useActiveDept } from '../../lib/useDept'
+import { demoField } from '../../lib/mode'
 
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
@@ -29,6 +30,7 @@ export function Shell({ children }: { children: ReactNode }) {
           style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 18, color: '#111111', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {wordmark}
+          {demoField && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#AAAAAA', marginLeft: 10 }}>Demo</span>}
         </button>
         <nav className="hidden items-baseline gap-7 lg:flex">
           {NAV.map((item) => {

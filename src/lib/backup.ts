@@ -1,4 +1,4 @@
-import { db } from '../db/db'
+import { db, type AppDB } from '../db/db'
 import { migrateLegacyWorks, movePressToEntries, normalizePressDates } from './works'
 
 // A portable backup of the whole local database. Because the app is local-first
@@ -17,15 +17,15 @@ type Dump = {
   tables: Record<string, Record<string, unknown>[]>
 }
 
-export async function exportData(): Promise<string> {
+export async function exportData(from: AppDB = db): Promise<string> {
   const dump: Dump = {
     format: FORMAT,
     v: 1,
-    dbVersion: db.verno,
+    dbVersion: from.verno,
     exportedAt: new Date().toISOString(),
     tables: {},
   }
-  for (const t of db.tables) {
+  for (const t of from.tables) {
     dump.tables[t.name] = (await t.toArray()) as Record<string, unknown>[]
   }
   return JSON.stringify(dump)

@@ -2,6 +2,11 @@ import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from '
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
+import { demoField, userId } from './lib/mode'
+import { needsPassword } from './lib/supabase'
+import { startCloud } from './lib/cloud'
+import { seedDemo } from './lib/demoSeed'
+import { AuthScreens } from './components/auth/AuthScreens'
 import { Projects } from './pages/Projects'
 import { Opportunities } from './pages/Opportunities'
 import { Studio } from './pages/Studio'
@@ -48,21 +53,44 @@ function OpeningData({ blocked }: { blocked: boolean }) {
   )
 }
 
+// A demo starts with its sample studio; an account first catches up with its cloud copy.
+// Runs once per page load, even when React mounts twice.
+let preparing: Promise<void> | undefined
+function prepareStudio() {
+  preparing ??= (async () => {
+    if (demoField && (await db.departments.count()) === 0) await seedDemo(demoField)
+    if (userId) await startCloud()
+  })()
+  return preparing
+}
+
 function AppRoutes() {
   const [openError, setOpenError] = useState<string | null>(null)
   const [waiting, setWaiting] = useState<'no' | 'slow' | 'blocked'>('no')
+  const [ready, setReady] = useState(false)
   useEffect(() => {
     const onBlocked = () => setWaiting('blocked')
     db.on('blocked', onBlocked)
     const slow = setTimeout(() => setWaiting(w => (w === 'no' ? 'slow' : w)), 4000)
     db.open()
-      .then(() => { clearTimeout(slow); setWaiting('no') })
+      .then(async () => {
+        clearTimeout(slow); setWaiting('no')
+        await prepareStudio()
+        setReady(true)
+      })
       .catch((e: unknown) => setOpenError(e instanceof Error ? `${e.name}: ${e.message}` : String(e)))
     return () => { clearTimeout(slow); db.on('blocked').unsubscribe(onBlocked) }
   }, [])
-  const depts = useLiveQuery(() => db.departments.toArray())
+  const depts = useLiveQuery(async () => (ready ? await db.departments.toArray() : undefined), [ready])
   if (openError) return <DataError detail={openError} />
-  if (depts === undefined) return waiting === 'no' ? null : <OpeningData blocked={waiting === 'blocked'} />
+  if (depts === undefined) {
+    if (waiting !== 'no') return <OpeningData blocked={waiting === 'blocked'} />
+    return userId ? (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F5F5' }}>
+        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: '#AAAAAA' }}>Opening your studio</p>
+      </div>
+    ) : null
+  }
   if (depts.length === 0) return <Onboarding />
 
   return (
@@ -84,6 +112,7 @@ function AppRoutes() {
       <Route path="/career/recognition" element={<Press />} />
       <Route path="/press" element={<Navigate to="/career/recognition" replace />} />
       <Route path="/account" element={<Account />} />
+      <Route path="/demo/:field" element={<Navigate to="/projects" replace />} />
       <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>
   )
@@ -117,7 +146,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <PageErrorBoundary>
-        <AppRoutes />
+        {needsPassword || (!demoField && !userId) ? <AuthScreens /> : <AppRoutes />}
       </PageErrorBoundary>
     </BrowserRouter>
   )

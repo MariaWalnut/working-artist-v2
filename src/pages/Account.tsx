@@ -4,6 +4,7 @@ import { db, type Activity } from '../db/db'
 import { getActivities, PRACTICE_OPTIONS } from '../lib/activities'
 import { downloadBackup, importData, summarise } from '../lib/backup'
 import { Shell } from '../components/layout/Shell'
+import { AccountSection } from '../components/auth/AccountSection'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -103,6 +104,7 @@ export function Account() {
 
   return (
     <Shell>
+      <AccountSection />
       <Section title="Studio">
         <Field label="Name">
           {editingName ? (
