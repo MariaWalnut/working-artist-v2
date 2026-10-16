@@ -677,14 +677,29 @@ function BoardTabs({ boards, activeId, onSelect, onCreate, onDelete }: {
   boards: Board[]; activeId?: number; onSelect: (id: number) => void; onCreate: (name: string) => void; onDelete: (id: number) => void
 }) {
   const [adding, setAdding] = useState(false)
+  const [renaming, setRenaming] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const active = boards.find(b => b.id === activeId)
   const quiet: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#AAAAAA', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }
+  const startRename = () => { setConfirming(false); setRenaming(active?.name ?? '') }
+  async function saveRename() {
+    const name = renaming?.trim()
+    setRenaming(null)
+    if (active && name && name !== active.name) await db.boards.update(active.id!, { name })
+  }
   const [newName, setNewName] = useState('')
   const create = () => { if (newName.trim()) { onCreate(newName.trim()); setNewName(''); setAdding(false) } }
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 14, rowGap: 4 }}>
-      <FrameTabs label="Boards" tabs={boards.map(b => ({ key: b.id!, label: b.name }))} active={activeId} onSelect={onSelect} />
+      <FrameTabs label="Boards" tabs={boards.map(b => ({ key: b.id!, label: b.name }))} active={activeId} onSelect={onSelect}
+        onOpen={id => { if (id === activeId) startRename() }}
+        replace={renaming != null && active ? { key: active.id!, node: (
+          <input autoFocus value={renaming} onChange={e => setRenaming(e.target.value)} aria-label="Board name"
+            onFocus={e => e.target.select()}
+            onKeyDown={e => { if (e.key === 'Enter') void saveRename(); if (e.key === 'Escape') setRenaming(null) }}
+            onBlur={() => void saveRename()}
+            style={{ width: Math.max(80, renaming.length * 9 + 20), border: 'none', borderBottom: '2px solid #F5E642', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
+        ) } : undefined} />
       {adding ? (
         <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Board name"
           onKeyDown={e => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setAdding(false) }}
@@ -703,7 +718,10 @@ function BoardTabs({ boards, activeId, onSelect, onCreate, onDelete }: {
           <button onClick={() => setConfirming(false)} style={quiet}>Cancel</button>
         </span>
       ) : (
-        <button onClick={() => setConfirming(true)} style={quiet}>Delete board</button>
+        <>
+          <button onClick={startRename} style={quiet}>Rename</button>
+          <button onClick={() => setConfirming(true)} style={quiet}>Delete board</button>
+        </>
       ))}
     </div>
   )
