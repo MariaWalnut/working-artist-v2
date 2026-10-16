@@ -673,10 +673,13 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
 const LAST_BOARD = 'manifest-board'
 
-function BoardTabs({ boards, activeId, onSelect, onCreate }: {
-  boards: Board[]; activeId?: number; onSelect: (id: number) => void; onCreate: (name: string) => void
+function BoardTabs({ boards, activeId, onSelect, onCreate, onDelete }: {
+  boards: Board[]; activeId?: number; onSelect: (id: number) => void; onCreate: (name: string) => void; onDelete: (id: number) => void
 }) {
   const [adding, setAdding] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const active = boards.find(b => b.id === activeId)
+  const quiet: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#AAAAAA', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }
   const [newName, setNewName] = useState('')
   const create = () => { if (newName.trim()) { onCreate(newName.trim()); setNewName(''); setAdding(false) } }
   return (
@@ -693,6 +696,15 @@ function BoardTabs({ boards, activeId, onSelect, onCreate }: {
           + New board
         </button>
       )}
+      {active && (confirming ? (
+        <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 10, fontSize: 10, color: '#666666' }}>
+          Delete “{active.name}” and everything on it?
+          <button onClick={() => { setConfirming(false); onDelete(active.id!) }} style={{ ...quiet, color: '#C0392B', fontWeight: 600 }}>Delete</button>
+          <button onClick={() => setConfirming(false)} style={quiet}>Cancel</button>
+        </span>
+      ) : (
+        <button onClick={() => setConfirming(true)} style={quiet}>Delete board</button>
+      ))}
     </div>
   )
 }
@@ -717,6 +729,15 @@ export function VisionBoard() {
     try { localStorage.setItem(LAST_BOARD, String(id)) } catch { /* private mode */ }
   }
 
+  async function remove(id: number) {
+    await db.transaction('rw', db.boards, db.boardItems, async () => {
+      await db.boardItems.where('boardId').equals(id).delete()
+      await db.boards.delete(id)
+    })
+    const next = boards?.find(b => b.id !== id)
+    if (next) select(next.id!)
+  }
+
   async function create(name: string) {
     const id = await db.boards.add({ departmentId: dept?.id, name, boardType: 'Board', createdAt: Date.now() }) as number
     select(id)
@@ -724,7 +745,7 @@ export function VisionBoard() {
 
   if (boards === undefined) return <Shell>{null}</Shell>
 
-  const tabs = <BoardTabs boards={boards} activeId={active?.id} onSelect={select} onCreate={name => void create(name)} />
+  const tabs = <BoardTabs boards={boards} activeId={active?.id} onSelect={select} onCreate={name => void create(name)} onDelete={id => void remove(id)} />
 
   return (
     <Shell>
