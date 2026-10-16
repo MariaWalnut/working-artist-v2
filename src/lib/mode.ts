@@ -42,9 +42,6 @@ export const studioDbName = demoField ? `WorkingArtistDemo-${demoField}`
   : userId ? `WorkingArtist-${userId}`
   : 'WorkingArtist-signed-out'
 
-// The studio saved in this browser before accounts existed.
-export const LEGACY_DB = 'WorkingArtistV2'
-
 export function exitDemo() {
   try { sessionStorage.removeItem(DEMO_KEY) } catch { /* private mode */ }
   location.href = '/'
