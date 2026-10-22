@@ -1,18 +1,17 @@
 import { db, type Activity, type BoardItem, type EventEntry, type Opportunity, type PressEntry, type Project, type Work } from '../db/db'
 import type { DemoField } from './mode'
-import { cover, fontsReady, marks, mood, painting, sleeve } from './demoArt'
 
 // Sample studios for the open demos. Everyone and everything here is invented.
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-22c'
+export const DEMO_VERSION = '2026-10-22d'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
 
 type Todo = [title: string, dueInDays: number | null, done?: boolean]
-type Item = Pick<BoardItem, 'itemType' | 'content' | 'x' | 'y' | 'w' | 'h' | 'color' | 'imageData'>
+type Item = Pick<BoardItem, 'itemType' | 'content' | 'x' | 'y' | 'w' | 'h' | 'color'>
 
 interface Seed {
   name: string
@@ -24,15 +23,14 @@ interface Seed {
   opportunities: Array<Omit<Opportunity, 'departmentId'>>
   // workId here is an index into `works`
   press: Array<Omit<PressEntry, 'departmentId'>>
-  desk: { list: { title: string; items: Array<[string, boolean?]> }; quote: string; note: string; image: string; submission: number }
+  desk: { list: { title: string; items: Array<[string, boolean?]> }; quote: string; note: string; submission: number }
   board: Vision
 }
 
-// A Manifest board: the vision board pictures in the middle, aspirational quotes above,
+// A Manifest board: empty picture slots in the middle, aspirational quotes above,
 // goals down the left, artist references down the right, joined by connectors.
 interface Vision {
   name: string
-  pics: [hero: string, left: string, right: string]
   quotes: [string, string]
   goals: [string, string, string]
   refs: [string, string, string]
@@ -58,9 +56,9 @@ function visionLayout(v: Vision): { items: Keyed[]; arrows: Array<[string, strin
     ({ key, itemType: 'text', content, x, y: 168, w: 190, h: 52, color: '#FAFAFA' })
   const items: Keyed[] = [
     { key: 'title', itemType: 'title', content: v.name, x: 469, y: 24, w: 270, h: 72, color: '#FFFFFF' },
-    { key: 'hero', itemType: 'image', content: 'Picture', imageData: v.pics[0], x: 484, y: 136, w: 240, h: 300 },
-    { key: 'left', itemType: 'image', content: 'Picture', imageData: v.pics[1], x: 262, y: 230, w: 180, h: 135 },
-    { key: 'right', itemType: 'image', content: 'Picture', imageData: v.pics[2], x: 770, y: 214, w: 168, h: 168 },
+    { key: 'hero', itemType: 'image', content: 'Picture', x: 484, y: 136, w: 240, h: 300 },
+    { key: 'left', itemType: 'image', content: 'Picture', x: 262, y: 230, w: 180, h: 135 },
+    { key: 'right', itemType: 'image', content: 'Picture', x: 770, y: 214, w: 168, h: 168 },
     { key: 'q0', itemType: 'quote', content: v.quotes[0], x: 24, y: 24, w: 240, h: 110, color: '#F5E642' },
     { key: 'q1', itemType: 'quote', content: v.quotes[1], x: 944, y: 24, w: 240, h: 110, color: '#FFFFFF' },
     label('goals', 'Goals', 44),
@@ -83,12 +81,12 @@ const SEEDS: Record<DemoField, () => Seed> = {
     name: 'Lena Moss',
     activities: ['musician'],
     works: [
-      { title: 'Low Tide', kind: 'Release', format: 'Album', label: 'Northbound Records', year: 2025, month: 3, location: 'Berlin', image: sleeve('lowtide', 'Low Tide', ['#1F3A4A', '#3E6B7A', '#8FB8BF', '#E8D9B5']) },
-      { title: 'Paper Lanterns', kind: 'Release', format: 'EP', label: 'Self-released', year: 2023, month: 9, location: 'Lisbon', image: sleeve('lanterns', 'Paper Lanterns', ['#7A2E1F', '#C8642D', '#E8A04A', '#F2D18B']) },
-      { title: 'Glass Hour', kind: 'Release', format: 'Single', label: 'Northbound Records', year: 2026, month: 6, location: 'Berlin', image: sleeve('glass', 'Glass Hour', ['#2E3D55', '#6E86A6', '#B8C7D9', '#E9E4DA']) },
-      { title: 'Northern Lights (Live)', kind: 'Release', format: 'Live album', label: 'Northbound Records', year: 2024, month: 2, location: 'Copenhagen', image: sleeve('northern', 'Northern Lights', ['#0F1B2D', '#2E4A6B', '#7FA7C9', '#F5E642']) },
-      { title: 'Field Recordings, Vol. 1', kind: 'Release', format: 'Cassette', label: 'Self-released', year: 2022, month: 11, location: 'London', image: sleeve('field', 'Field Recordings', ['#2B2B2B', '#5A5A5A', '#9A9A9A', '#D9D9D9']) },
-      { title: 'Small Hours', kind: 'Release', format: 'EP', label: 'Self-released', year: 2021, month: 5, location: 'Vienna', image: sleeve('smallhours', 'Small Hours', ['#3B2F4A', '#7A5C8F', '#C7A6D9', '#F0E3F5']) },
+      { title: 'Low Tide', kind: 'Release', format: 'Album', label: 'Northbound Records', year: 2025, month: 3, location: 'Berlin' },
+      { title: 'Paper Lanterns', kind: 'Release', format: 'EP', label: 'Self-released', year: 2023, month: 9, location: 'Lisbon' },
+      { title: 'Glass Hour', kind: 'Release', format: 'Single', label: 'Northbound Records', year: 2026, month: 6, location: 'Berlin' },
+      { title: 'Northern Lights (Live)', kind: 'Release', format: 'Live album', label: 'Northbound Records', year: 2024, month: 2, location: 'Copenhagen' },
+      { title: 'Field Recordings, Vol. 1', kind: 'Release', format: 'Cassette', label: 'Self-released', year: 2022, month: 11, location: 'London' },
+      { title: 'Small Hours', kind: 'Release', format: 'EP', label: 'Self-released', year: 2021, month: 5, location: 'Vienna' },
     ],
     projects: [
       P('Second album', 'Release', { label: 'Northbound Records', notes: 'Twelve songs demoed. Choosing nine.' },
@@ -146,11 +144,9 @@ const SEEDS: Record<DemoField, () => Seed> = {
       list: { title: 'Setlist, Copenhagen', items: [['Low Tide'], ['Glass Hour'], ['Harbour (new)'], ['Paper Lanterns'], ['Small Hours']] },
       quote: 'Play the room you are in.',
       note: 'Call the label on Thursday',
-      image: mood('desk-music', ['#1F3A4A', '#3E6B7A', '#E8D9B5', '#8FB8BF']),
       submission: 0,
     },
     board: { name: '2027',
-      pics: [mood('m-hero', ['#0F1B2D', '#2E4A6B', '#7FA7C9', '#F5E642'], 480, 600), mood('m-left', ['#E9E4DA', '#B8C7D9', '#C8642D', '#6E86A6']), sleeve('harbour', 'Harbour', ['#1F3340', '#BFD6DD', '#C8642D', '#2E4A5C'])],
       quotes: ['Play the room you are in.', 'Make the record you want to hear.'],
       goals: ['Finish album two', 'Tour three cities', 'Teach one workshop'],
       refs: ['Joni Mitchell, open tunings', 'Nils Frahm, the room as instrument', 'Arthur Russell, cello and echo'],
@@ -161,14 +157,14 @@ const SEEDS: Record<DemoField, () => Seed> = {
     name: 'Tomás Vale',
     activities: ['visual_artist'],
     works: [
-      { title: 'Salt Flats I', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection', image: painting('salt1', ['#E9E2D3', '#D9C7A7', '#B9C6C9', '#F2EEE6']) },
-      { title: 'Salt Flats II', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 7, location: 'Lisbon', image: painting('salt2', ['#E6E0D6', '#C9D3D6', '#D8C3A0']) },
-      { title: 'Interior with Blue Chair', kind: 'Artwork', medium: 'Oil on canvas', dimensions: '80 × 60 cm', year: 2025, month: 2, location: 'Berlin', collection: 'Available', image: painting('interior', ['#C9B79C', '#2F4B6E', '#5D7FA6', '#8A5A3C']) },
-      { title: 'Night Garden', kind: 'Artwork', medium: 'Acrylic and pastel on paper', dimensions: '50 × 70 cm', year: 2025, month: 10, location: 'Berlin', image: marks('garden', ['#14261C', '#3E6B4A', '#C8D96F', '#E8A0B4', '#F2E6C9']) },
-      { title: 'Study for a Window', kind: 'Artwork', medium: 'Oil on panel', dimensions: '30 × 24 cm', year: 2026, month: 4, location: 'Berlin', image: painting('window', ['#F2E9D8', '#7FA0B0', '#D9CBB0']) },
-      { title: 'Red Room', kind: 'Artwork', medium: 'Oil on canvas', dimensions: '150 × 120 cm', year: 2023, month: 11, location: 'Vienna', collection: 'City Museum', image: painting('red', ['#2B1414', '#7A1E1E', '#B23A2E', '#D9734A']) },
-      { title: 'Orchard, Morning', kind: 'Artwork', medium: 'Gouache on paper', dimensions: '40 × 30 cm', year: 2026, month: 6, location: 'Lisbon', image: marks('orchard', ['#F1EAD8', '#9DBF7A', '#E8C15A', '#D9785F']) },
-      { title: 'Green Hour', kind: 'Artwork', medium: 'Oil on linen', dimensions: '100 × 80 cm', year: 2026, month: 8, location: 'Berlin', collection: 'Available', image: painting('green', ['#2E4A3A', '#6F8F5E', '#C9D6A8']) },
+      { title: 'Salt Flats I', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection' },
+      { title: 'Salt Flats II', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 7, location: 'Lisbon' },
+      { title: 'Interior with Blue Chair', kind: 'Artwork', medium: 'Oil on canvas', dimensions: '80 × 60 cm', year: 2025, month: 2, location: 'Berlin', collection: 'Available' },
+      { title: 'Night Garden', kind: 'Artwork', medium: 'Acrylic and pastel on paper', dimensions: '50 × 70 cm', year: 2025, month: 10, location: 'Berlin' },
+      { title: 'Study for a Window', kind: 'Artwork', medium: 'Oil on panel', dimensions: '30 × 24 cm', year: 2026, month: 4, location: 'Berlin' },
+      { title: 'Red Room', kind: 'Artwork', medium: 'Oil on canvas', dimensions: '150 × 120 cm', year: 2023, month: 11, location: 'Vienna', collection: 'City Museum' },
+      { title: 'Orchard, Morning', kind: 'Artwork', medium: 'Gouache on paper', dimensions: '40 × 30 cm', year: 2026, month: 6, location: 'Lisbon' },
+      { title: 'Green Hour', kind: 'Artwork', medium: 'Oil on linen', dimensions: '100 × 80 cm', year: 2026, month: 8, location: 'Berlin', collection: 'Available' },
     ],
     projects: [
       P('Solo show: Quiet Rooms', 'Exhibition', { location: 'Berlin', institution: 'Galerie Nordlicht', dateStart: inDays(45), dateEnd: inDays(80) },
@@ -223,11 +219,9 @@ const SEEDS: Record<DemoField, () => Seed> = {
       list: { title: 'Studio supplies', items: [['Linen, 2 m'], ['Cadmium yellow'], ['Stretcher bars 120 × 90'], ['Varnish', true]] },
       quote: 'Paint what the light does, not what the thing is.',
       note: 'Collector visit Friday, 3 pm',
-      image: painting('desk-paint', ['#2E4A3A', '#6F8F5E', '#C9D6A8'], 640, 480),
       submission: 0,
     },
     board: { name: 'Next body of work',
-      pics: [painting('b-hero', ['#F2E9D8', '#7FA0B0', '#D9CBB0'], 480, 600), mood('b-left', ['#2E4A3A', '#C9D6A8', '#E8C15A', '#6F8F5E']), marks('b-right', ['#F1EAD8', '#9DBF7A', '#E8C15A', '#D9785F'], 600, 600)],
       quotes: ['Paint what the light does, not what the thing is.', 'Fewer, larger, slower.'],
       goals: ['Larger canvases', 'Show in Lisbon', 'Paint every morning'],
       refs: ['Agnes Martin, pale grids', 'Pierre Bonnard, interiors', 'Etel Adnan, small mountains'],
@@ -240,7 +234,6 @@ const SEEDS: Record<DemoField, () => Seed> = {
     works: [
       { title: 'The Fox Who Kept the Moon', kind: 'Book', publisher: 'Little Lantern Books', publishedDate: '2024-09', year: 2024, month: 9, language: 'English',
         credits: 'Text by Mara Holt, illustrated by Ines Okafor', pages: 32, dimensions: '24 × 30 cm', technique: 'Gouache, pencil', location: 'London',
-        image: cover('fox', 'The Fox Who Kept the Moon', 'Mara Holt · Ines Okafor', ['#1E2A44', '#141C30', '#F2D98B', '#C8642D', '#F4EBDD'], 'moon'),
         contract: { currency: '€', price: 16, binding: 'Hardcover', printRun: 4000, advance: 4000, advancePaid: 'full', royaltyRate: 5, royaltyBase: 'retail', territory: 'World, English language', signed: '2023-02' },
         rights: [
           { id: 'r1', language: 'German', publisher: 'Blauer Verlag', year: 2025, status: 'sold', advance: 2000, royaltyRate: 6, printRun: 3000 },
@@ -249,20 +242,14 @@ const SEEDS: Record<DemoField, () => Seed> = {
         ] },
       { title: 'Hush, Little Harbour', kind: 'Book', publisher: 'Little Lantern Books', publishedDate: '2026-05', year: 2026, month: 5, language: 'English',
         credits: 'Written and illustrated by Ines Okafor', pages: 40, dimensions: '25 × 25 cm', technique: 'Gouache, coloured pencil', location: 'London',
-        image: cover('harbour', 'Hush, Little Harbour', 'Ines Okafor', ['#BFD6DD', '#2E4A5C', '#C8642D', '#C8642D', '#1F3340'], 'harbour'),
         contract: { currency: '€', price: 17, binding: 'Hardcover', printRun: 5000, advance: 6000, advancePaid: 'part', royaltyRate: 7, royaltyBase: 'retail', territory: 'World, all languages', signed: '2024-06' },
         rights: [{ id: 'r1', language: 'Dutch', publisher: 'Uitgeverij Zee', year: 2026, status: 'sold', advance: 1500 }] },
       { title: "Grandma's Garden", kind: 'Book', publisher: 'Small Steps Press', publishedDate: '2022-04', year: 2022, month: 4, language: 'German',
-        credits: 'Text by Ana Weiss, illustrated by Ines Okafor', pages: 28, dimensions: '22 × 28 cm', technique: 'Watercolour', location: 'Berlin',
-        image: cover('garden', "Grandma's Garden", 'Ana Weiss · Ines Okafor', ['#EAF0D8', '#7FA65A', '#4E7A3A', '#2E4A2A', '#2B2B2B'], 'hills') },
-      { title: 'Autumn cover', kind: 'Illustration', publisher: 'City Magazine', publishedDate: '2025-10', year: 2025, month: 10, medium: 'Gouache, digital',
-        image: cover('autumn', 'City Magazine', 'October', ['#F0E2C8', '#C8642D', '#E8A04A', '#7A3A1F', '#2B1A10'], 'hills') },
-      { title: 'Book festival poster', kind: 'Illustration', publisher: "Children's Book Festival", publishedDate: '2026-02', year: 2026, month: 2, medium: 'Gouache', location: 'Paris',
-        image: cover('poster', 'Book Festival', 'Paris 2026', ['#F5E642', '#E86A5A', '#8CB4D4', '#111111', '#111111'], 'hills') },
-      { title: 'Reading in bed', kind: 'Illustration', publisher: 'Weekend Books', publishedDate: '2025-03', year: 2025, month: 3, medium: 'Pencil, digital',
-        image: marks('bed', ['#F4EBDD', '#8CB4D4', '#E8A0B4', '#2E4A5C']) },
-      { title: 'Snow Days, character sheet', kind: 'Illustration', publisher: 'Little Lantern Books', publishedDate: '2026-08', year: 2026, month: 8, medium: 'Gouache',
-        image: cover('snow', 'Snow Days', 'Ines Okafor', ['#2E4A6B', '#1E2A44', '#FFFFFF', '#C8642D', '#F4EBDD'], 'snow') },
+        credits: 'Text by Ana Weiss, illustrated by Ines Okafor', pages: 28, dimensions: '22 × 28 cm', technique: 'Watercolour', location: 'Berlin' },
+      { title: 'Autumn cover', kind: 'Illustration', publisher: 'City Magazine', publishedDate: '2025-10', year: 2025, month: 10, medium: 'Gouache, digital' },
+      { title: 'Book festival poster', kind: 'Illustration', publisher: "Children's Book Festival", publishedDate: '2026-02', year: 2026, month: 2, medium: 'Gouache', location: 'Paris' },
+      { title: 'Reading in bed', kind: 'Illustration', publisher: 'Weekend Books', publishedDate: '2025-03', year: 2025, month: 3, medium: 'Pencil, digital' },
+      { title: 'Snow Days, character sheet', kind: 'Illustration', publisher: 'Little Lantern Books', publishedDate: '2026-08', year: 2026, month: 8, medium: 'Gouache' },
     ],
     projects: [
       P('Picture book three: Snow Days', 'Books', { publisher: 'Little Lantern Books', author: 'Ines Okafor' },
@@ -316,11 +303,9 @@ const SEEDS: Record<DemoField, () => Seed> = {
       list: { title: 'Book fair to do', items: [['Portfolio prints'], ['Business cards'], ['Meetings list'], ['Train tickets', true]] },
       quote: 'Leave room for the reader.',
       note: 'Editor call Wednesday',
-      image: cover('desk-snow', 'Snow Days', 'Work in progress', ['#2E4A6B', '#1E2A44', '#FFFFFF', '#C8642D', '#F4EBDD'], 'snow', 640, 480),
       submission: 0,
     },
     board: { name: 'Book three',
-      pics: [cover('b-snow', 'Snow Days', 'Ines Okafor', ['#2E4A6B', '#1E2A44', '#FFFFFF', '#C8642D', '#F4EBDD'], 'snow', 480, 600), mood('b-m1', ['#F4EBDD', '#8CB4D4', '#E8A0B4', '#2E4A6B']), mood('b-m2', ['#1E2A44', '#2E4A6B', '#F2D98B', '#C8642D'], 600, 600)],
       quotes: ['Leave room for the reader.', 'Draw it the way a child would remember it.'],
       goals: ['Finish by spring', 'One spread without words', 'Show it at the book fair'],
       refs: ['Tove Jansson, Moomin winters', 'Beatrice Alemagna, texture', 'Jon Klassen, the pause'],
@@ -332,7 +317,6 @@ const SEEDS: Record<DemoField, () => Seed> = {
     activities: ['writer'],
     works: [
       { title: 'The Summer House', kind: 'Book', subtitle: 'A novel', publisher: 'Harbour Press', publishedDate: '2023-04', year: 2023, month: 4, language: 'English', pages: 280, location: 'London',
-        image: cover('summer', 'The Summer House', 'Clara Brandt', ['#F2E3C6', '#D9785F', '#E8C15A', '#9DBF7A', '#2B1A10'], 'hills'),
         contract: { currency: '€', price: 20, binding: 'Hardcover', printRun: 5000, advance: 8000, advancePaid: 'full', royaltyRate: 10, royaltyBase: 'retail', royaltySteps: '12.5% from 10,000 copies', territory: 'World, English language', signed: '2021-11', agent: 'Ruth Adler', agentCommission: 15 },
         rights: [
           { id: 'r1', language: 'German', publisher: 'Nordwind Verlag', year: 2024, status: 'sold', advance: 3500 },
@@ -340,13 +324,11 @@ const SEEDS: Record<DemoField, () => Seed> = {
           { id: 'r3', language: 'Danish', status: 'pending' },
         ] },
       { title: 'Small Weather', kind: 'Book', subtitle: 'Stories', publisher: 'Harbour Press', publishedDate: '2025-09', year: 2025, month: 9, language: 'English', pages: 190, location: 'Dublin',
-        image: cover('weather', 'Small Weather', 'Clara Brandt', ['#DDE4E8', '#2E4A5C', '#8CB4D4', '#8CB4D4', '#1F3340'], 'harbour'),
         contract: { currency: '€', price: 18, binding: 'Paperback', printRun: 3000, advance: 5000, advancePaid: 'part', royaltyRate: 7.5, royaltyBase: 'retail', signed: '2024-03', agent: 'Ruth Adler', agentCommission: 15 } },
-      { title: 'Das Sommerhaus', kind: 'Book', subtitle: 'Roman', publisher: 'Nordwind Verlag', publishedDate: '2024-09', year: 2024, month: 9, language: 'German', credits: 'Translated by Jonas Berg', pages: 296, location: 'Berlin',
-        image: cover('sommer', 'Das Sommerhaus', 'Clara Brandt', ['#E8E2D6', '#2E4A3A', '#6F8F5E', '#C9D6A8', '#1A1A1A'], 'hills') },
-      { title: 'On Walking', kind: 'Other', medium: 'Essay, City Review', year: 2024, month: 3, image: mood('walking', ['#E8E2D6', '#9DBF7A', '#C9B79C', '#7FA0B0']) },
-      { title: 'Salt', kind: 'Other', medium: 'Short story, Coastal Review', year: 2022, month: 6, image: mood('salt', ['#DDE4E8', '#B9C6C9', '#E9E2D3', '#8FB8BF']) },
-      { title: 'Letters from Lisbon', kind: 'Other', medium: 'Essay, Weekend Magazine', year: 2025, month: 12, image: mood('lisbon', ['#F2E3C6', '#E8A04A', '#C8642D', '#8CB4D4']) },
+      { title: 'Das Sommerhaus', kind: 'Book', subtitle: 'Roman', publisher: 'Nordwind Verlag', publishedDate: '2024-09', year: 2024, month: 9, language: 'German', credits: 'Translated by Jonas Berg', pages: 296, location: 'Berlin' },
+      { title: 'On Walking', kind: 'Other', medium: 'Essay, City Review', year: 2024, month: 3 },
+      { title: 'Salt', kind: 'Other', medium: 'Short story, Coastal Review', year: 2022, month: 6 },
+      { title: 'Letters from Lisbon', kind: 'Other', medium: 'Essay, Weekend Magazine', year: 2025, month: 12 },
     ],
     projects: [
       P('Novel two: The Lighthouse Keepers', 'Books', { publisher: 'Harbour Press' },
@@ -401,11 +383,9 @@ const SEEDS: Record<DemoField, () => Seed> = {
       list: { title: 'Chapter 9', items: [['Storm scene'], ['Letter from Ana'], ['End at the lighthouse', true]] },
       quote: 'Write the book only you can write.',
       note: 'Agent lunch Tuesday',
-      image: mood('desk-write', ['#DDE4E8', '#2E4A5C', '#8CB4D4', '#E9E2D3']),
       submission: 1,
     },
     board: { name: 'Novel two',
-      pics: [cover('w-hero', 'The Lighthouse Keepers', 'Clara Brandt', ['#1F3340', '#BFD6DD', '#F2D98B', '#F2D98B', '#F4EBDD'], 'harbour', 480, 600), mood('w-left', ['#DDE4E8', '#2E4A5C', '#8CB4D4', '#E9E2D3']), mood('w-right', ['#F2E3C6', '#E8A04A', '#C8642D', '#8CB4D4'], 600, 600)],
       quotes: ['Write the book only you can write.', 'Two pages a day, every day.'],
       goals: ['Finish by summer', 'Visit the coast', 'Read it aloud'],
       refs: ['Virginia Woolf, To the Lighthouse', 'Tove Ditlevsen, plainness', 'Jon Fosse, the sea'],
@@ -415,7 +395,6 @@ const SEEDS: Record<DemoField, () => Seed> = {
 
 // Replaces whatever is in the demo database with the sample studio for this field.
 export async function seedDemo(field: DemoField) {
-  await fontsReady()
   const s = SEEDS[field]()
   const now = Date.now()
   await db.transaction('rw', db.tables, async () => {
@@ -440,17 +419,16 @@ export async function seedDemo(field: DemoField) {
     for (const p of s.press) await db.pressEntries.add({ ...p, departmentId, workId: p.workId == null ? undefined : workIds[p.workId] })
 
     // The desk, laid out in its four columns: projects on the left, tasks and a list beside them,
-    // a picture, a quote, a submission and a note on the right.
+    // a quote, a submission and a note on the right.
     const deskId = await db.boards.add({ departmentId, name: 'Desk', boardType: 'desk', createdAt: now }) as number
     const desk: Array<Omit<BoardItem, 'boardId' | 'createdAt'>> = [
       { itemType: 'comingup', content: '', x: 0, y: 24, w: 3, h: 56 },
       ...projectIds.map((id, i) => ({ itemType: 'project' as const, content: String(id), x: i % 2, y: 120 + Math.floor(i / 2) * 216, w: 1, h: 176 })),
       { itemType: 'tasks', content: 'week', x: 2, y: 120, w: 1, h: 320 },
       { itemType: 'list', content: JSON.stringify({ title: s.desk.list.title, items: s.desk.list.items.map(([text, isDone], i) => ({ id: `l${i}`, text, done: !!isDone })) }), x: 2, y: 552, w: 1, h: 200 },
-      { itemType: 'image', content: 'Picture', imageData: s.desk.image, x: 3, y: 24, w: 1, h: 216 },
-      { itemType: 'quote', content: s.desk.quote, x: 3, y: 264, w: 1, h: 112 },
-      { itemType: 'submission', content: String(oppIds[s.desk.submission]), x: 3, y: 408, w: 1, h: 112 },
-      { itemType: 'note', content: s.desk.note, x: 3, y: 552, w: 1, h: 96 },
+      { itemType: 'quote', content: s.desk.quote, x: 3, y: 24, w: 1, h: 112 },
+      { itemType: 'submission', content: String(oppIds[s.desk.submission]), x: 3, y: 168, w: 1, h: 112 },
+      { itemType: 'note', content: s.desk.note, x: 3, y: 312, w: 1, h: 96 },
     ]
     for (const item of desk) await db.boardItems.add({ ...item, boardId: deskId, createdAt: now })
 
