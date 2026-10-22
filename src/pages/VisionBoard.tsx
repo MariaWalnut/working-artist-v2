@@ -187,7 +187,7 @@ function EditPopup({
             <button key={s.type} onClick={() => setEditedType(s.type)}
               style={{
                 flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: editedType === s.type ? '#F5E642' : '#F5F5F5',
+                background: editedType === s.type ? 'var(--accent)' : '#F5F5F5',
                 color: editedType === s.type ? '#111111' : '#888888',
                 fontSize: 10, fontWeight: editedType === s.type ? 600 : 400,
               }}>
@@ -221,7 +221,7 @@ function EditPopup({
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
           <button onClick={() => void save()}
-            style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
             {isImage ? 'Done' : 'Save'}
           </button>
         </div>
@@ -449,7 +449,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
           </button>
           <button onClick={() => { setAdding(null); setEditingId(null); setMode(m => m === 'arrow' ? 'select' : 'arrow'); setArrowSrc(null) }}
             style={{ padding: '5px 11px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 500,
-              background: mode === 'arrow' ? '#F5E642' : 'none', color: mode === 'arrow' ? '#111' : '#888' }}>
+              background: mode === 'arrow' ? 'var(--accent)' : 'none', color: mode === 'arrow' ? '#111' : '#888' }}>
             Arrow
           </button>
         </div>
@@ -459,7 +459,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
       {/* Arrow hint */}
       {mode === 'arrow' && (
-        <div style={{ background: '#F5E642', borderRadius: 8, padding: '6px 14px', margin: '8px 12px', fontSize: 11, color: '#111', textAlign: 'center' }}>
+        <div style={{ background: 'var(--accent)', borderRadius: 8, padding: '6px 14px', margin: '8px 12px', fontSize: 11, color: '#111', textAlign: 'center' }}>
           {arrowSrc === null ? 'Click the source element — then click the target' : 'Now click the target element'}
         </div>
       )}
@@ -487,7 +487,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
               ))}
             </div>
             <button onClick={() => void addItem(adding, addText, addColor)}
-              style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+              style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
             <button onClick={() => setAdding(null)}
               style={{ background: 'none', border: 'none', fontSize: 14, color: '#AAA', cursor: 'pointer' }}>×</button>
           </div>
@@ -571,7 +571,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
                 borderRadius: isTag ? 999 : isQ ? 20 : 14,
                 border: !isImg && (bg === '#FFFFFF' || bg === '#F5F5F5') ? '1px solid #EEEEEE' : 'none',
                 boxShadow: isSrc
-                  ? '0 0 0 2.5px #F5E642, 0 4px 18px rgba(0,0,0,.12)'
+                  ? '0 0 0 2.5px var(--accent), 0 4px 18px rgba(0,0,0,.12)'
                   : isEdit
                   ? '0 0 0 2px #78AECB, 0 4px 16px rgba(0,0,0,.12)'
                   : '0 2px 12px rgba(0,0,0,.08)',
@@ -710,13 +710,13 @@ function BoardTabs({ boards, activeId, onSelect, onCreate, onDelete }: {
             onFocus={e => e.target.select()}
             onKeyDown={e => { if (e.key === 'Enter') void saveRename(); if (e.key === 'Escape') setRenaming(null) }}
             onBlur={() => void saveRename()}
-            style={{ width: Math.max(80, renaming.length * 9 + 20), border: 'none', borderBottom: '2px solid #F5E642', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
+            style={{ width: Math.max(80, renaming.length * 9 + 20), border: 'none', borderBottom: '2px solid var(--accent)', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
         ) } : undefined} />
       {adding ? (
         <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Board name"
           onKeyDown={e => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setAdding(false) }}
           onBlur={() => { if (newName.trim()) create(); else setAdding(false) }}
-          style={{ width: 140, border: 'none', borderBottom: '2px solid #F5E642', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
+          style={{ width: 140, border: 'none', borderBottom: '2px solid var(--accent)', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
       ) : (
         <button onClick={() => setAdding(true)}
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#AAAAAA', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }}>
@@ -783,7 +783,7 @@ export function VisionBoard() {
         <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: '#111', marginBottom: 20 }}>No boards yet</p>
-            <button onClick={() => void create('Manifest')} style={{ background: '#F5E642', border: 'none', borderRadius: 10, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Start a board</button>
+            <button onClick={() => void create('Manifest')} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Start a board</button>
           </div>
         </div>
       )}

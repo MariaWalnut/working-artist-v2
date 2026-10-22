@@ -199,7 +199,7 @@ function AddTaskInline({ projectId, deptId, col, onDone }: { projectId: number; 
       <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
         style={{ width: '100%', border: 'none', outline: 'none', fontSize: 11, color: '#AAAAAA', background: 'transparent', marginTop: 6 }} />
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <button onClick={() => void save()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+        <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Add</button>
         <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
       </div>
     </div>
@@ -349,7 +349,7 @@ export function ProjectDetail() {
                 style={{ ...inp, resize: 'vertical' }} />
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => void saveEdit()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+              <button onClick={() => void saveEdit()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
               <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>

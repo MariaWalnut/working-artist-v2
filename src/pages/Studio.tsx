@@ -49,7 +49,7 @@ function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (
         <WorkFields kind={kind} values={fields} onChange={setFields} inp={inp} columns={2}
           onIsbnFound={r => { if (r.title && !title.trim()) setTitle(r.title); if (r.image) setImage(r.image) }} />
         <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-          <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+          <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
           <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
         </div>
       </div>
@@ -99,7 +99,7 @@ export function Studio() {
             </div>
           )}
           {!narrow && (
-            <button onClick={() => setAdding(true)} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => setAdding(true)} style={{ background: 'var(--accent)', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
               + Add work
             </button>
           )}
@@ -110,7 +110,7 @@ export function Studio() {
           <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
             <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{kindFilter ? `${kindFilter}s` : 'Works'}</p>
             <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#888888' }}>{shown.length}</span>
-            <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? '#F5E642' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : '#AAAAAA', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
+            <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? 'var(--accent)' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : '#AAAAAA', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
           </div>
           {shown.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>

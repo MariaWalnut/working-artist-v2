@@ -5,7 +5,7 @@ import type { DemoField } from './mode'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-23'
+export const DEMO_VERSION = '2026-10-23c'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -419,16 +419,16 @@ export async function seedDemo(field: DemoField) {
     for (const p of s.press) await db.pressEntries.add({ ...p, departmentId, workId: p.workId == null ? undefined : workIds[p.workId] })
 
     // The desk, laid out in its four columns: projects on the left, tasks and a list beside them,
-    // a quote, a submission and a note on the right.
+    // coming up, a quote, a submission and a note on the right.
     const deskId = await db.boards.add({ departmentId, name: 'Desk', boardType: 'desk', createdAt: now }) as number
     const desk: Array<Omit<BoardItem, 'boardId' | 'createdAt'>> = [
-      { itemType: 'comingup', content: '', x: 0, y: 24, w: 3, h: 56 },
-      ...projectIds.map((id, i) => ({ itemType: 'project' as const, content: String(id), x: i % 2, y: 120 + Math.floor(i / 2) * 216, w: 1, h: 176 })),
-      { itemType: 'tasks', content: 'week', x: 2, y: 120, w: 1, h: 320 },
-      { itemType: 'list', content: JSON.stringify({ title: s.desk.list.title, items: s.desk.list.items.map(([text, isDone], i) => ({ id: `l${i}`, text, done: !!isDone })) }), x: 2, y: 552, w: 1, h: 200 },
-      { itemType: 'quote', content: s.desk.quote, x: 3, y: 24, w: 1, h: 112 },
-      { itemType: 'submission', content: String(oppIds[s.desk.submission]), x: 3, y: 168, w: 1, h: 112 },
-      { itemType: 'note', content: s.desk.note, x: 3, y: 312, w: 1, h: 96 },
+      { itemType: 'comingup', content: '', x: 3, y: 24, w: 1, h: 300 },
+      ...projectIds.map((id, i) => ({ itemType: 'project' as const, content: String(id), x: i % 2, y: 24 + Math.floor(i / 2) * 216, w: 1, h: 176 })),
+      { itemType: 'tasks', content: 'week', x: 2, y: 24, w: 1, h: 320 },
+      { itemType: 'list', content: JSON.stringify({ title: s.desk.list.title, items: s.desk.list.items.map(([text, isDone], i) => ({ id: `l${i}`, text, done: !!isDone })) }), x: 2, y: 456, w: 1, h: 200 },
+      { itemType: 'quote', content: s.desk.quote, x: 3, y: 408, w: 1, h: 112 },
+      { itemType: 'submission', content: String(oppIds[s.desk.submission]), x: 3, y: 576, w: 1, h: 112 },
+      { itemType: 'note', content: s.desk.note, x: 3, y: 744, w: 1, h: 96 },
     ]
     for (const item of desk) await db.boardItems.add({ ...item, boardId: deskId, createdAt: now })
 

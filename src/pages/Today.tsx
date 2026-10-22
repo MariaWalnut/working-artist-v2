@@ -43,7 +43,7 @@ export function Today() {
   return (
     <div
       className="min-h-svh"
-      style={{ position: 'relative', overflow: 'hidden', background: hasCover ? '#111' : '#F5E642' }}
+      style={{ position: 'relative', overflow: 'hidden', background: hasCover ? '#111' : 'var(--accent)' }}
       onMouseEnter={() => setShowCoverBtn(true)}
       onMouseLeave={() => setShowCoverBtn(false)}
     >

@@ -180,7 +180,7 @@ export function WorldMapPanel() {
                 <g transform={`scale(${markerScale})`}>
                 <circle
                   r={isHub ? 9 : 5}
-                  fill={isHub ? '#F5E642' : hasWork && !hasEvent ? '#F5E642' : '#111111'}
+                  style={{ fill: isHub ? 'var(--accent)' : hasWork && !hasEvent ? 'var(--accent)' : '#111111' }}
                   stroke={isHub || (hasWork && !hasEvent) ? '#111111' : 'none'}
                   strokeWidth={isHub || (hasWork && !hasEvent) ? 1.5 : 0}
                 />
@@ -221,11 +221,11 @@ export function WorldMapPanel() {
             <span style={{ fontSize: 9, color: '#888888' }}>Event</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F5E642', border: '1.5px solid #111111' }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid #111111' }} />
             <span style={{ fontSize: 9, color: '#888888' }}>Work</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F5E642', border: '1.5px solid #111111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid #111111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: 5, fontWeight: 700 }}>3</span>
             </div>
             <span style={{ fontSize: 9, color: '#888888' }}>Hub (3+)</span>
@@ -265,7 +265,7 @@ export function WorldMapPanel() {
                 <div>
                   {workItems.slice(0, 2).map((w, j) => (
                     <div key={j} style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 2 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F5E642', border: '1px solid #999', flexShrink: 0, marginTop: 4 }} />
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', border: '1px solid #999', flexShrink: 0, marginTop: 4 }} />
                       <span style={{ fontSize: 10, color: '#888888', lineHeight: 1.4 }}>{w.title}</span>
                     </div>
                   ))}

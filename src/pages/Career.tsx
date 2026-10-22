@@ -202,7 +202,7 @@ function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
         ))}
         <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
           {e.clipping && <button onClick={() => setViewing(true)} style={{ background: '#111111', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>View clipping</button>}
-          {e.open && <button onClick={() => navigate(e.open!)} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer' }}>Open</button>}
+          {e.open && <button onClick={() => navigate(e.open!)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer' }}>Open</button>}
           <button onClick={onClose} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Close</button>
         </div>
       </div>

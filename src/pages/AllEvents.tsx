@@ -17,7 +17,7 @@ const TYPE_DOT: Record<string, string> = {
   Talk:        '#B8C8A8',
   Performance: '#D4A8C8',
   Screening:   '#A8B4D4',
-  Award:       '#F5E642',
+  Award:       'var(--accent)',
   Residency:   '#888888',
   Other:       '#DDDDDD',
 }
@@ -132,7 +132,7 @@ function EventForm({ entry, works, onDone }: {
                 const sel = workIds.includes(w.id)
                 return (
                   <button key={w.id} type="button" onClick={() => toggleWork(w.id!)}
-                    style={{ padding: '4px 11px', borderRadius: 999, border: sel ? 'none' : '1px solid #E8E8E8', background: sel ? '#F5E642' : 'transparent', color: sel ? '#111111' : '#888888', fontSize: 11, fontWeight: sel ? 600 : 400, cursor: 'pointer', transition: 'background 0.1s' }}>
+                    style={{ padding: '4px 11px', borderRadius: 999, border: sel ? 'none' : '1px solid #E8E8E8', background: sel ? 'var(--accent)' : 'transparent', color: sel ? '#111111' : '#888888', fontSize: 11, fontWeight: sel ? 600 : 400, cursor: 'pointer', transition: 'background 0.1s' }}>
                     {w.title}
                   </button>
                 )
@@ -148,7 +148,7 @@ function EventForm({ entry, works, onDone }: {
           <div>{entry && <button onClick={() => void del()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={() => void save()} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{entry ? 'Save' : 'Add'}</button>
+            <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{entry ? 'Save' : 'Add'}</button>
           </div>
         </div>
       </div>
@@ -285,7 +285,7 @@ export function AllEvents() {
                 Date {sortAsc ? '↑' : '↓'}
               </button>
               <button onClick={() => setEditing('new')}
-                style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
                 + Add
               </button>
             </div>
@@ -309,7 +309,7 @@ export function AllEvents() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
                   <span style={{ fontSize: 13, fontWeight: 500, color: '#444444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
-                  {isUpcoming(e, today) && <span style={{ fontSize: 8, fontWeight: 700, background: '#F5E642', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>{isOngoing(e) ? 'On now' : 'Upcoming'}</span>}
+                  {isUpcoming(e, today) && <span style={{ fontSize: 8, fontWeight: 700, background: 'var(--accent)', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>{isOngoing(e) ? 'On now' : 'Upcoming'}</span>}
                 </div>
                 {narrow && (e.location || e.type) && (
                   <span style={{ paddingLeft: 14, fontSize: 10, color: '#999999' }}>{[e.location, e.type].filter(Boolean).join(' · ')}</span>

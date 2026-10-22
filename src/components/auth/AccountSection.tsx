@@ -79,7 +79,7 @@ function SignedInCard() {
             <input type="password" autoComplete="new-password" autoFocus value={pw} onChange={e => setPw(e.target.value)} placeholder="New password"
               onKeyDown={e => { if (e.key === 'Enter') void savePassword(); if (e.key === 'Escape') setChanging(false) }}
               style={{ borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '7px 12px', fontSize: 13, outline: 'none', width: 170 }} />
-            <button onClick={() => void savePassword()} style={{ ...quiet, background: '#F5E642', color: '#111111', fontWeight: 600 }}>Save</button>
+            <button onClick={() => void savePassword()} style={{ ...quiet, background: 'var(--accent)', color: '#111111', fontWeight: 600 }}>Save</button>
           </span>
         ) : (
           <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

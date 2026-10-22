@@ -42,7 +42,7 @@ export function Onboarding() {
             <button key={p.key} onClick={() => toggle(p.key)}
               style={{
                 borderRadius: 12, padding: '10px 12px', fontSize: 13, textAlign: 'left', border: 'none', cursor: 'pointer',
-                background: selected.includes(p.key) ? '#F5E642' : '#F5F5F5',
+                background: selected.includes(p.key) ? 'var(--accent)' : '#F5F5F5',
                 color: selected.includes(p.key) ? '#111111' : '#888888',
                 fontWeight: selected.includes(p.key) ? 600 : 400,
               }}>

@@ -13,6 +13,7 @@ export interface Department {
   establishedYear?: number
   createdAt: number
   coverImage?: string
+  accent?: string // hex, set in Account › Appearance
 }
 
 export interface Project {
@@ -234,6 +235,7 @@ export interface BoardItem {
   color?: string
   imageData?: string
   createdAt: number
+  hidden?: boolean // desk only: taken off the desk, listed under Hidden boxes
 }
 
 export class AppDB extends Dexie {

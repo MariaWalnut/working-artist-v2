@@ -8,8 +8,8 @@ const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Pre
 const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Closed']
 
 const BADGE: Record<string, string> = {
-  Shortlisted: 'bg-[#F5E642] text-[#111111]',
-  Won:         'bg-[#F5E642] text-[#111111]',
+  Shortlisted: 'bg-[var(--accent)] text-[#111111]',
+  Won:         'bg-[var(--accent)] text-[#111111]',
   Applied:     'bg-[#F5F5F5] text-[#666666]',
   Active:      'bg-[#F5F5F5] text-[#111111]',
   Draft:       'text-[#AAAAAA]',
@@ -57,7 +57,7 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes" rows={3}
           style={{ ...inp, resize: 'none', marginBottom: 16 }} />
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => void save()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{opp ? 'Save' : 'Add'}</button>
+          <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{opp ? 'Save' : 'Add'}</button>
           <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
           {opp && <button onClick={async () => { if (opp.id) await db.opportunities.delete(opp.id); onDone() }}
             style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}
@@ -197,7 +197,7 @@ export function Opportunities() {
             {['Active', 'Draft', 'Applied', 'Shortlisted', 'All'].map(s => <FilterItem key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
           </div>
 
-          <button onClick={() => setEditing('new')} style={{ background: '#F5E642', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+          <button onClick={() => setEditing('new')} style={{ background: 'var(--accent)', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
             + Add
           </button>
           <input ref={importRef} type="file" accept=".csv,.json,text/csv,application/json" hidden onChange={e => { void importFile(e.target.files?.[0]); e.target.value = '' }} />
@@ -246,7 +246,7 @@ export function Opportunities() {
                   {!overdue && !critical && urgent && <span style={{ fontSize: 8, fontWeight: 700, color: '#F0A020', background: 'rgba(240,160,32,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days}d</span>}
                 </div>
                 <span className={badge(o.status)}>{o.status}</span>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: o.status === 'Shortlisted' || o.status === 'Won' ? '#F5E642' : (isDraft ? '#EEEEEE' : '#DDDDDD'), margin: 'auto' }} />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: o.status === 'Shortlisted' || o.status === 'Won' ? 'var(--accent)' : (isDraft ? '#EEEEEE' : '#DDDDDD'), margin: 'auto' }} />
               </div>
             )
           })}

@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useActiveDept } from '../../lib/useDept'
 import { demoField } from '../../lib/mode'
+import { applyAccent } from '../../lib/accent'
 
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
@@ -19,6 +20,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const dept = useActiveDept()
   const wordmark = dept?.name?.trim() || 'Working Artist'
   const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => applyAccent(dept?.accent), [dept?.accent])
   const isActive = (to: string) => location.pathname === to || (to !== '/projects' && location.pathname.startsWith(to)) || (to === '/projects' && /^\/projects\/\d+/.test(location.pathname))
 
   return (
@@ -45,7 +47,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   color: active ? '#111111' : '#C0C0C0',
                   background: 'none',
                   border: 'none',
-                  borderBottom: active ? '3px solid #F5E642' : '3px solid transparent',
+                  borderBottom: active ? '3px solid var(--accent)' : '3px solid transparent',
                   paddingBottom: active ? 3 : 0,
                   cursor: 'pointer',
                   transition: 'color 0.12s',
@@ -82,7 +84,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 48, fontFamily: 'Recoleta, serif', fontSize: 17, color: active ? '#111111' : '#888888', background: 'none', border: 'none', borderBottom: i < NAV.length - 1 ? '1px solid #F5F5F5' : 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
               >
                 {item.label}
-                {active && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F5E642' }} />}
+                {active && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />}
               </button>
             )
           })}

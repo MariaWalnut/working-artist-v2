@@ -5,6 +5,7 @@ import { getActivities, PRACTICE_OPTIONS } from '../lib/activities'
 import { downloadBackup, importData, summarise } from '../lib/backup'
 import { Shell } from '../components/layout/Shell'
 import { AccountSection } from '../components/auth/AccountSection'
+import { AccentPicker } from '../components/AccentPicker'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -112,7 +113,7 @@ export function Account() {
               <input autoFocus value={name} onChange={e => setName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') void saveName(); if (e.key === 'Escape') setEditingName(false) }}
                 style={{ borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '7px 12px', fontSize: 13, color: '#111111', outline: 'none', width: 180 }} />
-              <button onClick={() => void saveName()} style={{ background: '#F5E642', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+              <button onClick={() => void saveName()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
               <button onClick={() => setEditingName(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
             </div>
           ) : (
@@ -134,7 +135,7 @@ export function Account() {
               PRACTICE_OPTIONS.map(p => (
                 <button key={p.key} onClick={() => void toggleActivity(p.key)}
                   style={{ padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 12,
-                    background: activities.includes(p.key) ? '#F5E642' : '#F5F5F5',
+                    background: activities.includes(p.key) ? 'var(--accent)' : '#F5F5F5',
                     color: activities.includes(p.key) ? '#111111' : '#888888',
                     fontWeight: activities.includes(p.key) ? 600 : 400 }}>
                   {p.label}
@@ -152,6 +153,10 @@ export function Account() {
             )}
           </div>
         </div>
+      </Section>
+
+      <Section title="Appearance">
+        <AccentPicker dept={d} />
       </Section>
 
       <Section title="Danger zone">

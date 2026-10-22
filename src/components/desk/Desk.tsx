@@ -30,16 +30,11 @@ const SPAN: Record<DeskType, { span: number; h: number }> = {
   tasks: { span: 1, h: 320 },
   list: { span: 1, h: 200 },
   submission: { span: 1, h: 112 },
-  comingup: { span: 3, h: 56 },
+  comingup: { span: 1, h: 300 },
   note: { span: 1, h: 96 },
   quote: { span: 1, h: 112 },
   image: { span: 1, h: 200 },
   title: { span: 1, h: 56 },
-}
-
-const EVENT_DOT: Record<string, string> = {
-  Reading: '#8CB4D4', Exhibition: '#111111', 'Book Fair': '#F0C878', Market: '#C8A88C', Talk: '#B8C8A8',
-  Performance: '#D4A8C8', Screening: '#A8B4D4', Award: '#F5E642', Residency: '#888888', Other: '#DDDDDD',
 }
 
 const cardStyle: React.CSSProperties = { background: '#FFFFFF', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }
@@ -106,42 +101,44 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
   const navigate = useNavigate()
   const month = localISO().slice(0, 7)
   const today = localISO()
-  const ev = events.filter(e => isUpcoming(e, month)).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).slice(0, 6)
-  const subs = opps.filter(o => notSent(o) && o.deadline && o.deadline >= today)
-    .sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? '')).slice(0, 5)
-  const chip: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, border: 'none', borderRadius: 999, padding: '6px 12px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'inherit' }
+  type Row = { key: string; date: string; title: string; sub: string; urgent?: boolean; go: () => void }
+  const rows: Row[] = [
+    ...events.filter(e => isUpcoming(e, month)).map(e => ({
+      key: `e${e.id}`, date: e.date ?? '', title: e.title,
+      sub: [e.type, e.location].filter(Boolean).join(' · ') + (e.endDate ? `, until ${formatEventDate(e.endDate, undefined, { year: false })}` : ''),
+      go: () => navigate('/projects/events'),
+    })),
+    ...opps.filter(o => notSent(o) && o.deadline && o.deadline >= today).map(o => {
+      const n = daysUntil(o.deadline!)
+      return { key: `s${o.id}`, date: o.deadline!, title: o.title, sub: n === 0 ? 'Deadline today' : `Deadline in ${n} days`, urgent: n <= 7, go: () => navigate('/opportunities') }
+    }),
+  ].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5)
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 18px', minHeight: 56 }}>
-      <span style={{ ...smallLabel, color: '#BBBBBB', flexShrink: 0 }}>Coming up</span>
-      <div style={{ width: 1, height: 16, background: '#F0F0F0', flexShrink: 0 }} />
-      {ev.length === 0 && subs.length === 0 ? (
-        <span style={{ fontSize: 12, color: '#BBBBBB' }}>Nothing scheduled</span>
-      ) : (
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '10px 0' }}>
-          {ev.map(e => (
-            <button key={`e${e.id}`} onClick={() => navigate('/projects/events')} style={{ ...chip, background: '#F9F9F9' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: EVENT_DOT[e.type ?? ''] ?? '#DDDDDD' }} />
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#444444' }}>{e.title}</span>
-              <span style={{ fontSize: 10, color: '#999999' }}>{formatEventDate(e.date, e.endDate, { year: false })}</span>
+    <div style={{ padding: '16px 18px 8px', color: '#FFFFFF' }}>
+      <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15 }}>Coming up</span>
+      {rows.length === 0 && <p style={{ fontSize: 12, color: '#9A9A9A', margin: '10px 0' }}>Nothing scheduled</p>}
+      <div style={{ marginTop: 6 }}>
+        {rows.map(r => {
+          const d = parseDay(r.date.length === 7 ? `${r.date}-01` : r.date)
+          return (
+            <button key={r.key} onClick={r.go}
+              style={{ ...plainBtn, display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '9px 0', borderTop: '1px solid #2A2A2A', color: '#FFFFFF' }}>
+              <span style={{ width: 36, flexShrink: 0, textAlign: 'center' }}>
+                <span style={{ display: 'block', fontFamily: 'Recoleta, serif', fontSize: 19, lineHeight: 1 }}>{r.date.length === 7 ? '' : d.getDate()}</span>
+                <span style={{ display: 'block', marginTop: 3, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#B3B3B3' }}>{d.toLocaleDateString('en-GB', { month: 'short' })}</span>
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500 }}>
+                  {r.urgent && <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--accent)', flexShrink: 0 }} />}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
+                </span>
+                <span style={{ fontSize: 10, color: r.urgent ? 'var(--accent)' : '#B3B3B3' }}>{r.sub}</span>
+              </span>
             </button>
-          ))}
-          {subs.map(o => {
-            const n = daysUntil(o.deadline!)
-            const critical = n <= 2
-            const urgent = n <= 7
-            const color = critical ? '#C53030' : urgent ? '#A86400' : '#999999'
-            return (
-              <button key={`s${o.id}`} onClick={() => navigate('/opportunities')}
-                style={{ ...chip, background: critical ? '#FEF2F2' : urgent ? '#FFFBEB' : '#F9F9F9' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: critical ? '#E05252' : urgent ? '#F0A020' : '#DDDDDD' }} />
-                <span style={{ fontSize: 12, fontWeight: 500, color: '#444444' }}>{o.title}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, color }}>{n === 0 ? 'today' : `${n}d`}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -156,7 +153,7 @@ function ProjectBlock({ p, todos, compact, onOpen }: { p: Project; todos: Todo[]
     <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', minHeight: compact ? undefined : 168 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <span style={smallLabel}>{p.projectType ?? 'Project'}</span>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F5E642' }} />
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
       </div>
       <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: '#111111' }}>{p.title}</button>
       {sub && <div style={{ fontSize: 11, color: '#999999', marginTop: 3 }}>{sub}</div>}
@@ -196,25 +193,25 @@ function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos:
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: '#111111' }}>Tasks</span>
         <button onClick={() => void db.boardItems.update(item.id!, { content: range === 'week' ? 'all' : 'week' })}
-          style={{ fontSize: 10, color: '#666666', background: '#F5F5F5', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ fontSize: 10, color: '#222222', background: 'rgba(0,0,0,.08)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
           {range === 'week' ? 'This week' : 'All open'}
         </button>
       </div>
       {shown.length === 0 && (
-        <p style={{ fontSize: 12, color: '#BBBBBB', margin: '8px 0' }}>{range === 'week' ? 'Nothing due this week' : 'No open tasks'}</p>
+        <p style={{ fontSize: 12, color: 'rgba(0,0,0,.55)', margin: '8px 0' }}>{range === 'week' ? 'Nothing due this week' : 'No open tasks'}</p>
       )}
       {shown.map(t => {
         const project = t.projectId != null ? projects.find(p => p.id === t.projectId) : undefined
         const due = dueLabel(t.dueDate)
         return (
-          <label key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid #F7F7F7', cursor: 'pointer' }}>
+          <label key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)', cursor: 'pointer' }}>
             <input type="checkbox" checked={false}
               onChange={() => void db.todos.update(t.id!, { done: true, kanbanStatus: 'done' })}
               style={{ accentColor: '#111111', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0 }} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <span style={{ fontSize: 12, color: '#111111' }}>{t.title}</span>
               {(project || due) && (
-                <span style={{ fontSize: 10, color: '#999999' }}>
+                <span style={{ fontSize: 10, color: 'rgba(0,0,0,.62)' }}>
                   {project?.title}{project && due ? ' · ' : ''}
                   {due && <span style={due.overdue ? { color: '#C53030', fontWeight: 600 } : undefined}>{due.text}</span>}
                 </span>
@@ -223,7 +220,7 @@ function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos:
           </label>
         )
       })}
-      {open.length > shown.length && <p style={{ fontSize: 10, color: '#AAAAAA', margin: '8px 0 0' }}>{open.length - shown.length} more</p>}
+      {open.length > shown.length && <p style={{ fontSize: 10, color: 'rgba(0,0,0,.55)', margin: '8px 0 0' }}>{open.length - shown.length} more</p>}
       <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void add() }}
         placeholder="+ Add task" aria-label="Add task"
         style={{ ...bareInput, fontSize: 11.5, marginTop: 10 }} />
@@ -291,8 +288,8 @@ function SubmissionBlock({ o }: { o: Opportunity }) {
 }
 
 const TEXT_LOOK: Record<string, React.CSSProperties> = {
-  note: { padding: '14px 16px', fontSize: 12.5, lineHeight: 1.6, color: '#555555' },
-  quote: { padding: '20px 22px', fontFamily: 'Recoleta, serif', fontSize: 20, lineHeight: 1.3, color: '#111111' },
+  note: { padding: '14px 16px', fontSize: 12.5, lineHeight: 1.6, color: '#222222' },
+  quote: { padding: '20px 22px', fontFamily: 'Recoleta, serif', fontSize: 20, lineHeight: 1.3, color: 'var(--accent)' },
   title: { padding: '2px 4px', fontFamily: 'Recoleta, serif', fontSize: 34, lineHeight: 1.15, color: '#111111' },
 }
 const TEXT_PLACEHOLDER: Record<string, string> = { note: 'Note', quote: 'Quote', title: 'Heading' }
@@ -409,11 +406,11 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       const id = await db.boards.add({ departmentId: deptId, name: 'Desk', boardType: 'desk', createdAt: Date.now() }) as number
       const now = Date.now()
       const seed: BoardItem[] = [
-        { boardId: id, itemType: 'comingup', content: '', x: 0, y: 24, w: 3, h: 56, createdAt: now },
-        { boardId: id, itemType: 'tasks', content: 'week', x: 2, y: 104, w: 1, h: 320, createdAt: now },
+        { boardId: id, itemType: 'comingup', content: '', x: 3, y: 24, w: 1, h: 300, createdAt: now },
+        { boardId: id, itemType: 'tasks', content: 'week', x: 2, y: 24, w: 1, h: 320, createdAt: now },
       ]
       projects.filter(isActive).forEach((p, i) => {
-        seed.push({ boardId: id, itemType: 'project', content: String(p.id), x: i % 2, y: 104 + Math.floor(i / 2) * 200, w: 1, h: 176, createdAt: now })
+        seed.push({ boardId: id, itemType: 'project', content: String(p.id), x: i % 2, y: 24 + Math.floor(i / 2) * 216, w: 1, h: 176, createdAt: now })
       })
       await db.boardItems.bulkAdd(seed)
     })
@@ -431,6 +428,22 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       }
     })
   }, [items, deskW, narrow])
+
+  useEffect(() => {
+    if (!items || narrow) return
+    const strips = items.filter(i => i.itemType === 'comingup' && i.w > 1 && !isLegacy(i))
+    if (strips.length === 0) return
+    void db.transaction('rw', db.boardItems, async () => {
+      for (const strip of strips) {
+        const grow = 260
+        for (const o of items) {
+          if (o.id === strip.id || isLegacy(o) || o.y <= strip.y) continue
+          if (o.x <= strip.x && strip.x < o.x + o.w) await db.boardItems.update(o.id!, { y: o.y + grow })
+        }
+        await db.boardItems.update(strip.id!, { w: 1, h: 300 })
+      }
+    })
+  }, [items, narrow])
 
   // Keep the desk in step with projects: new active ones get a card, deleted ones lose theirs.
   useEffect(() => {
@@ -466,6 +479,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   })
 
   const visible = (items ?? []).filter(i => {
+    if (i.hidden) return false
     if (!narrow && isLegacy(i)) return false
     if (i.itemType === 'project') {
       const p = projects?.find(x => String(x.id) === i.content)
@@ -474,6 +488,29 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     if (i.itemType === 'submission') return opps.some(o => String(o.id) === i.content)
     return true
   })
+  const hiddenItems = (items ?? []).filter(i => i.hidden && (i.itemType !== 'project' || projects?.some(p => String(p.id) === i.content)))
+  function labelOf(i: BoardItem): string {
+    switch (i.itemType) {
+      case 'project': return projects?.find(p => String(p.id) === i.content)?.title ?? 'Project'
+      case 'submission': return opps.find(o => String(o.id) === i.content)?.title ?? 'Submission'
+      case 'tasks': return 'Tasks'
+      case 'comingup': return 'Coming up'
+      case 'list': return parseList(i.content).title
+      case 'image': return i.content || 'Image'
+      case 'quote': return i.content ? `“${i.content.slice(0, 40)}${i.content.length > 40 ? '…' : ''}”` : 'Quote'
+      default: return i.content ? i.content.slice(0, 40) + (i.content.length > 40 ? '…' : '') : 'Note'
+    }
+  }
+  const [trayOpen, setTrayOpen] = useState(false)
+  const [hintDone, setHintDone] = useState(() => {
+    try { return localStorage.getItem('desk-hint-done') === '1' } catch { return false }
+  })
+
+  async function setHidden(item: BoardItem, hidden: boolean) {
+    await db.boardItems.update(item.id!, { hidden: hidden || undefined } as Partial<BoardItem>)
+    setHovered(null)
+  }
+
   const ordered = narrow ? [...visible].sort((a, b) => a.y - b.y || a.x - b.x) : visible
   const pastProjects = (projects ?? []).filter(p => !isActive(p)).sort((a, b) => (b.dateEnd ?? '').localeCompare(a.dateEnd ?? ''))
   const projectIdsOnDesk = new Set((items ?? []).filter(i => i.itemType === 'project').map(i => i.content))
@@ -567,6 +604,10 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       return
     }
     const g = geometry(d, e)
+    if (!hintDone) {
+      setHintDone(true)
+      try { localStorage.setItem('desk-hint-done', '1') } catch { /* private mode */ }
+    }
     if (d.mode === 'move') {
       await db.boardItems.update(d.id, { x: colAt(g.left, item.w), y: snap(g.top) })
     } else {
@@ -597,7 +638,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   // ── rendering ─────────────────────────────────────────────────────────────
   function blockShell(t: DeskType): React.CSSProperties {
-    if (t === 'note') return { background: '#FFFDE7', border: '1px solid #F5E642', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,.05)' }
+    if (t === 'note' || t === 'tasks') return { ...cardStyle, background: 'var(--accent)' }
+    if (t === 'quote' || t === 'comingup') return { ...cardStyle, background: '#111111' }
     if (t === 'title') return {}
     if (t === 'image') return { borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.08)', background: '#EEEEEE' }
     return cardStyle
@@ -660,10 +702,18 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
           {blockContent(item)}
         </div>
         {showRemove && (
-          <button aria-label="Remove block" onClick={() => void removeBlock(item)}
-            style={{ position: 'absolute', top: -8, right: -8, width: narrow ? 18 : 22, height: narrow ? 18 : 22, borderRadius: 999, background: '#FFFFFF', border: '1px solid #E5E5E5', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.45 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, zIndex: 2 }}>
-            <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="#888888" strokeWidth="1.4" strokeLinecap="round" /></svg>
-          </button>
+          <div style={{ position: 'absolute', top: -10, right: -8, display: 'flex', gap: 4, zIndex: 2 }}>
+            <button aria-label="Hide this box" title="Hide" onClick={() => void setHidden(item, true)}
+              style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: '#FFFFFF', border: '1px solid #E5E5E5', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8s2.2-4.2 6-4.2S14 8 14 8s-2.2 4.2-6 4.2S2 8 2 8z" stroke="#666666" strokeWidth="1.4" strokeLinejoin="round" /><circle cx="8" cy="8" r="1.8" stroke="#666666" strokeWidth="1.4" /><path d="M3 13L13 3" stroke="#666666" strokeWidth="1.4" strokeLinecap="round" /></svg>
+            </button>
+            {CONFIRM_TYPES.includes(t) && (
+              <button aria-label="Delete this box" title="Delete" onClick={() => void removeBlock(item)}
+                style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: '#FFFFFF', border: '1px solid #E5E5E5', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="#888888" strokeWidth="1.4" strokeLinecap="round" /></svg>
+              </button>
+            )}
+          </div>
         )}
         {showHandle && (
           <div aria-hidden="true" onPointerDown={e => onPointerDown(e, item, 'resize')}
@@ -708,8 +758,41 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   const loaded = items !== undefined
 
+  const topRow = (!narrow && !hintDone) || hiddenItems.length > 0 ? (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+      {!narrow && !hintDone ? (
+        <p style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, fontSize: 12, color: '#6E6E6E' }}>
+          <svg width="10" height="14" viewBox="0 0 12 16" fill="none" aria-hidden="true"><circle cx="3" cy="3" r="1.4" fill="#6E6E6E" /><circle cx="9" cy="3" r="1.4" fill="#6E6E6E" /><circle cx="3" cy="8" r="1.4" fill="#6E6E6E" /><circle cx="9" cy="8" r="1.4" fill="#6E6E6E" /><circle cx="3" cy="13" r="1.4" fill="#6E6E6E" /><circle cx="9" cy="13" r="1.4" fill="#6E6E6E" /></svg>
+          Drag cards to arrange your desk. Drag the side handle to resize.
+        </p>
+      ) : <span />}
+      {hiddenItems.length > 0 && (
+        <div style={{ position: 'relative' }}>
+          <button onClick={() => setTrayOpen(o => !o)} aria-expanded={trayOpen}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 34, padding: '0 14px', border: '1px solid #DDDDDD', borderRadius: 999, background: '#FFFFFF', color: '#111111', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Hidden boxes
+            <span style={{ minWidth: 20, height: 20, padding: '0 6px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 999, background: 'var(--accent)', fontSize: 11, fontWeight: 600 }}>{hiddenItems.length}</span>
+          </button>
+          {trayOpen && (
+            <div style={{ position: 'absolute', right: 0, top: 42, zIndex: 50, width: 280, maxWidth: 'calc(100vw - 40px)', background: '#FFFFFF', borderRadius: 14, boxShadow: '0 14px 44px rgba(0,0,0,.18)', padding: '12px 16px' }}>
+              <p style={{ ...smallLabel, margin: '0 0 6px' }}>Hidden boxes</p>
+              {hiddenItems.map(i => (
+                <div key={i.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid #F0F0F0' }}>
+                  <span style={{ fontSize: 13, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{labelOf(i)}</span>
+                  <button onClick={() => { void setHidden(i, false); if (hiddenItems.length === 1) setTrayOpen(false) }}
+                    style={{ flexShrink: 0, minHeight: 30, padding: '0 12px', border: 'none', borderRadius: 999, background: '#111111', color: '#FFFFFF', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Show</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  ) : null
+
   return (
     <>
+      {topRow}
       {narrow ? (
         <div ref={canvasRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 120 }}>
           {ordered.map(renderBlock)}
@@ -717,14 +800,14 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         </div>
       ) : (
         <div ref={canvasRef}
-          style={{ position: 'relative', height: canvasH, background: '#FAFAFA', border: '1px solid #EEEEEE', borderRadius: 20 }}>
+          style={{ position: 'relative', height: canvasH, background: '#E6E6E6', borderRadius: 20 }}>
           {live && Array.from({ length: COLS }, (_, c) => (
             <div key={c} aria-hidden="true"
               style={{ position: 'absolute', top: 12, bottom: 12, left: colLeft(c), width: colW, borderRadius: 12, background: 'rgba(0,0,0,.025)', pointerEvents: 'none' }} />
           ))}
           {preview && (
             <div aria-hidden="true"
-              style={{ position: 'absolute', ...preview, borderRadius: 16, border: '1.5px dashed #D8D8D8', background: 'rgba(245,230,66,.08)', pointerEvents: 'none' }} />
+              style={{ position: 'absolute', ...preview, borderRadius: 16, border: '1.5px dashed #D8D8D8', background: 'rgba(0,0,0,.03)', pointerEvents: 'none' }} />
           )}
           {deskW > 0 && ordered.map(renderBlock)}
           {loaded && visible.length === 0 && (
@@ -739,7 +822,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       {/* Toolbar */}
       {minimised ? (
         <button aria-label="Show toolbar" onClick={() => toggleToolbar(false)}
-          style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', width: 48, height: 48, borderRadius: 999, background: '#F5E642', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 40 }}>
+          style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', width: 48, height: 48, borderRadius: 999, background: 'var(--accent)', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 40 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="#111111" strokeWidth="1.8" strokeLinecap="round" /></svg>
         </button>
       ) : (
@@ -765,7 +848,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       {picker === 'project' && (
         <Modal title="Project" onClose={() => setPicker(null)}>
           <button onClick={() => { setPicker(null); onNewProject() }}
-            style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12 }}>
+            style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12 }}>
             New project
           </button>
           {offDesk.length === 0

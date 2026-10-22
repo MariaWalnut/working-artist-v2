@@ -215,7 +215,7 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={() => void save()} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{entry ? 'Save' : 'Add'}</button>
+            <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{entry ? 'Save' : 'Add'}</button>
           </div>
         </div>
       </div>
@@ -342,7 +342,7 @@ export function Press() {
           )}
           <input ref={importRef} type="file" accept={CLIPPING_ACCEPT} hidden onChange={e => { void startNewWith(e.target.files?.[0]); e.target.value = '' }} />
           <button onClick={() => importRef.current?.click()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: '#555555', cursor: 'pointer' }}>Import file</button>
-          <button onClick={() => setEditing('new')} style={{ background: '#F5E642', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
+          <button onClick={() => setEditing('new')} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
         </div>
       }>
 

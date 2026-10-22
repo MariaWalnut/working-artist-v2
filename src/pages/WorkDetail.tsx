@@ -17,7 +17,7 @@ const NARROW = '(max-width: 900px)'
 function uid() { return Math.random().toString(36).slice(2) }
 
 const RIGHT_BADGE: Record<string, React.CSSProperties> = {
-  live:    { background: '#F5E642', color: '#111111' },
+  live:    { background: 'var(--accent)', color: '#111111' },
   sold:    { background: '#F5F5F5', color: '#666666' },
   pending: { background: 'transparent', color: '#AAAAAA', border: '1px dashed #DDDDDD' },
 }
@@ -179,7 +179,7 @@ export function WorkDetail() {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             {editing ? (
               <input autoFocus value={title} onChange={e => setTitle(e.target.value)} aria-label="Title"
-                style={{ fontFamily: 'Recoleta, serif', fontSize: 22, border: 'none', borderBottom: '2px solid #F5E642', outline: 'none', background: 'none', color: '#111111', padding: '0 0 2px', flex: 1, minWidth: 0 }} />
+                style={{ fontFamily: 'Recoleta, serif', fontSize: 22, border: 'none', borderBottom: '2px solid var(--accent)', outline: 'none', background: 'none', color: '#111111', padding: '0 0 2px', flex: 1, minWidth: 0 }} />
             ) : (
               <span style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: '#111111' }}>{w.title}</span>
             )}
@@ -188,11 +188,11 @@ export function WorkDetail() {
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
               {editing ? (
                 <>
-                  <button onClick={() => void saveEdit()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+                  <button onClick={() => void saveEdit()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
                   <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
                 </>
               ) : (
-                <button onClick={startEdit} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Edit</button>
+                <button onClick={startEdit} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Edit</button>
               )}
             </div>
           </div>
@@ -240,7 +240,7 @@ export function WorkDetail() {
             <div style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 {sectionLabel('Press coverage')}
-                <button onClick={() => setAddingPress(v => !v)} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: -12 }}>+ Add</button>
+                <button onClick={() => setAddingPress(v => !v)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: -12 }}>+ Add</button>
               </div>
               {addingPress && (
                 <div style={{ background: '#F9F9F9', borderRadius: 10, padding: 12, marginBottom: 12 }}>
@@ -255,7 +255,7 @@ export function WorkDetail() {
                     <input value={pressUrl} onChange={e => setPressUrl(e.target.value)} placeholder="https://…" style={{ ...inp, flex: 2 }} />
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => void addPress()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+                    <button onClick={() => void addPress()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
                     <button onClick={() => setAddingPress(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
                   </div>
                 </div>
@@ -341,7 +341,7 @@ export function WorkDetail() {
                     {RIGHT_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                   </select>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => void addRight()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
+                    <button onClick={() => void addRight()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
                     <button onClick={() => setAddingRight(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
                   </div>
                 </div>

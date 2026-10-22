@@ -104,7 +104,7 @@ export function ContractCard({ work }: { work: Work }) {
         {editing ? (
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#999999', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={() => void save()} style={{ background: '#F5E642', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+            <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
           </div>
         ) : (
           <button onClick={() => { setDraft(toDraft(c)); setEditing(true) }}

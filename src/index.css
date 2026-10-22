@@ -12,9 +12,14 @@
   --color-ink: #111111;
   --color-paper: #FFFFFF;
   --color-page: #F5F5F5;
-  --color-yellow: #F5E642;
+  --color-yellow: var(--accent);
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Recoleta', serif;
+}
+
+:root {
+  /* The studio's accent colour, set in Account › Appearance. */
+  --accent: #F5E642;
 }
 
 * {

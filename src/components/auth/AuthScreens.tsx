@@ -7,7 +7,7 @@ const DEMO_LABEL: Record<typeof DEMO_FIELDS[number], string> = {
 }
 
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '11px 14px', fontSize: 13, color: '#111111', outline: 'none', fontFamily: 'inherit' }
-const btn: React.CSSProperties = { width: '100%', background: '#F5E642', border: 'none', borderRadius: 10, padding: '13px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#111111', cursor: 'pointer', fontFamily: 'inherit' }
+const btn: React.CSSProperties = { width: '100%', background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '13px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#111111', cursor: 'pointer', fontFamily: 'inherit' }
 const link: React.CSSProperties = { background: 'none', border: 'none', padding: 0, fontSize: 11, color: '#999999', cursor: 'pointer', fontFamily: 'inherit' }
 const label: React.CSSProperties = { display: 'block', fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 5 }
 
@@ -30,7 +30,7 @@ function DemoLinks() {
       <p style={{ fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#AAAAAA', margin: '0 0 10px' }}>Try a demo studio</p>
       <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 16, rowGap: 6 }}>
         {DEMO_FIELDS.map(f => (
-          <a key={f} href={`/demo/${f}`} style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', textDecoration: 'none', borderBottom: '2px solid #F5E642' }}>{DEMO_LABEL[f]}</a>
+          <a key={f} href={`/demo/${f}`} style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', textDecoration: 'none', borderBottom: '2px solid var(--accent)' }}>{DEMO_LABEL[f]}</a>
         ))}
       </div>
     </div>
