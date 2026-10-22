@@ -6,7 +6,7 @@ import { cover, fontsReady, marks, mood, painting, sleeve } from './demoArt'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-22'
+export const DEMO_VERSION = '2026-10-22c'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -25,7 +25,18 @@ interface Seed {
   // workId here is an index into `works`
   press: Array<Omit<PressEntry, 'departmentId'>>
   desk: { list: { title: string; items: Array<[string, boolean?]> }; quote: string; note: string; image: string; submission: number }
-  board: { name: string; items: Item[] }
+  board: Vision
+}
+
+// A Manifest board: the vision board pictures in the middle, aspirational quotes above,
+// goals down the left, artist references down the right, joined by connectors.
+interface Vision {
+  name: string
+  pics: [hero: string, left: string, right: string]
+  quotes: [string, string]
+  goals: [string, string, string]
+  refs: [string, string, string]
+  tags: string[]
 }
 
 const P = (title: string, type: string, extra: Partial<Project>, todos: Todo[]) =>
@@ -40,17 +51,31 @@ const op = (title: string, opportunityType: string, organisation: string, due: n
 const pr = (title: string, type: string | undefined, outlet: string, date: string, workId?: number, category: 'press' | 'award' = 'press') =>
   ({ title, type, outlet, date, workId, category })
 
-// A Manifest board: title, quote, pictures, notes and tags, loosely arranged.
-function boardItems(title: string, quote: string, pics: string[], notes: string[], tags: string[]): Item[] {
-  return [
-    { itemType: 'title', content: title, x: 40, y: 32, w: 300, h: 90, color: '#FFFFFF' },
-    { itemType: 'quote', content: quote, x: 380, y: 36, w: 280, h: 116, color: '#F5E642' },
-    { itemType: 'image', content: 'Picture', imageData: pics[0], x: 700, y: 30, w: 240, h: 300 },
-    { itemType: 'image', content: 'Picture', imageData: pics[1], x: 380, y: 190, w: 280, h: 210 },
-    ...(pics[2] ? [{ itemType: 'image' as const, content: 'Picture', imageData: pics[2], x: 980, y: 90, w: 220, h: 165 }] : []),
-    ...notes.map((n, i) => ({ itemType: 'note' as const, content: n, x: 40 + (i % 2) * 165, y: 160 + Math.floor(i / 2) * 130, w: 150, h: 110, color: ['#FFFFFF', '#E8C4B4', '#B8E0A4', '#F5F5F5'][i % 4] })),
-    ...tags.map((t, i) => ({ itemType: 'tag' as const, content: t, x: 700 + i * 145, y: 370, w: 130, h: 44, color: '#111111' })),
+type Keyed = Item & { key: string }
+
+function visionLayout(v: Vision): { items: Keyed[]; arrows: Array<[string, string]> } {
+  const label = (key: string, content: string, x: number): Keyed =>
+    ({ key, itemType: 'text', content, x, y: 168, w: 190, h: 52, color: '#FAFAFA' })
+  const items: Keyed[] = [
+    { key: 'title', itemType: 'title', content: v.name, x: 469, y: 24, w: 270, h: 72, color: '#FFFFFF' },
+    { key: 'hero', itemType: 'image', content: 'Picture', imageData: v.pics[0], x: 484, y: 136, w: 240, h: 300 },
+    { key: 'left', itemType: 'image', content: 'Picture', imageData: v.pics[1], x: 262, y: 230, w: 180, h: 135 },
+    { key: 'right', itemType: 'image', content: 'Picture', imageData: v.pics[2], x: 770, y: 214, w: 168, h: 168 },
+    { key: 'q0', itemType: 'quote', content: v.quotes[0], x: 24, y: 24, w: 240, h: 110, color: '#F5E642' },
+    { key: 'q1', itemType: 'quote', content: v.quotes[1], x: 944, y: 24, w: 240, h: 110, color: '#FFFFFF' },
+    label('goals', 'Goals', 44),
+    label('refs', 'References', 974),
+    ...v.goals.map((g, i) => ({ key: `g${i}`, itemType: 'note' as const, content: g, x: 44, y: 236 + i * 92, w: 190, h: 56, color: ['#B8E0A4', '#FFFFFF', '#E8C4B4'][i] })),
+    ...v.refs.map((r, i) => ({ key: `r${i}`, itemType: 'note' as const, content: r, x: 974, y: 236 + i * 92, w: 190, h: 68, color: '#F5F5F5' })),
+    ...v.tags.map((t, i) => ({ key: `t${i}`, itemType: 'tag' as const, content: t, x: 401 + i * 140, y: 480, w: 125, h: 36, color: '#111111' })),
   ]
+  // Every connector runs to the nearest picture, and the side pictures feed the vision in the middle.
+  const arrows: Array<[string, string]> = [
+    ['q0', 'left'], ['g0', 'left'], ['g1', 'left'], ['g2', 'left'],
+    ['q1', 'right'], ['r0', 'right'], ['r1', 'right'], ['r2', 'right'],
+    ['left', 'hero'], ['right', 'hero'],
+  ]
+  return { items, arrows }
 }
 
 const SEEDS: Record<DemoField, () => Seed> = {
@@ -124,9 +149,12 @@ const SEEDS: Record<DemoField, () => Seed> = {
       image: mood('desk-music', ['#1F3A4A', '#3E6B7A', '#E8D9B5', '#8FB8BF']),
       submission: 0,
     },
-    board: { name: '2027', items: boardItems('2027', 'Play the room you are in.',
-      [mood('m1', ['#0F1B2D', '#2E4A6B', '#7FA7C9', '#F5E642']), mood('m2', ['#E9E4DA', '#B8C7D9', '#C8642D', '#6E86A6']), sleeve('harbour', 'Harbour', ['#1F3340', '#BFD6DD', '#C8642D', '#2E4A5C'])],
-      ['Tour three cities', 'Finish album two', 'Teach one workshop', 'Play Tokyo'], ['slow', 'warm', 'live']) },
+    board: { name: '2027',
+      pics: [mood('m-hero', ['#0F1B2D', '#2E4A6B', '#7FA7C9', '#F5E642'], 480, 600), mood('m-left', ['#E9E4DA', '#B8C7D9', '#C8642D', '#6E86A6']), sleeve('harbour', 'Harbour', ['#1F3340', '#BFD6DD', '#C8642D', '#2E4A5C'])],
+      quotes: ['Play the room you are in.', 'Make the record you want to hear.'],
+      goals: ['Finish album two', 'Tour three cities', 'Teach one workshop'],
+      refs: ['Joni Mitchell, open tunings', 'Nils Frahm, the room as instrument', 'Arthur Russell, cello and echo'],
+      tags: ['slow', 'warm', 'live'] },
   }),
 
   painter: () => ({
@@ -198,9 +226,12 @@ const SEEDS: Record<DemoField, () => Seed> = {
       image: painting('desk-paint', ['#2E4A3A', '#6F8F5E', '#C9D6A8'], 640, 480),
       submission: 0,
     },
-    board: { name: 'Next body of work', items: boardItems('Next body of work', 'Paint what the light does, not what the thing is.',
-      [painting('b1', ['#F2E9D8', '#7FA0B0', '#D9CBB0'], 480, 600), mood('b2', ['#2E4A3A', '#C9D6A8', '#E8C15A', '#6F8F5E']), marks('b3', ['#F1EAD8', '#9DBF7A', '#E8C15A', '#D9785F'])],
-      ['Larger canvases', 'More green', 'Show in Lisbon', 'Paint mornings'], ['quiet', 'light', 'rooms']) },
+    board: { name: 'Next body of work',
+      pics: [painting('b-hero', ['#F2E9D8', '#7FA0B0', '#D9CBB0'], 480, 600), mood('b-left', ['#2E4A3A', '#C9D6A8', '#E8C15A', '#6F8F5E']), marks('b-right', ['#F1EAD8', '#9DBF7A', '#E8C15A', '#D9785F'], 600, 600)],
+      quotes: ['Paint what the light does, not what the thing is.', 'Fewer, larger, slower.'],
+      goals: ['Larger canvases', 'Show in Lisbon', 'Paint every morning'],
+      refs: ['Agnes Martin, pale grids', 'Pierre Bonnard, interiors', 'Etel Adnan, small mountains'],
+      tags: ['quiet', 'light', 'rooms'] },
   }),
 
   illustrator: () => ({
@@ -288,9 +319,12 @@ const SEEDS: Record<DemoField, () => Seed> = {
       image: cover('desk-snow', 'Snow Days', 'Work in progress', ['#2E4A6B', '#1E2A44', '#FFFFFF', '#C8642D', '#F4EBDD'], 'snow', 640, 480),
       submission: 0,
     },
-    board: { name: 'Book three', items: boardItems('Book three', 'Leave room for the reader.',
-      [cover('b-snow', 'Snow Days', 'Ines Okafor', ['#2E4A6B', '#1E2A44', '#FFFFFF', '#C8642D', '#F4EBDD'], 'snow', 480, 600), mood('b-m1', ['#F4EBDD', '#8CB4D4', '#E8A0B4', '#2E4A6B']), mood('b-m2', ['#1E2A44', '#2E4A6B', '#F2D98B', '#C8642D'])],
-      ['Softer palette', 'One spread without words', 'Finish by spring', 'More snow, less text'], ['snow', 'quiet', 'play']) },
+    board: { name: 'Book three',
+      pics: [cover('b-snow', 'Snow Days', 'Ines Okafor', ['#2E4A6B', '#1E2A44', '#FFFFFF', '#C8642D', '#F4EBDD'], 'snow', 480, 600), mood('b-m1', ['#F4EBDD', '#8CB4D4', '#E8A0B4', '#2E4A6B']), mood('b-m2', ['#1E2A44', '#2E4A6B', '#F2D98B', '#C8642D'], 600, 600)],
+      quotes: ['Leave room for the reader.', 'Draw it the way a child would remember it.'],
+      goals: ['Finish by spring', 'One spread without words', 'Show it at the book fair'],
+      refs: ['Tove Jansson, Moomin winters', 'Beatrice Alemagna, texture', 'Jon Klassen, the pause'],
+      tags: ['snow', 'quiet', 'play'] },
   }),
 
   writer: () => ({
@@ -370,9 +404,12 @@ const SEEDS: Record<DemoField, () => Seed> = {
       image: mood('desk-write', ['#DDE4E8', '#2E4A5C', '#8CB4D4', '#E9E2D3']),
       submission: 1,
     },
-    board: { name: 'Novel two', items: boardItems('Novel two', 'Write the book only you can write.',
-      [mood('w1', ['#DDE4E8', '#2E4A5C', '#8CB4D4', '#E9E2D3'], 480, 600), mood('w2', ['#F2E3C6', '#E8A04A', '#C8642D', '#8CB4D4']), cover('w3', 'The Lighthouse Keepers', 'Clara Brandt', ['#1F3340', '#BFD6DD', '#F2D98B', '#F2D98B', '#F4EBDD'], 'harbour', 440, 560)],
-      ['Mornings for drafting', 'Visit the coast', 'Finish by summer', 'Read it aloud'], ['salt', 'light', 'keepers']) },
+    board: { name: 'Novel two',
+      pics: [cover('w-hero', 'The Lighthouse Keepers', 'Clara Brandt', ['#1F3340', '#BFD6DD', '#F2D98B', '#F2D98B', '#F4EBDD'], 'harbour', 480, 600), mood('w-left', ['#DDE4E8', '#2E4A5C', '#8CB4D4', '#E9E2D3']), mood('w-right', ['#F2E3C6', '#E8A04A', '#C8642D', '#8CB4D4'], 600, 600)],
+      quotes: ['Write the book only you can write.', 'Two pages a day, every day.'],
+      goals: ['Finish by summer', 'Visit the coast', 'Read it aloud'],
+      refs: ['Virginia Woolf, To the Lighthouse', 'Tove Ditlevsen, plainness', 'Jon Fosse, the sea'],
+      tags: ['salt', 'light', 'keepers'] },
   }),
 }
 
@@ -418,7 +455,12 @@ export async function seedDemo(field: DemoField) {
     for (const item of desk) await db.boardItems.add({ ...item, boardId: deskId, createdAt: now })
 
     const boardId = await db.boards.add({ departmentId, name: s.board.name, boardType: 'Board', createdAt: now }) as number
-    for (const item of s.board.items) await db.boardItems.add({ ...item, boardId, createdAt: now })
+    const { items, arrows } = visionLayout(s.board)
+    const ids: Record<string, number> = {}
+    for (const { key, ...item } of items) ids[key] = await db.boardItems.add({ ...item, boardId, createdAt: now }) as number
+    for (const [from, to] of arrows) {
+      await db.boardItems.add({ boardId, itemType: 'arrow', content: JSON.stringify({ fromId: ids[from], toId: ids[to] }), x: 0, y: 0, w: 0, h: 0, createdAt: now })
+    }
   })
   try { localStorage.setItem(`wa-demo-version-${field}`, DEMO_VERSION) } catch { /* private mode */ }
 }

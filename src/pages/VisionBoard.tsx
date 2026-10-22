@@ -41,6 +41,17 @@ const TEXT_STYLES: Array<{ type: BoardItem['itemType']; label: string; size: str
 
 function center(i: BoardItem) { return { x: i.x + i.w / 2, y: i.y + i.h / 2 } }
 
+// Where the line from this item's centre towards (tx, ty) leaves the item, plus a small gap,
+// so a connector starts and ends at the edges and its arrowhead stays visible.
+function edgePoint(i: BoardItem, tx: number, ty: number, gap = 6) {
+  const c = center(i)
+  const dx = tx - c.x, dy = ty - c.y
+  if (dx === 0 && dy === 0) return c
+  const t = Math.min(dx ? (i.w / 2) / Math.abs(dx) : Infinity, dy ? (i.h / 2) / Math.abs(dy) : Infinity)
+  const len = Math.hypot(dx, dy)
+  return { x: c.x + dx * t + (dx / len) * gap, y: c.y + dy * t + (dy / len) * gap }
+}
+
 function isDark(hex: string | undefined) {
   if (!hex) return false
   const c = hex.replace('#', '')
@@ -401,7 +412,8 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
     const from = items.find(i => i.id === d.fromId)
     const to   = items.find(i => i.id === d.toId)
     if (!from || !to) return null
-    const fc = center(from), tc = center(to)
+    const toC = center(to), fromC = center(from)
+    const fc = edgePoint(from, toC.x, toC.y), tc = edgePoint(to, fromC.x, fromC.y)
     return (
       <g key={a.id}>
         {/* wide invisible hit area for deletion */}
