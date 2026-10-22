@@ -5,7 +5,7 @@ import { db } from './db/db'
 import { demoField, userId } from './lib/mode'
 import { needsPassword } from './lib/supabase'
 import { startCloud } from './lib/cloud'
-import { seedDemo } from './lib/demoSeed'
+import { demoOutdated, seedDemo } from './lib/demoSeed'
 import { AuthScreens } from './components/auth/AuthScreens'
 import { Projects } from './pages/Projects'
 import { Opportunities } from './pages/Opportunities'
@@ -58,7 +58,7 @@ function OpeningData({ blocked }: { blocked: boolean }) {
 let preparing: Promise<void> | undefined
 function prepareStudio() {
   preparing ??= (async () => {
-    if (demoField && (await db.departments.count()) === 0) await seedDemo(demoField)
+    if (demoField && ((await db.departments.count()) === 0 || demoOutdated(demoField))) await seedDemo(demoField)
     if (userId) await startCloud()
   })()
   return preparing
