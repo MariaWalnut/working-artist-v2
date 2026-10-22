@@ -5,7 +5,7 @@ import type { DemoField } from './mode'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-22d'
+export const DEMO_VERSION = '2026-10-23'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -78,7 +78,7 @@ function visionLayout(v: Vision): { items: Keyed[]; arrows: Array<[string, strin
 
 const SEEDS: Record<DemoField, () => Seed> = {
   musician: () => ({
-    name: 'Lena Moss',
+    name: 'Working Artist',
     activities: ['musician'],
     works: [
       { title: 'Low Tide', kind: 'Release', format: 'Album', label: 'Northbound Records', year: 2025, month: 3, location: 'Berlin' },
@@ -154,7 +154,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
   }),
 
   painter: () => ({
-    name: 'Tomás Vale',
+    name: 'Working Artist',
     activities: ['visual_artist'],
     works: [
       { title: 'Salt Flats I', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection' },
@@ -229,7 +229,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
   }),
 
   illustrator: () => ({
-    name: 'Ines Okafor',
+    name: 'Working Artist',
     activities: ['picture_book'],
     works: [
       { title: 'The Fox Who Kept the Moon', kind: 'Book', publisher: 'Little Lantern Books', publishedDate: '2024-09', year: 2024, month: 9, language: 'English',
@@ -313,7 +313,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
   }),
 
   writer: () => ({
-    name: 'Clara Brandt',
+    name: 'Working Artist',
     activities: ['writer'],
     works: [
       { title: 'The Summer House', kind: 'Book', subtitle: 'A novel', publisher: 'Harbour Press', publishedDate: '2023-04', year: 2023, month: 4, language: 'English', pages: 280, location: 'London',
