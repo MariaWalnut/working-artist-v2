@@ -46,7 +46,7 @@ function fromDraft(d: Draft): BookContract {
   return out as BookContract
 }
 
-const label: React.CSSProperties = { fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+const label: React.CSSProperties = { fontSize: 9, color: '#6E6E6E', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
 export function ContractCard({ work }: { work: Work }) {
   const c = work.contract ?? {}
@@ -91,7 +91,7 @@ export function ContractCard({ work }: { work: Work }) {
   const select = (k: keyof BookContract, text: string, options: Array<[string, string]>) => (
     <label>
       <span style={label}>{text}</span>
-      <select value={draft[k]} onChange={e => set(k, e.target.value)} style={{ ...inp, color: draft[k] ? '#111111' : '#999999' }}>
+      <select value={draft[k]} onChange={e => set(k, e.target.value)} style={{ ...inp, color: draft[k] ? '#111111' : '#6E6E6E' }}>
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </label>
@@ -100,15 +100,15 @@ export function ContractCard({ work }: { work: Work }) {
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: 0 }}>Contract</p>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: 0 }}>Contract</p>
         {editing ? (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#999999', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
             <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
           </div>
         ) : (
           <button onClick={() => { setDraft(toDraft(c)); setEditing(true) }}
-            style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer' }}>
+            style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#6E6E6E', cursor: 'pointer' }}>
             {shown.length ? 'Edit' : '+ Add'}
           </button>
         )}
@@ -140,12 +140,12 @@ export function ContractCard({ work }: { work: Work }) {
           </label>
         </div>
       ) : shown.length === 0 && !c.notes ? (
-        <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>No contract terms yet</p>
+        <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>No contract terms yet</p>
       ) : (
         <>
           {shown.map(([k, v]) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid #F5F5F5' }}>
-              <span style={{ fontSize: 10, color: '#AAAAAA', flexShrink: 0 }}>{k}</span>
+              <span style={{ fontSize: 10, color: '#6E6E6E', flexShrink: 0 }}>{k}</span>
               <span style={{ fontSize: 12, fontWeight: 500, color: '#111111', textAlign: 'right' }}>{v}</span>
             </div>
           ))}

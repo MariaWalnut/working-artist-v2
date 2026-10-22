@@ -68,7 +68,7 @@ async function lookupIsbn(isbn: string): Promise<IsbnResult | null> {
   }
 }
 
-const label: React.CSSProperties = { fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+const label: React.CSSProperties = { fontSize: 9, color: '#6E6E6E', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
 export function KindSelect({ value, onChange, style }: { value: WorkKind; onChange: (k: WorkKind) => void; style: React.CSSProperties }) {
   return (

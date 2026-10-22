@@ -92,7 +92,7 @@ function scatter(cx: number, cy: number, w: number, h: number) {
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
     <div>
-      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 8px' }}>Color</p>
+      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#767676', margin: '0 0 8px' }}>Color</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
         {PRESETS.map(c => (
           <button key={c} onClick={() => onChange(c)}
@@ -104,7 +104,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
         {/* Custom color: input sits on top, visually hidden behind the "+" dot */}
         <div style={{ position: 'relative', width: 20, height: 20, flexShrink: 0 }}>
           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1.5px dashed #CCCCCC', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-            <span style={{ fontSize: 9, color: '#AAAAAA', lineHeight: 1 }}>+</span>
+            <span style={{ fontSize: 9, color: '#6E6E6E', lineHeight: 1 }}>+</span>
           </div>
           <input type="color" value={value} onChange={e => onChange(e.target.value)}
             style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%', border: 'none', padding: 0 }} />
@@ -188,7 +188,7 @@ function EditPopup({
               style={{
                 flex: 1, padding: '5px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
                 background: editedType === s.type ? 'var(--accent)' : '#F5F5F5',
-                color: editedType === s.type ? '#111111' : '#888888',
+                color: editedType === s.type ? '#111111' : '#666666',
                 fontSize: 10, fontWeight: editedType === s.type ? 600 : 400,
               }}>
               {s.label}
@@ -215,11 +215,11 @@ function EditPopup({
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button onClick={() => void del()}
-          style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 10px', fontSize: 10, color: '#CCCCCC', cursor: 'pointer' }}>
+          style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '5px 10px', fontSize: 10, color: '#767676', cursor: 'pointer' }}>
           Delete
         </button>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 12, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
           <button onClick={() => void save()}
             style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
             {isImage ? 'Done' : 'Save'}
@@ -489,7 +489,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
             <button onClick={() => void addItem(adding, addText, addColor)}
               style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
             <button onClick={() => setAdding(null)}
-              style={{ background: 'none', border: 'none', fontSize: 14, color: '#AAA', cursor: 'pointer' }}>×</button>
+              style={{ background: 'none', border: 'none', fontSize: 14, color: '#6E6E6E', cursor: 'pointer' }}>×</button>
           </div>
         </div>
       )}
@@ -539,8 +539,8 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
         {/* Empty state */}
         {items.length === 0 && !dropOver && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, pointerEvents: 'none' }}>
-            <p style={{ fontSize: 11, color: '#CCCCCC', margin: 0 }}>Add items from the toolbar</p>
-            <p style={{ fontSize: 11, color: '#CCCCCC', margin: 0, opacity: 0.7 }}>or drop images here</p>
+            <p style={{ fontSize: 11, color: '#767676', margin: 0 }}>Add items from the toolbar</p>
+            <p style={{ fontSize: 11, color: '#767676', margin: 0, opacity: 0.7 }}>or drop images here</p>
           </div>
         )}
         {dropOver && (
@@ -597,7 +597,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
                       }}
                       style={{ width: item.w, height: item.h, objectFit: 'contain', borderRadius: 14, display: 'block', boxShadow: '0 2px 12px rgba(0,0,0,.10)' }} />
                   : <div style={{ width: item.w, height: item.h, background: '#F0F0F0', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 10, color: '#AAAAAA' }}>Image</span>
+                      <span style={{ fontSize: 10, color: '#6E6E6E' }}>Image</span>
                     </div>
               ) : isTag ? (
                 <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: tc, padding: '0 18px', textAlign: 'center' }}>
@@ -664,14 +664,14 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
               <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, margin: '0 0 6px', color: '#111111' }}>
                 Drop image here
               </p>
-              <p style={{ fontSize: 12, color: '#AAAAAA', margin: '0 0 20px' }}>JPEG · PNG · GIF · WEBP</p>
+              <p style={{ fontSize: 12, color: '#6E6E6E', margin: '0 0 20px' }}>JPEG · PNG · GIF · WEBP</p>
               <button onClick={() => fileRef.current?.click()}
                 style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 11, color: '#666666', cursor: 'pointer', pointerEvents: 'auto' }}>
                 or choose a file
               </button>
             </div>
             <button onClick={() => setAddingImage(false)}
-              style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>
+              style={{ background: 'none', border: 'none', fontSize: 12, color: '#6E6E6E', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -692,7 +692,7 @@ function BoardTabs({ boards, activeId, onSelect, onCreate, onDelete }: {
   const [renaming, setRenaming] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const active = boards.find(b => b.id === activeId)
-  const quiet: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#AAAAAA', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }
+  const quiet: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#6E6E6E', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }
   const startRename = () => { setConfirming(false); setRenaming(active?.name ?? '') }
   async function saveRename() {
     const name = renaming?.trim()
@@ -719,7 +719,7 @@ function BoardTabs({ boards, activeId, onSelect, onCreate, onDelete }: {
           style={{ width: 140, border: 'none', borderBottom: '2px solid var(--accent)', background: 'none', padding: '0 0 2px', fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111', outline: 'none' }} />
       ) : (
         <button onClick={() => setAdding(true)}
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#AAAAAA', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }}>
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: '#6E6E6E', fontSize: 10, letterSpacing: '0.1em', fontFamily: 'inherit' }}>
           + New board
         </button>
       )}

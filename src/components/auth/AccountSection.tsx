@@ -8,13 +8,13 @@ const STATUS_LABEL = {
   idle: '', loading: 'Loading', saving: 'Saving', saved: 'Saved online', offline: 'Offline, saves when back online', error: 'Not saved yet',
 } as const
 
-const quiet: React.CSSProperties = { background: '#F5F5F5', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: '#888888', cursor: 'pointer' }
+const quiet: React.CSSProperties = { background: '#F5F5F5', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: '#666666', cursor: 'pointer' }
 const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid #F5F5F5' }
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '22px 28px', marginBottom: 10 }}>
-      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 16px' }}>{title}</p>
+      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: '0 0 16px' }}>{title}</p>
       {children}
     </div>
   )
@@ -68,7 +68,7 @@ function SignedInCard() {
       <div style={row}>
         <span style={{ fontSize: 13, color: '#444444' }}>Studio</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: status === 'error' || status === 'offline' ? '#A86400' : '#888888' }}>{STATUS_LABEL[status]}</span>
+          <span style={{ fontSize: 12, color: status === 'error' || status === 'offline' ? '#A86400' : '#666666' }}>{STATUS_LABEL[status]}</span>
           {status === 'error' && <button onClick={retryCloud} style={quiet}>Try again</button>}
         </span>
       </div>
@@ -83,7 +83,7 @@ function SignedInCard() {
           </span>
         ) : (
           <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {pwMsg && <span style={{ fontSize: 12, color: '#888888' }}>{pwMsg}</span>}
+            {pwMsg && <span style={{ fontSize: 12, color: '#666666' }}>{pwMsg}</span>}
             <button onClick={() => { setChanging(true); setPw(''); setPwMsg('') }} style={quiet}>Change</button>
           </span>
         )}

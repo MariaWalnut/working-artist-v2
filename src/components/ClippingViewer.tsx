@@ -37,7 +37,7 @@ export function ClippingViewer({ entry, onClose }: { entry: PressEntry; onClose:
       <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, maxWidth: '100%' }}>
         <div style={{ textAlign: 'center', maxWidth: 640 }}>
           <div style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: '#111111', textWrap: 'balance' }}>{entry.title}</div>
-          {(entry.outlet || entry.date) && <div style={{ fontSize: 11, color: '#777777', marginTop: 4 }}>{[entry.outlet, formatAnyDate(entry.date)].filter(Boolean).join(' · ')}</div>}
+          {(entry.outlet || entry.date) && <div style={{ fontSize: 11, color: '#6E6E6E', marginTop: 4 }}>{[entry.outlet, formatAnyDate(entry.date)].filter(Boolean).join(' · ')}</div>}
         </div>
         {pdf
           ? <iframe src={pdfUrl ?? undefined} title={entry.title} style={{ ...frame, width: 'min(900px, 92vw)', height: '72vh', border: 'none' }} />

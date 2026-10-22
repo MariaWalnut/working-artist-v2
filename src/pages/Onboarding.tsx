@@ -31,11 +31,11 @@ export function Onboarding() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-[#F5F5F5] px-6">
       <div className="w-full max-w-[520px] rounded-[20px] bg-white p-8 shadow-[0_4px_40px_rgba(0,0,0,.12)]">
-        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: '#AAAAAA', textAlign: 'center', marginBottom: 8 }}>Working Artist</p>
+        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: '#6E6E6E', textAlign: 'center', marginBottom: 8 }}>Working Artist</p>
         <h1 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 28, color: '#111111', textAlign: 'center', margin: '0 0 8px' }}>
           What is your practice?
         </h1>
-        <p style={{ fontSize: 13, color: '#AAAAAA', textAlign: 'center', marginBottom: 28 }}>Select all that apply. You can change this later.</p>
+        <p style={{ fontSize: 13, color: '#6E6E6E', textAlign: 'center', marginBottom: 28 }}>Select all that apply. You can change this later.</p>
 
         <div className="mb-5 grid grid-cols-4 gap-2">
           {PRACTICE_OPTIONS.map(p => (
@@ -43,7 +43,7 @@ export function Onboarding() {
               style={{
                 borderRadius: 12, padding: '10px 12px', fontSize: 13, textAlign: 'left', border: 'none', cursor: 'pointer',
                 background: selected.includes(p.key) ? 'var(--accent)' : '#F5F5F5',
-                color: selected.includes(p.key) ? '#111111' : '#888888',
+                color: selected.includes(p.key) ? '#111111' : '#666666',
                 fontWeight: selected.includes(p.key) ? 600 : 400,
               }}>
               {p.label}

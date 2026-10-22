@@ -7,7 +7,7 @@ import { Desk } from '../components/desk/Desk'
 export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Award', 'Commission', 'Books', 'Publications', 'Other']
 
 const inp: React.CSSProperties = { width: '100%', borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none' }
-const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }
+const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#767676' }
 function Row({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>{children}</div>
 }
@@ -122,7 +122,7 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div style={{ marginBottom: 16, background: '#FFFFFF', borderRadius: 20, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,.07)' }}>
-      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>New project</p>
+      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', marginBottom: 16 }}>New project</p>
       <div style={{ marginBottom: 10 }}>
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title"
           style={{ ...inp, fontSize: 14 }} onKeyDown={e => { if (e.key === 'Enter') void save() }} />
@@ -143,7 +143,7 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
       <TypeFields type={type} state={fields} set={setField} />
       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
         <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer' }}>Add</button>
-        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
+        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
       </div>
     </div>
   )

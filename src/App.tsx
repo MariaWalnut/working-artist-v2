@@ -28,7 +28,7 @@ function DataError({ detail }: { detail: string }) {
         <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>Your data couldn't be opened</h1>
         <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>Nothing has been deleted. Reload to try again.</p>
         <button onClick={() => location.reload()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reload</button>
-        <p style={{ fontSize: 10, color: '#AAAAAA', margin: '18px 0 0', wordBreak: 'break-word' }}>{detail}</p>
+        <p style={{ fontSize: 10, color: '#6E6E6E', margin: '18px 0 0', wordBreak: 'break-word' }}>{detail}</p>
       </div>
     </div>
   )
@@ -87,7 +87,7 @@ function AppRoutes() {
     if (waiting !== 'no') return <OpeningData blocked={waiting === 'blocked'} />
     return userId ? (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F5F5' }}>
-        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: '#AAAAAA' }}>Opening your studio</p>
+        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: '#6E6E6E' }}>Opening your studio</p>
       </div>
     ) : null
   }
@@ -135,7 +135,7 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
             <button onClick={() => { location.href = '/projects' }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>On My Desk</button>
             <button onClick={() => location.reload()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
           </div>
-          <p style={{ fontSize: 10, color: '#AAAAAA', margin: '18px 0 0', wordBreak: 'break-word' }}>{where} · {error.name}: {error.message}</p>
+          <p style={{ fontSize: 10, color: '#6E6E6E', margin: '18px 0 0', wordBreak: 'break-word' }}>{where} · {error.name}: {error.message}</p>
         </div>
       </div>
     )

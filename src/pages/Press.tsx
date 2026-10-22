@@ -97,7 +97,7 @@ function ClippingThumb({ data, thumb, label, onOpen, size = 36 }: { data: string
       style={{ position: 'relative', width: size, height: Math.round(size * 1.28), flexShrink: 0, padding: 0, border: '1px solid #EEEEEE', borderRadius: 5, overflow: 'hidden', background: '#F7F7F7', cursor: 'zoom-in', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {preview
         ? <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }} />
-        : <span style={{ fontSize: 8, fontWeight: 700, color: '#999999', letterSpacing: '0.08em' }}>PDF</span>}
+        : <span style={{ fontSize: 8, fontWeight: 700, color: '#6E6E6E', letterSpacing: '0.08em' }}>PDF</span>}
       {pdf && preview && (
         <span style={{ position: 'absolute', right: 2, bottom: 2, fontSize: 6, fontWeight: 700, letterSpacing: '0.06em', color: '#FFFFFF', background: 'rgba(17,17,17,.7)', borderRadius: 2, padding: '1px 2px' }}>PDF</span>
       )}
@@ -152,13 +152,13 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
       {viewing && clipping && <ClippingViewer entry={{ title: title || clipping.name, outlet, date, url, clipping: clipping.data, clippingName: clipping.name }} onClose={() => setViewing(false)} />}
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 480, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 16px' }}>
-          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: 0 }}>
+          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: 0 }}>
             {entry ? (award ? 'Edit award' : 'Edit press item') : (award ? 'Add award' : 'Add press')}
           </p>
           <div role="group" aria-label="Kind" style={{ display: 'flex', background: '#F5F5F5', borderRadius: 999, padding: 2 }}>
             {(['press', 'award'] as Section[]).map(c => (
               <button key={c} type="button" onClick={() => { setCategory(c); if (type && !TYPES[c].includes(type)) setType('') }} aria-pressed={category === c}
-                style={{ border: 'none', borderRadius: 999, padding: '4px 10px', fontSize: 10, cursor: 'pointer', background: category === c ? '#FFFFFF' : 'transparent', color: category === c ? '#111111' : '#888888', fontWeight: category === c ? 600 : 400, boxShadow: category === c ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>
+                style={{ border: 'none', borderRadius: 999, padding: '4px 10px', fontSize: 10, cursor: 'pointer', background: category === c ? '#FFFFFF' : 'transparent', color: category === c ? '#111111' : '#666666', fontWeight: category === c ? 600 : 400, boxShadow: category === c ? '0 1px 3px rgba(0,0,0,.08)' : 'none' }}>
                 {c === 'press' ? 'Press' : 'Award'}
               </button>
             ))}
@@ -175,11 +175,11 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
         )}
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#999999' }}>
+          <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? '#111111' : '#6E6E6E' }}>
             <option value="">Type…</option>
             {TYPES[category].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <select value={workId ?? ''} onChange={e => setWorkId(e.target.value ? Number(e.target.value) : undefined)} style={{ ...inp, flex: 1, color: workId ? '#111111' : '#999999' }}>
+          <select value={workId ?? ''} onChange={e => setWorkId(e.target.value ? Number(e.target.value) : undefined)} style={{ ...inp, flex: 1, color: workId ? '#111111' : '#6E6E6E' }}>
             <option value="">Work…</option>
             {works.map(w => <option key={w.id} value={w.id}>{w.title}</option>)}
           </select>
@@ -197,12 +197,12 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
             <>
               <ClippingThumb data={clipping.data} thumb={clipping.thumb} label={clipping.name} onOpen={() => setViewing(true)} />
               <span style={{ flex: 1, minWidth: 0, fontSize: 11, color: '#555555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clipping.name}</span>
-              <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Replace</button>
-              <button type="button" onClick={() => setClipping(null)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#BBBBBB', cursor: 'pointer' }}>Remove</button>
+              <button type="button" onClick={() => fileRef.current?.click()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#666666', cursor: 'pointer' }}>Replace</button>
+              <button type="button" onClick={() => setClipping(null)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#767676', cursor: 'pointer' }}>Remove</button>
             </>
           ) : (
             <>
-              <span style={{ flex: 1, fontSize: 11, color: '#999999' }}>{award ? 'Drop a certificate or photo here, image or PDF' : 'Drop a clipping here, image or PDF'}</span>
+              <span style={{ flex: 1, fontSize: 11, color: '#6E6E6E' }}>{award ? 'Drop a certificate or photo here, image or PDF' : 'Drop a clipping here, image or PDF'}</span>
               <button type="button" onClick={() => fileRef.current?.click()} style={{ background: '#FFFFFF', border: '1px solid #E5E5E5', borderRadius: 8, padding: '6px 12px', fontSize: 11, color: '#555555', cursor: 'pointer' }}>Choose file</button>
             </>
           )}
@@ -211,10 +211,10 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            {entry && <button onClick={() => void del()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}
+            {entry && <button onClick={() => void del()} style={{ background: 'none', border: 'none', fontSize: 11, color: '#767676', cursor: 'pointer' }}>Delete</button>}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
             <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{entry ? 'Save' : 'Add'}</button>
           </div>
         </div>
@@ -336,7 +336,7 @@ export function Press() {
           {entries.length === 0 && (
             <button onClick={() => void handleImportV1()}
               disabled={importing === 'loading'}
-              style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: importing === 'done' ? '#888888' : '#666666', cursor: 'pointer' }}>
+              style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: importing === 'done' ? '#666666' : '#666666', cursor: 'pointer' }}>
               {importing === 'loading' ? 'Importing…' : importing === 'done' ? `✓ ${importCount} imported` : importing === 'error' ? 'Nothing found in v1' : 'Import from v1'}
             </button>
           )}
@@ -354,9 +354,9 @@ export function Press() {
         {usedTypes.length > 0 && (
           <>
             <div style={{ width: 1, height: 18, background: '#E5E5E5' }} />
-            <button onClick={() => setTypeFilter(null)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === null ? '#111111' : '#F5F5F5', color: typeFilter === null ? '#FFFFFF' : '#888888' }}>All</button>
+            <button onClick={() => setTypeFilter(null)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === null ? '#111111' : '#F5F5F5', color: typeFilter === null ? '#FFFFFF' : '#666666' }}>All</button>
             {usedTypes.map(t => (
-              <button key={t} onClick={() => setTypeFilter(typeFilter === t ? null : t)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === t ? '#111111' : '#F5F5F5', color: typeFilter === t ? '#FFFFFF' : '#888888' }}>
+              <button key={t} onClick={() => setTypeFilter(typeFilter === t ? null : t)} style={{ padding: '4px 12px', borderRadius: 999, border: 'none', fontSize: 11, cursor: 'pointer', background: typeFilter === t ? '#111111' : '#F5F5F5', color: typeFilter === t ? '#FFFFFF' : '#666666' }}>
                 {t}
               </button>
             ))}
@@ -365,7 +365,7 @@ export function Press() {
       </div>
 
       {filtered.length === 0 ? (
-        <div style={{ padding: '64px 20px', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
+        <div style={{ padding: '64px 20px', textAlign: 'center', color: '#767676', fontSize: 13, fontStyle: 'italic' }}>
           {inSection.length > 0 ? 'Nothing matches this filter.'
             : section === 'award' ? 'No awards yet. Drop a certificate or photo here to start.'
             : 'No press items yet. Drop a clipping here to start.'}
@@ -385,14 +385,14 @@ export function Press() {
                 )}
 
                 {/* Date */}
-                <div style={{ width: 84, flexShrink: 0, fontSize: 10, color: '#AAAAAA', fontWeight: 500 }}>
+                <div style={{ width: 84, flexShrink: 0, fontSize: 10, color: '#6E6E6E', fontWeight: 500 }}>
                   {formatAnyDate(p.date)}
                 </div>
 
                 {/* Main */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: '#111111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div>
-                  <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>
+                  <div style={{ fontSize: 10, color: '#6E6E6E', marginTop: 2 }}>
                     {[p.outlet, work?.title].filter(Boolean).join(' · ')}
                   </div>
                 </div>
@@ -406,7 +406,7 @@ export function Press() {
                   )}
                   {p.url && (
                     <a href={p.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      style={{ fontSize: 12, color: '#AAAAAA', textDecoration: 'none' }} title="Open link">↗</a>
+                      style={{ fontSize: 12, color: '#6E6E6E', textDecoration: 'none' }} title="Open link">↗</a>
                   )}
                 </div>
               </div>

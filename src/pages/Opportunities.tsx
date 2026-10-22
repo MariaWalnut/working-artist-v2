@@ -12,8 +12,8 @@ const BADGE: Record<string, string> = {
   Won:         'bg-[var(--accent)] text-[#111111]',
   Applied:     'bg-[#F5F5F5] text-[#666666]',
   Active:      'bg-[#F5F5F5] text-[#111111]',
-  Draft:       'text-[#AAAAAA]',
-  Closed:      'bg-[#F5F5F5] text-[#CCCCCC]',
+  Draft:       'text-[#6E6E6E]',
+  Closed:      'bg-[#F5F5F5] text-[#767676]',
 }
 
 const BADGE_BORDER: Record<string, string> = {
@@ -46,7 +46,7 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 480, boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', marginBottom: 16 }}>{opp ? 'Edit' : 'New opportunity'}</p>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', marginBottom: 16 }}>{opp ? 'Edit' : 'New opportunity'}</p>
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Opportunity name" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1 }}>{OPP_TYPES.map(t => <option key={t}>{t}</option>)}</select>
@@ -58,9 +58,9 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
           style={{ ...inp, resize: 'none', marginBottom: 16 }} />
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{opp ? 'Save' : 'Add'}</button>
-          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
           {opp && <button onClick={async () => { if (opp.id) await db.opportunities.delete(opp.id); onDone() }}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer' }}>Delete</button>}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#767676', cursor: 'pointer' }}>Delete</button>}
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@ function FilterItem({ label, active, count, onClick }: { label: string; active: 
   return (
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? '#F5F5F5' : 'none', color: active ? '#111111' : '#666666', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
       <span>{label}</span>
-      {count != null && <span style={{ fontSize: 10, color: '#AAAAAA', fontWeight: 400 }}>{count}</span>}
+      {count != null && <span style={{ fontSize: 10, color: '#6E6E6E', fontWeight: 400 }}>{count}</span>}
     </button>
   )
 }
@@ -165,7 +165,7 @@ export function Opportunities() {
   const closedCount = opps.filter(o => o.status === 'Closed').length
 
   const sidePanel: React.CSSProperties = { background: '#FFFFFF', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
-  const sectionLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', padding: '0 8px 8px' }
+  const sectionLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', padding: '0 8px 8px' }
 
   return (
     <Shell>
@@ -178,8 +178,8 @@ export function Opportunities() {
           <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
             {[{ label: 'Active', v: activeCount, muted: false }, { label: 'Won', v: wonCount, muted: false }, { label: 'Shortlisted', v: shortCount, muted: false }, { label: 'Closed', v: closedCount, muted: true }].map((s, i) => (
               <div key={s.label} style={{ textAlign: 'center', padding: '14px 0', borderTop: i >= 2 ? '1px solid #F5F5F5' : undefined, borderLeft: i % 2 === 1 ? '1px solid #F5F5F5' : undefined }}>
-                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, color: s.muted ? '#AAAAAA' : '#111111', margin: '0 0 2px', lineHeight: 1.1 }}>{s.v}</p>
-                <p style={{ fontSize: 9, color: s.muted ? '#CCCCCC' : '#AAAAAA', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
+                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, color: s.muted ? '#6E6E6E' : '#111111', margin: '0 0 2px', lineHeight: 1.1 }}>{s.v}</p>
+                <p style={{ fontSize: 9, color: s.muted ? '#767676' : '#6E6E6E', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -212,12 +212,12 @@ export function Opportunities() {
           {/* Column headers */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid #F5F5F5' }}>
             {['Title', 'Type', 'Deadline', 'Status', ''].map(h => (
-              <span key={h} style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#AAAAAA' }}>{h}</span>
+              <span key={h} style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6E6E6E' }}>{h}</span>
             ))}
           </div>
 
           {filtered.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#CCCCCC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p>
+            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p>
           ) : filtered.map(o => {
             const today = new Date().toISOString().slice(0, 10)
             const notSent = o.status === 'Active' || o.status === 'Draft'
@@ -229,14 +229,14 @@ export function Opportunities() {
             const critical = days !== null && days <= 2
             const urgent = days !== null && days <= 7
             const rowBg = critical ? 'rgba(224,82,82,0.04)' : urgent ? 'rgba(240,160,32,0.05)' : 'transparent'
-            const deadlineColor = overdue ? '#E05252' : critical ? '#E05252' : urgent ? '#F0A020' : (isDraft ? '#CCCCCC' : '#AAAAAA')
+            const deadlineColor = overdue ? '#C53030' : critical ? '#C53030' : urgent ? '#A86400' : (isDraft ? '#767676' : '#6E6E6E')
             return (
               <div key={o.id} onClick={() => setEditing(o)} style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid #F5F5F5', alignItems: 'center', cursor: 'pointer', background: rowBg, borderLeft: critical ? '3px solid #E05252' : urgent ? '3px solid #F0A020' : '3px solid transparent' }}>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? '#888888' : '#111111', margin: '0 0 2px' }}>{o.title}</p>
-                  {o.organisation && <p style={{ fontSize: 10, color: isDraft ? '#CCCCCC' : '#AAAAAA', margin: 0 }}>{o.organisation}</p>}
+                  <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? '#666666' : '#111111', margin: '0 0 2px' }}>{o.title}</p>
+                  {o.organisation && <p style={{ fontSize: 10, color: isDraft ? '#767676' : '#6E6E6E', margin: 0 }}>{o.organisation}</p>}
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? '#CCCCCC' : '#666666' }}>{o.opportunityType ?? '—'}</span>
+                <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? '#767676' : '#666666' }}>{o.opportunityType ?? '—'}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 10, color: deadlineColor }}>
                     {o.deadline ? new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}

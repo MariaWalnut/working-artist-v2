@@ -33,7 +33,7 @@ export function Shell({ children }: { children: ReactNode }) {
           style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 18, color: '#111111', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {wordmark}
-          {demoField && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#AAAAAA', marginLeft: 10 }}>Demo</span>}
+          {demoField && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#6E6E6E', marginLeft: 10 }}>Demo</span>}
         </button>
         <nav className="hidden items-baseline gap-7 lg:flex">
           {NAV.map((item) => {
@@ -45,7 +45,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 style={{
                   fontFamily: 'Recoleta, serif',
                   fontSize: 15,
-                  color: active ? '#111111' : '#C0C0C0',
+                  color: active ? '#111111' : '#767676',
                   background: 'none',
                   border: 'none',
                   borderBottom: active ? '3px solid var(--accent)' : '3px solid transparent',
@@ -82,7 +82,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <button
                 key={item.to}
                 onClick={() => { setMenuOpen(false); navigate(item.to) }}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 48, fontFamily: 'Recoleta, serif', fontSize: 17, color: active ? '#111111' : '#888888', background: 'none', border: 'none', borderBottom: i < NAV.length - 1 ? '1px solid #F5F5F5' : 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 48, fontFamily: 'Recoleta, serif', fontSize: 17, color: active ? '#111111' : '#666666', background: 'none', border: 'none', borderBottom: i < NAV.length - 1 ? '1px solid #F5F5F5' : 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
               >
                 {item.label}
                 {active && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />}

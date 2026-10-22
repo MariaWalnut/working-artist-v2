@@ -77,7 +77,7 @@ function layoutYear(events: CareerEvent[], minGap: number): Placed[] {
 const KIND_DOT: Record<EventKind, string> = {
   project: '#111111',
   event: '#E0A030',
-  work: '#AAAAAA',
+  work: '#7A7A7A',
   press: '#9C86C4',
   award: '#5FA897',
 }
@@ -109,16 +109,16 @@ function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, 
   const markerY = (lane: number) => TOP + lane * LANE_H
 
   return (
-    <div style={{ borderBottom: last ? 'none' : '1px solid #F5F5F5' }}>
+    <div style={{ borderBottom: last ? 'none' : '1px solid #E4E4E4' }}>
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
         {/* Year label */}
         <button
           onClick={hasEvents ? onToggle : undefined}
-          style={{ width: 58, flexShrink: 0, background: 'none', border: 'none', borderRight: '1px solid #F5F5F5', cursor: hasEvents ? 'pointer' : 'default', minHeight: MONTH_BAR_H, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0 }}
+          style={{ width: 58, flexShrink: 0, background: 'none', border: 'none', borderRight: '1px solid #E4E4E4', cursor: hasEvents ? 'pointer' : 'default', minHeight: MONTH_BAR_H, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 0 }}
         >
-          <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, lineHeight: `${MONTH_BAR_H}px`, color: hasEvents ? '#999999' : '#DDDDDD', fontWeight: 400 }}>{year}</span>
+          <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, lineHeight: `${MONTH_BAR_H}px`, color: hasEvents ? '#111111' : '#8A8A8A', fontWeight: 400 }}>{year}</span>
           {hasEvents && (
-            <span style={{ fontSize: 7, lineHeight: `${MONTH_BAR_H}px`, color: '#DDDDDD', marginLeft: 3 }}>{collapsed ? '▶' : '▼'}</span>
+            <span style={{ fontSize: 8, lineHeight: `${MONTH_BAR_H}px`, color: '#6E6E6E', marginLeft: 4 }}>{collapsed ? '▶' : '▼'}</span>
           )}
         </button>
 
@@ -127,9 +127,9 @@ function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, 
           <div ref={measureRef} style={{ position: 'relative', minWidth: 500, height: collapsed || !hasEvents ? MONTH_BAR_H : rowH }}>
 
             {/* Month bar */}
-            <div style={{ position: 'absolute', inset: '0 0 auto 0', height: MONTH_BAR_H, borderBottom: '1px solid #F5F5F5', display: 'flex', alignItems: 'center' }}>
+            <div style={{ position: 'absolute', inset: '0 0 auto 0', height: MONTH_BAR_H, borderBottom: '1px solid #E4E4E4', display: 'flex', alignItems: 'center' }}>
               {MONTHS.map((m, i) => (
-                <div key={m} style={{ position: 'absolute', left: `${((i + 0.5) / 12) * 100}%`, transform: 'translateX(-50%)', fontSize: 8, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#DDDDDD', fontWeight: 500 }}>
+                <div key={m} style={{ position: 'absolute', left: `${((i + 0.5) / 12) * 100}%`, transform: 'translateX(-50%)', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#767676', fontWeight: 600 }}>
                   {m}
                 </div>
               ))}
@@ -142,24 +142,24 @@ function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, 
                   {placed.map(({ e, mx, lx, lane }) => (
                     <path key={e.key}
                       d={`M ${mx} ${LINE_Y} L ${mx} ${markerY(lane) - 4} L ${lx} ${markerY(lane)}`}
-                      stroke="#EEEEEE" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+                      stroke="#BDBDBD" strokeWidth="1" vectorEffect="non-scaling-stroke" />
                   ))}
                 </svg>
 
                 {placed.map(({ e, mx, lx, lane }) => (
                   <Fragment key={e.key}>
                     {/* Month tick */}
-                    <div style={{ position: 'absolute', left: `${mx / 10}%`, top: LINE_Y, width: 1, height: 5, background: '#DDDDDD' }} />
+                    <div style={{ position: 'absolute', left: `${mx / 10}%`, top: LINE_Y, width: 1, height: 6, background: '#8A8A8A' }} />
                     {/* Event label */}
                     <button onClick={() => onSelect(e)}
-                      style={{ position: 'absolute', left: `${lx / 10}%`, top: markerY(lane), transform: 'translateX(-50%)', width: 80, maxHeight: LANE_H - 10, overflow: 'hidden', background: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0 0 2px', textAlign: 'center', zIndex: 1 }}>
+                      style={{ position: 'absolute', left: `${lx / 10}%`, top: markerY(lane), transform: 'translateX(-50%)', width: 92, maxHeight: LANE_H - 8, overflow: 'hidden', background: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0 0 2px', textAlign: 'center', zIndex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: KIND_DOT[e.kind] }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: KIND_DOT[e.kind] }} />
                       </div>
-                      <span style={{ display: '-webkit-box', fontSize: 9, fontWeight: 500, color: '#444444', lineHeight: 1.3, overflow: 'hidden', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <span style={{ display: '-webkit-box', fontSize: 11, fontWeight: 500, color: '#111111', lineHeight: 1.25, overflow: 'hidden', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {e.label}
                       </span>
-                      <span style={{ display: 'block', fontSize: 8, color: '#BBBBBB', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span style={{ display: 'block', fontSize: 9, color: '#6B6B6B', letterSpacing: '0.04em', textTransform: 'uppercase', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {e.sub}
                       </span>
                     </button>
@@ -186,16 +186,16 @@ function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div onClick={ev => ev.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px', maxWidth: 420, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,.18)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 10px' }}>{e.kind} · {monthLabel}</p>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6E6E6E', margin: '0 0 10px' }}>{e.kind} · {monthLabel}</p>
         <h2 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 6px', color: '#111111' }}>{e.label}</h2>
-        <p style={{ fontSize: 13, color: '#888888', margin: 0 }}>{e.sub}</p>
+        <p style={{ fontSize: 13, color: '#666666', margin: 0 }}>{e.sub}</p>
         {(e.groups ?? []).filter(g => g.links.length > 0).map(g => (
           <div key={g.title} style={{ marginTop: 18 }}>
-            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 6px' }}>{g.title}</p>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6E6E6E', margin: '0 0 6px' }}>{g.title}</p>
             {g.links.map(l => (
               <button key={l.to + l.label} onClick={() => navigate(l.to)}
                 style={{ display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '9px 0', fontSize: 13, color: '#111111', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
-                {l.label}<span style={{ color: '#BBBBBB' }}>→</span>
+                {l.label}<span style={{ color: '#6E6E6E' }}>→</span>
               </button>
             ))}
           </div>
@@ -203,7 +203,7 @@ function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
         <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
           {e.clipping && <button onClick={() => setViewing(true)} style={{ background: '#111111', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>View clipping</button>}
           {e.open && <button onClick={() => navigate(e.open!)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer' }}>Open</button>}
-          <button onClick={onClose} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: '#888888', cursor: 'pointer' }}>Close</button>
+          <button onClick={onClose} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: '#444444', cursor: 'pointer' }}>Close</button>
         </div>
       </div>
     </div>
@@ -310,7 +310,7 @@ export function Career() {
           {(Object.keys(KIND_LABELS) as EventKind[]).map(k => (
             <button key={k} onClick={() => toggleKind(k)} aria-pressed={show[k]}
               style={{ padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 11,
-                background: show[k] ? '#111111' : '#F5F5F5', color: show[k] ? '#FFFFFF' : '#888888', fontWeight: show[k] ? 600 : 400 }}>
+                background: show[k] ? '#111111' : '#F5F5F5', color: show[k] ? '#FFFFFF' : '#666666', fontWeight: show[k] ? 600 : 400 }}>
               {KIND_LABELS[k]}
             </button>
           ))}
@@ -318,7 +318,7 @@ export function Career() {
       }>
 
       {isEmpty ? (
-        <div style={{ padding: '64px 20px', textAlign: 'center', color: '#CCCCCC', fontSize: 13, fontStyle: 'italic' }}>
+        <div style={{ padding: '64px 20px', textAlign: 'center', color: '#6E6E6E', fontSize: 13, fontStyle: 'italic' }}>
           Add dated projects, events, works, press or awards to build your career timeline.
         </div>
       ) : (

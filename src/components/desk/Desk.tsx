@@ -38,7 +38,7 @@ const SPAN: Record<DeskType, { span: number; h: number }> = {
 }
 
 const cardStyle: React.CSSProperties = { background: '#FFFFFF', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }
-const smallLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#AAAAAA' }
+const smallLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6E6E6E' }
 const plainBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit', textAlign: 'left' }
 const bareInput: React.CSSProperties = { border: 'none', outline: 'none', background: 'none', padding: 0, width: '100%', font: 'inherit', color: '#111111' }
 
@@ -156,17 +156,17 @@ function ProjectBlock({ p, todos, compact, onOpen }: { p: Project; todos: Todo[]
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
       </div>
       <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: '#111111' }}>{p.title}</button>
-      {sub && <div style={{ fontSize: 11, color: '#999999', marginTop: 3 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 11, color: '#6E6E6E', marginTop: 3 }}>{sub}</div>}
       <div style={{ marginTop: 'auto', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {next && <div style={{ fontSize: 11, color: '#444444' }}><span style={{ color: '#AAAAAA' }}>Next </span>{next.title}</div>}
+        {next && <div style={{ fontSize: 11, color: '#444444' }}><span style={{ color: '#6E6E6E' }}>Next </span>{next.title}</div>}
         {mine.length > 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, height: 4, borderRadius: 2, background: '#F0F0F0', overflow: 'hidden' }}>
               <div style={{ width: `${(done / mine.length) * 100}%`, height: '100%', background: '#111111' }} />
             </div>
-            <span style={{ fontSize: 9, color: '#999999' }}>{done}/{mine.length}</span>
+            <span style={{ fontSize: 9, color: '#6E6E6E' }}>{done}/{mine.length}</span>
           </div>
-        ) : date ? <div style={{ fontSize: 10, color: '#AAAAAA' }}>{date}</div> : null}
+        ) : date ? <div style={{ fontSize: 10, color: '#6E6E6E' }}>{date}</div> : null}
       </div>
     </div>
   )
@@ -248,14 +248,14 @@ function ListBlock({ item }: { item: BoardItem }) {
         style={{ ...bareInput, fontFamily: 'Recoleta, serif', fontSize: 15, marginBottom: 6 }} />
       {data.items.map(it => (
         <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? '#AAAAAA' : '#333333', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
+          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? '#6E6E6E' : '#333333', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
             <input type="checkbox" checked={it.done}
               onChange={() => void save({ ...data, items: data.items.map(x => x.id === it.id ? { ...x, done: !x.done } : x) })}
               style={{ accentColor: '#111111', width: 14, height: 14, margin: 0, flexShrink: 0 }} />
             {it.text}
           </label>
           <button aria-label={`Remove ${it.text}`} onClick={() => void save({ ...data, items: data.items.filter(x => x.id !== it.id) })}
-            style={{ ...plainBtn, fontSize: 12, color: '#CCCCCC', padding: '2px 4px' }}>×</button>
+            style={{ ...plainBtn, fontSize: 12, color: '#767676', padding: '2px 4px' }}>×</button>
         </div>
       ))}
       <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addItem() }}
@@ -276,7 +276,7 @@ function SubmissionBlock({ o }: { o: Opportunity }) {
     <div style={{ padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={smallLabel}>Submission</span>
-        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#777777', border: '1px solid #EEEEEE', borderRadius: 999, padding: '3px 8px' }}>{o.status}</span>
+        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6E6E6E', border: '1px solid #EEEEEE', borderRadius: 999, padding: '3px 8px' }}>{o.status}</span>
       </div>
       <div style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111' }}>{o.title}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
@@ -320,8 +320,8 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.2)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, width: 420, maxWidth: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ ...smallLabel, color: '#BBBBBB' }}>{title}</span>
-          <button onClick={onClose} style={{ ...plainBtn, fontSize: 12, color: '#999999' }}>Close</button>
+          <span style={{ ...smallLabel, color: '#767676' }}>{title}</span>
+          <button onClick={onClose} style={{ ...plainBtn, fontSize: 12, color: '#6E6E6E' }}>Close</button>
         </div>
         {children}
       </div>
@@ -333,7 +333,7 @@ function PickRow({ title, sub, onClick }: { title: string; sub?: string | null; 
   return (
     <button onClick={onClick} style={{ ...plainBtn, display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', padding: '11px 0', borderBottom: '1px solid #F5F5F5' }}>
       <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: '#111111', flex: 1 }}>{title}</span>
-      {sub && <span style={{ fontSize: 10, color: '#AAAAAA', flexShrink: 0 }}>{sub}</span>}
+      {sub && <span style={{ fontSize: 10, color: '#6E6E6E', flexShrink: 0 }}>{sub}</span>}
     </button>
   )
 }
@@ -740,7 +740,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     <button onClick={() => setPicker('earlier')}
       style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1px solid #EEEEEE', borderRadius: 999, padding: '9px 14px', fontSize: 11, color: '#666666', cursor: 'pointer', fontFamily: 'inherit', width: 'fit-content', ...(narrow ? {} : { position: 'absolute', left: PAD, bottom: 20 }) }}>
       Earlier work
-      <span style={{ fontSize: 9, fontWeight: 600, color: '#888888', background: '#F5F5F5', borderRadius: 999, padding: '2px 6px' }}>{pastProjects.length}</span>
+      <span style={{ fontSize: 9, fontWeight: 600, color: '#666666', background: '#F5F5F5', borderRadius: 999, padding: '2px 6px' }}>{pastProjects.length}</span>
     </button>
   )
 
@@ -811,7 +811,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
           )}
           {deskW > 0 && ordered.map(renderBlock)}
           {loaded && visible.length === 0 && (
-            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#BBBBBB' }}>Nothing on the desk</p>
+            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#767676' }}>Nothing on the desk</p>
           )}
           {earlierButton}
         </div>
@@ -828,7 +828,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       ) : (
         <div role="toolbar" aria-label="Add to desk"
           style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 32px)', overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 2, background: '#FFFFFF', borderRadius: 999, padding: '5px 6px', boxShadow: '0 4px 20px rgba(0,0,0,.12)', zIndex: 40, whiteSpace: 'nowrap' }}>
-          <span style={{ ...smallLabel, color: '#BBBBBB', padding: '0 8px 0 10px' }}>Add</span>
+          <span style={{ ...smallLabel, color: '#767676', padding: '0 8px 0 10px' }}>Add</span>
           {toolButtons.map(b => (
             <button key={b.label} onClick={b.run}
               style={{ fontSize: 11, color: '#555555', background: 'none', border: 'none', borderRadius: 999, padding: '8px 12px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
@@ -852,7 +852,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
             New project
           </button>
           {offDesk.length === 0
-            ? <p style={{ fontSize: 12, color: '#BBBBBB', margin: 0 }}>Every active project is on the desk.</p>
+            ? <p style={{ fontSize: 12, color: '#767676', margin: 0 }}>Every active project is on the desk.</p>
             : offDesk.map(p => <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => void restoreProject(p)} />)}
         </Modal>
       )}
@@ -860,7 +860,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       {picker === 'submission' && (
         <Modal title="Submission" onClose={() => setPicker(null)}>
           {openSubs.length === 0
-            ? <p style={{ fontSize: 12, color: '#BBBBBB', margin: 0 }}>No open submissions to add.</p>
+            ? <p style={{ fontSize: 12, color: '#767676', margin: 0 }}>No open submissions to add.</p>
             : openSubs.map(o => (
               <PickRow key={o.id} title={o.title} sub={o.deadline ? fmtDay(o.deadline) : o.status}
                 onClick={() => { setPicker(null); void addBlock('submission', String(o.id)) }} />

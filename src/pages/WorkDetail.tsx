@@ -19,11 +19,11 @@ function uid() { return Math.random().toString(36).slice(2) }
 const RIGHT_BADGE: Record<string, React.CSSProperties> = {
   live:    { background: 'var(--accent)', color: '#111111' },
   sold:    { background: '#F5F5F5', color: '#666666' },
-  pending: { background: 'transparent', color: '#AAAAAA', border: '1px dashed #DDDDDD' },
+  pending: { background: 'transparent', color: '#6E6E6E', border: '1px dashed #DDDDDD' },
 }
 
 function sectionLabel(text: string) {
-  return <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 12px' }}>{text}</p>
+  return <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: '0 0 12px' }}>{text}</p>
 }
 
 function useNarrow() {
@@ -173,7 +173,7 @@ export function WorkDetail() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {/* Back + title row */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
-          <button onClick={() => navigate('/studio')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}>
+          <button onClick={() => navigate('/studio')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4, width: 'fit-content' }}>
             ← Works
           </button>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
@@ -183,13 +183,13 @@ export function WorkDetail() {
             ) : (
               <span style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: '#111111' }}>{w.title}</span>
             )}
-            {!editing && w.subtitle && <span style={{ fontSize: 13, color: '#999999' }}>{w.subtitle}</span>}
+            {!editing && w.subtitle && <span style={{ fontSize: 13, color: '#6E6E6E' }}>{w.subtitle}</span>}
             {!editing && <span style={chip}>{wKind}</span>}
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
               {editing ? (
                 <>
                   <button onClick={() => void saveEdit()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-                  <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
                 </>
               ) : (
                 <button onClick={startEdit} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Edit</button>
@@ -208,10 +208,10 @@ export function WorkDetail() {
                 style={{ width: '100%', padding: 0, border: 'none', borderRadius: 8, overflow: 'hidden', cursor: 'pointer', background: w.image ? 'none' : 'linear-gradient(160deg,#EEEEEE 0%,#DDDDDD 100%)', minHeight: w.image ? undefined : 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {w.image
                   ? <img src={w.image} alt={w.title} style={{ display: 'block', width: '100%', maxHeight: narrow ? 360 : 300, objectFit: 'contain', background: '#F7F7F7' }} />
-                  : <span style={{ fontSize: 9, color: '#999999', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Add picture</span>}
+                  : <span style={{ fontSize: 9, color: '#6E6E6E', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Add picture</span>}
               </button>
               {w.image && (
-                <button onClick={() => void db.works.update(wid, { image: undefined })} style={{ background: 'none', border: 'none', fontSize: 10, color: '#BBBBBB', cursor: 'pointer', padding: 0 }}>Remove</button>
+                <button onClick={() => void db.works.update(wid, { image: undefined })} style={{ background: 'none', border: 'none', fontSize: 10, color: '#767676', cursor: 'pointer', padding: 0 }}>Remove</button>
               )}
             </div>
             <div style={{ ...card }}>
@@ -225,12 +225,12 @@ export function WorkDetail() {
               ) : shownFields.length > 0 ? (
                 shownFields.map(f => (
                   <div key={f.key} style={{ padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
-                    <div style={{ fontSize: 9, color: '#AAAAAA', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
+                    <div style={{ fontSize: 9, color: '#6E6E6E', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>{f.label}</div>
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{fieldDisplay(f.key, w[f.key], w)}</div>
                   </div>
                 ))
               ) : (
-                <button onClick={startEdit} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#BBBBBB', fontStyle: 'italic', cursor: 'pointer' }}>Add details</button>
+                <button onClick={startEdit} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#767676', fontStyle: 'italic', cursor: 'pointer' }}>Add details</button>
               )}
             </div>
           </div>
@@ -248,7 +248,7 @@ export function WorkDetail() {
                   <input value={pressOutlet} onChange={e => setPressOutlet(e.target.value)} placeholder="Outlet" aria-label="Outlet" style={{ ...inp, marginBottom: 8 }} />
                   <DateFields label="Date" value={pressDate} onChange={setPressDate} inp={inp} />
                   <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                    <select value={pressType} onChange={e => setPressType(e.target.value)} style={{ ...inp, flex: 1, color: pressType ? '#111111' : '#AAAAAA' }}>
+                    <select value={pressType} onChange={e => setPressType(e.target.value)} style={{ ...inp, flex: 1, color: pressType ? '#111111' : '#6E6E6E' }}>
                       <option value="">Type…</option>
                       {PRESS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -256,23 +256,23 @@ export function WorkDetail() {
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => void addPress()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
-                    <button onClick={() => setAddingPress(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={() => setAddingPress(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
                   </div>
                 </div>
               )}
-              {pressRows.length === 0 && !addingPress && <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>No press yet</p>}
+              {pressRows.length === 0 && !addingPress && <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>No press yet</p>}
               {pressRows.map(p => (
                 <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #F5F5F5' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F3F3F3', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 7, fontWeight: 700, color: '#999999', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>{String(p.outlet ?? '').slice(0, 4).toUpperCase() || '···'}</span>
+                    <span style={{ fontSize: 7, fontWeight: 700, color: '#6E6E6E', letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>{String(p.outlet ?? '').slice(0, 4).toUpperCase() || '···'}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', lineHeight: 1.35 }}>{p.title}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[p.outlet, formatAnyDate(p.date)].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize: 10, color: '#6E6E6E', marginTop: 2 }}>{[p.outlet, formatAnyDate(p.date)].filter(Boolean).join(' · ')}</div>
                   </div>
-                  {p.type && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#888888', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{p.type}</span>}
-                  {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" aria-label="Open article" style={{ fontSize: 12, color: '#AAAAAA', textDecoration: 'none', flexShrink: 0 }}>↗</a>}
-                  {p.remove && <button onClick={p.remove} aria-label="Remove press item" style={{ background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer', flexShrink: 0 }}>×</button>}
+                  {p.type && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', background: '#F5F5F5', color: '#666666', padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{p.type}</span>}
+                  {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" aria-label="Open article" style={{ fontSize: 12, color: '#6E6E6E', textDecoration: 'none', flexShrink: 0 }}>↗</a>}
+                  {p.remove && <button onClick={p.remove} aria-label="Remove press item" style={{ background: 'none', border: 'none', fontSize: 12, color: '#767676', cursor: 'pointer', flexShrink: 0 }}>×</button>}
                 </div>
               ))}
             </div>
@@ -284,7 +284,7 @@ export function WorkDetail() {
                   style={{ ...inp, resize: 'vertical' }} />
               ) : (
                 <p style={{ fontSize: 12.5, color: '#666666', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
-                  {w.notes || <span style={{ color: '#CCCCCC', fontStyle: 'italic' }}>No notes yet.</span>}
+                  {w.notes || <span style={{ color: '#767676', fontStyle: 'italic' }}>No notes yet.</span>}
                 </p>
               )}
             </div>
@@ -296,7 +296,7 @@ export function WorkDetail() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 {sectionLabel('Shown at')}
                 {linkable.length > 0 && (
-                  <button onClick={() => setLinkingEvent(v => !v)} style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer', marginTop: -12 }}>+ Add</button>
+                  <button onClick={() => setLinkingEvent(v => !v)} style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#6E6E6E', cursor: 'pointer', marginTop: -12 }}>+ Add</button>
                 )}
               </div>
               {linkingEvent && (
@@ -306,15 +306,15 @@ export function WorkDetail() {
                 </select>
               )}
               {shownAt.length === 0 && !linkingEvent && (
-                <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>{deptEvents.length === 0 ? 'Add events to link this work to them' : 'Not linked to any event'}</p>
+                <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>{deptEvents.length === 0 ? 'Add events to link this work to them' : 'Not linked to any event'}</p>
               )}
               {shownAt.map(e => (
                 <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{e.title}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[e.type, e.location, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize: 10, color: '#6E6E6E', marginTop: 2 }}>{[e.type, e.location, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')}</div>
                   </div>
-                  <button onClick={() => void unlinkEvent(e.id!)} aria-label={`Unlink ${e.title}`} style={{ background: 'none', border: 'none', fontSize: 12, color: '#CCCCCC', cursor: 'pointer', flexShrink: 0 }}>×</button>
+                  <button onClick={() => void unlinkEvent(e.id!)} aria-label={`Unlink ${e.title}`} style={{ background: 'none', border: 'none', fontSize: 12, color: '#767676', cursor: 'pointer', flexShrink: 0 }}>×</button>
                 </div>
               ))}
             </div>
@@ -322,7 +322,7 @@ export function WorkDetail() {
             <div style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 {sectionLabel('Rights')}
-                <button onClick={() => setAddingRight(v => !v)} style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#AAAAAA', cursor: 'pointer', marginTop: -12 }}>+ Add</button>
+                <button onClick={() => setAddingRight(v => !v)} style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#6E6E6E', cursor: 'pointer', marginTop: -12 }}>+ Add</button>
               </div>
               {addingRight && (
                 <div style={{ background: '#F9F9F9', borderRadius: 10, padding: 12, marginBottom: 12 }}>
@@ -342,18 +342,18 @@ export function WorkDetail() {
                   </select>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => void addRight()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
-                    <button onClick={() => setAddingRight(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={() => setAddingRight(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
                   </div>
                 </div>
               )}
-              {rights.length === 0 && !addingRight && <p style={{ fontSize: 12, color: '#CCCCCC', fontStyle: 'italic', margin: 0 }}>No rights tracked</p>}
+              {rights.length === 0 && !addingRight && <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>No rights tracked</p>}
               {rights.map(r => (
                 <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>
                   <div>
                     <div style={{ fontSize: 11.5, fontWeight: 500, color: '#111111' }}>{r.language}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 1 }}>{[r.publisher, r.year].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize: 10, color: '#6E6E6E', marginTop: 1 }}>{[r.publisher, r.year].filter(Boolean).join(' · ')}</div>
                     {(r.advance != null || r.royaltyRate != null || r.printRun != null || r.price != null) && (
-                      <div style={{ fontSize: 10, color: '#888888', marginTop: 2 }}>
+                      <div style={{ fontSize: 10, color: '#666666', marginTop: 2 }}>
                         {[r.advance != null ? `Advance ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}
                       </div>
                     )}
@@ -372,7 +372,7 @@ export function WorkDetail() {
                   <button key={a.id} onClick={() => navigate('/career/recognition')}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '8px 0', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: '#111111' }}>{a.title}</div>
-                    <div style={{ fontSize: 10, color: '#AAAAAA', marginTop: 2 }}>{[a.type, a.outlet, formatAnyDate(a.date)].filter(Boolean).join(' · ')}</div>
+                    <div style={{ fontSize: 10, color: '#6E6E6E', marginTop: 2 }}>{[a.type, a.outlet, formatAnyDate(a.date)].filter(Boolean).join(' · ')}</div>
                   </button>
                 ))}
               </div>
@@ -380,7 +380,7 @@ export function WorkDetail() {
 
             <div style={{ ...card }}>
               {sectionLabel('Danger zone')}
-              <button onClick={() => void deleteWork()} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '8px 14px', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>
+              <button onClick={() => void deleteWork()} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '8px 14px', fontSize: 12, color: '#6E6E6E', cursor: 'pointer' }}>
                 Delete work…
               </button>
             </div>

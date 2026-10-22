@@ -7,7 +7,7 @@ import { Shell } from '../components/layout/Shell'
 import { PROJECT_TYPES } from './Projects'
 
 const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
-const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#BBBBBB' }
+const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#767676' }
 function Row({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>{children}</div>
 }
@@ -87,7 +87,7 @@ function MetaItem({ label, value }: { label: string; value?: string | number | n
   if (!value) return null
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CCCCCC' }}>{label}</span>
+      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#767676' }}>{label}</span>
       <span style={{ fontSize: 13, color: '#444444' }}>{value}</span>
     </div>
   )
@@ -164,20 +164,20 @@ function TaskCard({ task, onMove, onDelete }: { task: Todo; onMove: (s: KanbanCo
   const overdue = task.dueDate && task.dueDate < today && !isDone
   return (
     <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,.06)', position: 'relative' }}>
-      <p style={{ fontSize: 13, color: isDone ? '#CCCCCC' : '#111111', textDecoration: isDone ? 'line-through' : 'none', margin: 0 }}>{task.title}</p>
+      <p style={{ fontSize: 13, color: isDone ? '#767676' : '#111111', textDecoration: isDone ? 'line-through' : 'none', margin: 0 }}>{task.title}</p>
       {task.dueDate && (
-        <p style={{ fontSize: 10, color: overdue ? '#E05252' : '#AAAAAA', margin: '4px 0 0' }}>
+        <p style={{ fontSize: 10, color: overdue ? '#E05252' : '#6E6E6E', margin: '4px 0 0' }}>
           {overdue ? 'Overdue' : 'Due'} {task.dueDate.slice(5).replace('-', '/')}
         </p>
       )}
       <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
         {COLUMNS.filter(c => c.key !== task.kanbanStatus).map(c => (
           <button key={c.key} onClick={() => onMove(c.key)}
-            style={{ background: '#F5F5F5', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, color: '#888888', cursor: 'pointer' }}>
+            style={{ background: '#F5F5F5', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, color: '#666666', cursor: 'pointer' }}>
             {c.label}
           </button>
         ))}
-        <button onClick={onDelete} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 14, color: '#DDDDDD', cursor: 'pointer', lineHeight: 1 }}>×</button>
+        <button onClick={onDelete} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 14, color: '#767676', cursor: 'pointer', lineHeight: 1 }}>×</button>
       </div>
     </div>
   )
@@ -197,10 +197,10 @@ function AddTaskInline({ projectId, deptId, col, onDone }: { projectId: number; 
         style={{ width: '100%', border: 'none', outline: 'none', fontSize: 13, color: '#111111', background: 'transparent' }}
         onKeyDown={e => { if (e.key === 'Enter') void save(); if (e.key === 'Escape') onDone() }} />
       <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
-        style={{ width: '100%', border: 'none', outline: 'none', fontSize: 11, color: '#AAAAAA', background: 'transparent', marginTop: 6 }} />
+        style={{ width: '100%', border: 'none', outline: 'none', fontSize: 11, color: '#6E6E6E', background: 'transparent', marginTop: 6 }} />
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Add</button>
-        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
       </div>
     </div>
   )
@@ -225,8 +225,8 @@ function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number
       {COLUMNS.map(col => (
         <div key={col.key}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#AAAAAA' }}>{col.label}</span>
-            <span style={{ fontSize: 10, color: '#DDDDDD' }}>{byCol(col.key).length}</span>
+            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6E6E6E' }}>{col.label}</span>
+            <span style={{ fontSize: 10, color: '#767676' }}>{byCol(col.key).length}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#F9F9F9', borderRadius: 12, padding: 8, minHeight: 60 }}>
             {byCol(col.key).map(task => (
@@ -236,7 +236,7 @@ function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number
               <AddTaskInline projectId={projectId} deptId={deptId} col={col.key} onDone={() => setAddingIn(null)} />
             )}
             <button onClick={() => setAddingIn(col.key)}
-              style={{ background: 'none', border: 'none', fontSize: 11, color: '#CCCCCC', cursor: 'pointer', padding: '6px 0', textAlign: 'left' }}>
+              style={{ background: 'none', border: 'none', fontSize: 11, color: '#767676', cursor: 'pointer', padding: '6px 0', textAlign: 'left' }}>
               + Add task
             </button>
           </div>
@@ -314,7 +314,7 @@ export function ProjectDetail() {
   return (
     <Shell>
       <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '28px 32px' }}>
-        <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#AAAAAA', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
+        <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
           ← On My Desk
         </button>
 
@@ -350,7 +350,7 @@ export function ProjectDetail() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => void saveEdit()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-              <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#888888', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
         ) : (
@@ -359,11 +359,11 @@ export function ProjectDetail() {
               <div>
                 <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 28, fontWeight: 400, margin: '0 0 4px', color: '#111111' }}>{project.title}</h1>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  {project.projectType && <span style={{ fontSize: 11, color: '#AAAAAA' }}>{project.projectType}</span>}
+                  {project.projectType && <span style={{ fontSize: 11, color: '#6E6E6E' }}>{project.projectType}</span>}
                   {project.status && <span style={{ fontSize: 11, background: '#F5F5F5', borderRadius: 999, padding: '2px 10px', color: '#666666' }}>{project.status}</span>}
                 </div>
               </div>
-              <button onClick={startEdit} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: '#888888', cursor: 'pointer', flexShrink: 0, marginLeft: 16 }}>Edit</button>
+              <button onClick={startEdit} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: '#666666', cursor: 'pointer', flexShrink: 0, marginLeft: 16 }}>Edit</button>
             </div>
 
             <ProjectMeta p={project} />
@@ -371,24 +371,24 @@ export function ProjectDetail() {
             {project.notes ? (
               <p style={{ fontSize: 14, color: '#444444', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: '0 0 28px' }}>{project.notes}</p>
             ) : (
-              <p style={{ fontSize: 13, color: '#CCCCCC', fontStyle: 'italic', margin: '0 0 28px' }}>No notes yet. <button onClick={startEdit} style={{ background: 'none', border: 'none', fontSize: 13, color: '#AAAAAA', cursor: 'pointer', padding: 0, fontStyle: 'italic' }}>Add one →</button></p>
+              <p style={{ fontSize: 13, color: '#767676', fontStyle: 'italic', margin: '0 0 28px' }}>No notes yet. <button onClick={startEdit} style={{ background: 'none', border: 'none', fontSize: 13, color: '#6E6E6E', cursor: 'pointer', padding: 0, fontStyle: 'italic' }}>Add one →</button></p>
             )}
 
             {project.id != null && (
               <div style={{ marginBottom: 32 }}>
-                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#CCCCCC', margin: '0 0 14px' }}>Tasks</p>
+                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: '0 0 14px' }}>Tasks</p>
                 <KanbanBoard projectId={project.id} deptId={dept?.id} />
               </div>
             )}
 
             <div style={{ borderTop: '1px solid #F5F5F5', paddingTop: 20 }}>
               {!confirmDelete ? (
-                <button onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '8px 14px', fontSize: 11, color: '#CCCCCC', cursor: 'pointer' }}>Delete project…</button>
+                <button onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: '1px solid #EEEEEE', borderRadius: 10, padding: '8px 14px', fontSize: 11, color: '#767676', cursor: 'pointer' }}>Delete project…</button>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 12, color: '#888888' }}>Delete this project?</span>
+                  <span style={{ fontSize: 12, color: '#666666' }}>Delete this project?</span>
                   <button onClick={() => void deleteProject()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete</button>
-                  <button onClick={() => setConfirmDelete(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#AAAAAA', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={() => setConfirmDelete(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
                 </div>
               )}
             </div>
