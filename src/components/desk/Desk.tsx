@@ -758,14 +758,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   const loaded = items !== undefined
 
-  const topRow = (!narrow && !hintDone) || hiddenItems.length > 0 ? (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
-      {!narrow && !hintDone ? (
-        <p style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, fontSize: 12, color: '#6E6E6E' }}>
-          <svg width="10" height="14" viewBox="0 0 12 16" fill="none" aria-hidden="true"><circle cx="3" cy="3" r="1.4" fill="#6E6E6E" /><circle cx="9" cy="3" r="1.4" fill="#6E6E6E" /><circle cx="3" cy="8" r="1.4" fill="#6E6E6E" /><circle cx="9" cy="8" r="1.4" fill="#6E6E6E" /><circle cx="3" cy="13" r="1.4" fill="#6E6E6E" /><circle cx="9" cy="13" r="1.4" fill="#6E6E6E" /></svg>
-          Drag cards to arrange your desk. Drag the side handle to resize.
-        </p>
-      ) : <span />}
+  const topRow = hiddenItems.length > 0 ? (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
       {hiddenItems.length > 0 && (
         <div style={{ position: 'relative' }}>
           <button onClick={() => setTrayOpen(o => !o)} aria-expanded={trayOpen}
@@ -818,6 +812,14 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       )}
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => void onImagePicked(e)} />
+
+      {/* Hint, just above the toolbar, until the first card is moved */}
+      {!narrow && !hintDone && (
+        <p style={{ position: 'fixed', bottom: minimised ? 80 : 74, left: '50%', transform: 'translateX(-50%)', zIndex: 40, margin: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 999, background: 'rgba(255,255,255,.92)', boxShadow: '0 2px 10px rgba(0,0,0,.08)', fontSize: 12, color: '#555555', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+          <svg width="10" height="14" viewBox="0 0 12 16" fill="none" aria-hidden="true"><circle cx="3" cy="3" r="1.4" fill="#555555" /><circle cx="9" cy="3" r="1.4" fill="#555555" /><circle cx="3" cy="8" r="1.4" fill="#555555" /><circle cx="9" cy="8" r="1.4" fill="#555555" /><circle cx="3" cy="13" r="1.4" fill="#555555" /><circle cx="9" cy="13" r="1.4" fill="#555555" /></svg>
+          Drag cards to arrange your desk. Drag the side handle to resize.
+        </p>
+      )}
 
       {/* Toolbar */}
       {minimised ? (
