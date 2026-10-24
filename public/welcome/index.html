@@ -17,6 +17,12 @@ h1, h2, h3, p { text-wrap: balance; }
 <style>html { scroll-behavior: smooth; }
 .band { display: grid; height: clamp(300px, 46vw, 680px); }
 .band.tall { height: clamp(300px, 56vw, 820px); }
+.shot { position: relative; padding-bottom: 56px; }
+.shot > .full { display: block; width: 100%; height: auto; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12); }
+.shot > .zoom { position: absolute; bottom: 0; width: var(--w, 42%); height: auto; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.26); }
+.shot.r > .zoom { right: -24px; }
+.shot.l > .zoom { left: -24px; }
+@media (max-width: 640px) { .shot > .zoom { width: 78%; } .shot.r > .zoom { right: -8px; } .shot.l > .zoom { left: -8px; } }
 .band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
 @media (max-width: 640px) { .band { height: 260px; } }
 </style>
@@ -41,7 +47,7 @@ h1, h2, h3, p { text-wrap: balance; }
         <a href="#demos" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #111111; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFFFFF; text-decoration: none">Try a demo</a>
         <a href="#start" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #FFFFFF; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; text-decoration: none">Get started</a>
       </div>
-      <img src="/welcome/01.jpg" alt="On My Desk in the painter demo: project cards, this week's tasks and upcoming events" style="position: relative; display: block; width: 100%; max-width: 1120px; height: auto; margin: 64px auto -140px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.16)">
+      <img src="/welcome/s-01.jpg" alt="On My Desk in the painter demo: project cards, this week's tasks and upcoming events" style="position: relative; display: block; width: 100%; max-width: 1120px; height: auto; margin: 64px auto -140px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.16)">
     </div>
   </section>
 
@@ -110,7 +116,10 @@ h1, h2, h3, p { text-wrap: balance; }
           <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 40px; line-height: 1.08">Every call, with its deadline.</h3>
           <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #555555">Open calls, grants, residencies and publisher proposals, from draft to won. Sent ones stop counting down.</p>
         </div>
-        <img src="/welcome/02.jpg" alt="Submissions in the musician demo, with deadlines and statuses" style="flex: 999 1 560px; min-width: 0; display: block; width: 100%; height: auto; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.10)">
+        <div class="shot r" style="flex: 999 1 560px; min-width: 0">
+          <img class="full" src="/welcome/s-02.jpg" alt="Submissions in the musician demo, with deadlines and statuses">
+          <img class="zoom" src="/welcome/z-02.jpg" alt="Submissions on a phone: each call with its type, status and deadline" style="--w: 34%">
+        </div>
       </div>
     </div>
   </section>
@@ -118,13 +127,16 @@ h1, h2, h3, p { text-wrap: balance; }
   <!-- Photos: black and white, edge to edge -->
   <div class="band" style="grid-template-columns: 1fr 1fr">
     <img src="/welcome/photo-1.jpg" alt="A musician working on a laptop in a home studio" loading="lazy" style="object-position: 50% 45%">
-    <img src="/welcome/photo-8.jpg" alt="A sculptor carving a marble head" loading="lazy" style="object-position: 50% 15%">
+    <img src="/welcome/photo-7.jpg" alt="A painter choosing a tube of paint" loading="lazy" style="object-position: 50% 50%">
   </div>
 
   <!-- 2 Events: black -->
   <section style="background: #111111; color: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
-      <img src="/welcome/03.jpg" alt="Events in the musician demo: performances, a talk and a market" style="flex: 999 1 560px; min-width: 0; display: block; width: 100%; height: auto">
+      <div class="shot l" style="flex: 999 1 560px; min-width: 0">
+        <img class="full" src="/welcome/s-03.jpg" alt="Events in the musician demo: performances, a talk and a market">
+        <img class="zoom" src="/welcome/z-03.jpg" alt="Close-up of upcoming events: a tour, a market and a talk">
+      </div>
       <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
         <p style="margin: 0 0 18px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">2</span>Events</p>
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 40px; line-height: 1.08; color: #FFFFFF">Readings, shows, fairs and markets.</h3>
@@ -141,7 +153,10 @@ h1, h2, h3, p { text-wrap: balance; }
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 40px; line-height: 1.08">Books, releases, artworks.</h3>
         <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #333333">Every detail of each piece. For books, the contract too: advance, royalty, print run and foreign rights.</p>
       </div>
-      <img src="/welcome/04.jpg" alt="A picture book in the illustrator demo, with press, contract and rights" style="flex: 999 1 560px; min-width: 0; display: block; width: 100%; height: auto; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.14)">
+      <div class="shot r" style="flex: 999 1 560px; min-width: 0">
+        <img class="full" src="/welcome/s-04.jpg" alt="A picture book in the illustrator demo, with press, contract and rights">
+        <img class="zoom" src="/welcome/z-04.jpg" alt="The book's contract: price, print run, advance, royalty and when it earns out" style="--w: 28%">
+      </div>
     </div>
   </section>
 
@@ -155,9 +170,12 @@ h1, h2, h3, p { text-wrap: balance; }
   <section style="background: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
       <div style="flex: 999 1 560px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
-        <img src="/welcome/06.jpg" alt="The career timeline in the writer demo" style="grid-column: 1 / -1; display: block; width: 100%; height: auto; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.10)">
-        <img src="/welcome/07.jpg" alt="The career map in the illustrator demo" style="display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10)">
-        <img src="/welcome/08.jpg" alt="Press and awards in the musician demo" style="display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10)">
+        <div class="shot l" style="grid-column: 1 / -1">
+          <img class="full" src="/welcome/s-06.jpg" alt="The career timeline in the writer demo">
+          <img class="zoom" src="/welcome/z-06.jpg" alt="Close-up of the timeline: a launch, a reading, an interview and an award">
+        </div>
+        <img src="/welcome/s-07.jpg" alt="The career map in the illustrator demo" style="display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10)">
+        <img src="/welcome/s-08.jpg" alt="Press and awards in the musician demo" style="display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10)">
       </div>
       <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
         <p style="margin: 0 0 18px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">4</span>Career</p>
@@ -180,14 +198,17 @@ h1, h2, h3, p { text-wrap: balance; }
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 40px; line-height: 1.08; color: #FFFFFF">Where you are heading.</h3>
         <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #CFCFCF">Pictures in the middle, with your quotes, goals and references around them, connected. One board per project, or one per year.</p>
       </div>
-      <img src="/welcome/09.jpg" alt="A Manifest board in the illustrator demo: pictures in the middle, quotes, goals and references around them, joined by connectors" style="flex: 999 1 560px; min-width: 0; display: block; width: 100%; height: auto">
+      <div class="shot r" style="flex: 999 1 560px; min-width: 0">
+        <img class="full" src="/welcome/s-09.jpg" alt="A Manifest board in the illustrator demo: pictures in the middle, quotes, goals and references around them, joined by connectors">
+        <img class="zoom" src="/welcome/z-09.jpg" alt="Close-up of the board: a quote and goals connected to a picture">
+      </div>
     </div>
   </section>
 
   <!-- Photos: black and white, edge to edge -->
   <div class="band" style="grid-template-columns: 1fr 1fr">
     <img src="/welcome/photo-9.jpg" alt="A writer working on a laptop with a marked-up manuscript" loading="lazy" style="object-position: 50% 30%">
-    <img src="/welcome/photo-7.jpg" alt="A painter choosing a tube of paint" loading="lazy" style="object-position: 50% 50%">
+    <img src="/welcome/photo-8.jpg" alt="A sculptor carving a marble head" loading="lazy" style="object-position: 50% 15%">
   </div>
 
   <!-- Phone: yellow -->
@@ -198,7 +219,7 @@ h1, h2, h3, p { text-wrap: balance; }
         <p style="margin: 20px 0 0; font-size: 18px; line-height: 1.6; color: #333333">Your studio is saved to your account and opens on any device. Download a backup whenever you like; your data stays yours.</p>
       </div>
       <div style="flex: 0 0 auto; width: 300px; max-width: 100%; border: 10px solid #111111; border-bottom: 0; border-radius: 44px 44px 0 0; overflow: hidden; background: #F5F5F5">
-        <img src="/welcome/10.jpg" alt="On My Desk on a phone" style="display: block; width: 100%; height: 540px; object-fit: cover; object-position: top">
+        <img src="/welcome/s-10.jpg" alt="On My Desk on a phone" style="display: block; width: 100%; height: 540px; object-fit: cover; object-position: top">
       </div>
     </div>
   </section>
