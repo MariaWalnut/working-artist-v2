@@ -124,7 +124,7 @@ export function Studio() {
               {shown.map(w => {
                 const sub = workSubtitle(w)
                 return (
-                  <button key={w.id} onClick={() => navigate(`/studio/${w.id}`)}
+                  <button key={w.id} data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)}
                     style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: '1px solid #F9F9F9', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
                     <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, #EEEEEE 0%, #DDDDDD 100%)', overflow: 'hidden' }}>
                       {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}

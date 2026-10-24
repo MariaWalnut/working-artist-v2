@@ -151,7 +151,7 @@ function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, 
                     {/* Month tick */}
                     <div style={{ position: 'absolute', left: `${mx / 10}%`, top: LINE_Y, width: 1, height: 6, background: '#8A8A8A' }} />
                     {/* Event label */}
-                    <button onClick={() => onSelect(e)}
+                    <button data-tour-title={e.label} onClick={() => onSelect(e)}
                       style={{ position: 'absolute', left: `${lx / 10}%`, top: markerY(lane), transform: 'translateX(-50%)', width: 92, maxHeight: LANE_H - 8, overflow: 'hidden', background: '#FFFFFF', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0 0 2px', textAlign: 'center', zIndex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: KIND_DOT[e.kind] }} />

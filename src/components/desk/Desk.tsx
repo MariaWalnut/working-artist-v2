@@ -206,7 +206,7 @@ function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos:
         return (
           <label key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)', cursor: 'pointer' }}>
             <input type="checkbox" checked={false}
-              onChange={() => void db.todos.update(t.id!, { done: true, kanbanStatus: 'done' })}
+              onChange={() => { void db.todos.update(t.id!, { done: true, kanbanStatus: 'done' }); window.dispatchEvent(new Event('wa:task-done')) }}
               style={{ accentColor: '#111111', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0 }} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <span style={{ fontSize: 12, color: '#111111' }}>{t.title}</span>
@@ -610,6 +610,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     }
     if (d.mode === 'move') {
       await db.boardItems.update(d.id, { x: colAt(g.left, item.w), y: snap(g.top) })
+      window.dispatchEvent(new Event('wa:card-moved'))
     } else {
       const upd: Partial<BoardItem> = { w: spanFor(g.width, item.x) }
       if (item.itemType === 'image') upd.h = snap(g.height)
@@ -805,7 +806,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
           )}
           {deskW > 0 && ordered.map(renderBlock)}
           {loaded && visible.length === 0 && (
-            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#767676' }}>Nothing on the desk</p>
+            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#767676' }}>Nothing on the desk yet. Add a project from the toolbar below.</p>
           )}
           {earlierButton}
         </div>

@@ -375,7 +375,7 @@ export function Press() {
           {filtered.map((p, i) => {
             const work = p.workId ? works.find(w => w.id === p.workId) : null
             return (
-              <div key={p.id} data-press-id={p.id} onClick={() => setEditing(p)}
+              <div key={p.id} data-press-id={p.id} data-tour-title={p.title} onClick={() => setEditing(p)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < filtered.length - 1 ? '1px solid #F5F5F5' : 'none', cursor: 'pointer', background: dropRow === p.id ? '#FFFBE0' : undefined, boxShadow: dropRow === p.id ? 'inset 0 0 0 1.5px #E8D600' : undefined }}>
 
                 {anyClipping && (

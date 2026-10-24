@@ -5,6 +5,7 @@ import { useActiveDept } from '../lib/useDept'
 import { currentMonth, formatEventDate, isOngoing, isUpcoming } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
+import { Hint } from '../components/Hint'
 
 
 const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Award', 'Residency', 'Other']
@@ -126,6 +127,7 @@ function EventForm({ entry, works, onDone }: {
         {works.length > 0 && !upcoming && (
           <div style={{ marginBottom: 10 }}>
             <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#767676', margin: '0 0 8px' }}>Works shown</p>
+            {workIds.length === 0 && <Hint id="event-works" style={{ marginBottom: 8 }}>Pick the works you showed. They appear together on your timeline and map.</Hint>}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto' }}>
               {works.map(w => {
                 if (w.id == null) return null
@@ -302,7 +304,7 @@ export function AllEvents() {
               {entries.length === 0 ? 'No events yet' : 'Nothing matches'}
             </p>
           ) : visible.map((e, i) => (
-            <div key={e.id} onClick={() => setEditing(e)}
+            <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
               style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid #F9F9F9' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? '#111111' : '#6E6E6E' }}>{formatEventDate(e.date, e.endDate)}</span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>

@@ -9,6 +9,7 @@ import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
 import { fileToDataUrl } from '../lib/images'
+import { Hint } from '../components/Hint'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
 const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile']
@@ -292,7 +293,7 @@ export function WorkDetail() {
 
           {/* RIGHT: shown at + rights + delete */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ ...card }}>
+            <div data-tour="work-shown" style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 {sectionLabel('Shown at')}
                 {linkable.length > 0 && (
@@ -306,7 +307,7 @@ export function WorkDetail() {
                 </select>
               )}
               {shownAt.length === 0 && !linkingEvent && (
-                <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>{deptEvents.length === 0 ? 'Add events to link this work to them' : 'Not linked to any event'}</p>
+                <Hint id="work-shown">{deptEvents.length === 0 ? 'Add the events this work was part of under Events, then link them here. It will show on your timeline and map.' : 'Link the events this work was part of. It will show on your timeline and map.'}</Hint>
               )}
               {shownAt.map(e => (
                 <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid #F5F5F5' }}>

@@ -4,6 +4,7 @@ import { db, type Board, type BoardItem } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { FrameHeader, FrameTabs } from '../components/FrameHeader'
+import { Hint } from '../components/Hint'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -456,6 +457,10 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
       }>
         {tabs}
       </FrameHeader>
+
+      {mode !== 'arrow' && arrows.length === 0 && items.length > 1 && (
+        <Hint id="manifest-arrow" style={{ margin: '8px 12px 0' }}>Press Arrow, then click two items, to connect them.</Hint>
+      )}
 
       {/* Arrow hint */}
       {mode === 'arrow' && (

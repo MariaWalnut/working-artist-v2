@@ -245,7 +245,7 @@ export function WorldMapPanel() {
           const eventItems = items.filter(x => x.kind === 'event')
           const workItems = items.filter(x => x.kind === 'work')
           return (
-            <div key={city}>
+            <div key={city} data-tour-title={city}>
               {i > 0 && <div style={{ height: 1, background: '#F5F5F5', margin: '14px 0' }} />}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: '#111111' }}>{city}</span>

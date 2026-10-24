@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Opportunity } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
+import { Hint } from '../components/Hint'
 
 const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Press', 'Commission']
 const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Closed']
@@ -217,7 +218,7 @@ export function Opportunities() {
           </div>
 
           {filtered.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p>
+            <div style={{ padding: '40px 24px' }}><p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p><Hint id="subs-start" style={{ maxWidth: 420, margin: '0 auto' }}>Add a call with + Add, or bring in a whole list with Import, from a spreadsheet with Title, Type, Organisation, Deadline and Status.</Hint></div>
           ) : filtered.map(o => {
             const today = new Date().toISOString().slice(0, 10)
             const notSent = o.status === 'Active' || o.status === 'Draft'
