@@ -17,12 +17,10 @@ h1, h2, h3, p { text-wrap: balance; }
 <style>html { scroll-behavior: smooth; }
 .band { display: grid; height: clamp(300px, 46vw, 680px); }
 .band.tall { height: clamp(300px, 56vw, 820px); }
-.shot { position: relative; padding-bottom: 56px; }
-.shot > .full { display: block; width: 100%; height: auto; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12); }
-.shot > .zoom { position: absolute; bottom: 0; width: var(--w, 42%); height: auto; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.26); }
-.shot.r > .zoom { right: -24px; }
-.shot.l > .zoom { left: -24px; }
-@media (max-width: 640px) { .shot > .zoom { width: 78%; } .shot.r > .zoom { right: -8px; } .shot.l > .zoom { left: -8px; } }
+.shot { position: relative; overflow: hidden; border: 1px solid #111111; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12); cursor: zoom-in; background: #F5F5F5; }
+.shot img { display: block; width: 100%; height: auto; transition: transform 0.3s ease; }
+.shot.on { cursor: zoom-out; }
+.shot.on img { transform: scale(1.8); }
 .band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
 @media (max-width: 640px) { .band { height: 260px; } }
 </style>
@@ -47,7 +45,9 @@ h1, h2, h3, p { text-wrap: balance; }
         <a href="#demos" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #111111; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFFFFF; text-decoration: none">Try a demo</a>
         <a href="#start" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #FFFFFF; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; text-decoration: none">Get started</a>
       </div>
-      <img src="/welcome/s-01.jpg" alt="On My Desk in the painter demo: project cards, this week's tasks and upcoming events" style="position: relative; display: block; width: 100%; max-width: 1120px; height: auto; margin: 64px auto -140px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.16)">
+      <div class="shot" style="max-width: 1120px; margin: 64px auto -140px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.16)">
+        <img src="/welcome/s-01.jpg" alt="On My Desk in the painter demo: project cards, this week's tasks and upcoming events">
+      </div>
     </div>
   </section>
 
@@ -116,9 +116,8 @@ h1, h2, h3, p { text-wrap: balance; }
           <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">The details behind every project, from contracts to press coverage.</h3>
           <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #555555">Every detail of each piece. For books, the contract too: advance, royalty, print run and foreign rights.</p>
         </div>
-        <div class="shot r" style="flex: 999 1 560px; min-width: 0">
-          <img class="full" src="/welcome/s-04.jpg" alt="A picture book in the illustrator demo, with press, contract and rights">
-          <img class="zoom" src="/welcome/z-04.jpg" alt="The book's contract: price, print run, advance, royalty and when it earns out" style="--w: 28%">
+        <div class="shot" style="flex: 999 1 560px; min-width: 0">
+          <img src="/welcome/s-04.jpg" alt="A picture book in the illustrator demo, with press, contract and rights">
         </div>
       </div>
     </div>
@@ -138,9 +137,8 @@ h1, h2, h3, p { text-wrap: balance; }
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">All your open calls and deadlines in one place.</h3>
         <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #333333">Open calls, grants, residencies and publisher proposals, from draft to won. Sent ones stop counting down.</p>
       </div>
-      <div class="shot r" style="flex: 999 1 560px; min-width: 0">
-        <img class="full" src="/welcome/s-02.jpg" alt="Submissions in the musician demo, with deadlines and statuses">
-        <img class="zoom" src="/welcome/z-02.jpg" alt="Submissions on a phone: each call with its type, status and deadline" style="--w: 34%">
+      <div class="shot" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-02.jpg" alt="Submissions in the musician demo, with deadlines and statuses">
       </div>
     </div>
   </section>
@@ -154,9 +152,8 @@ h1, h2, h3, p { text-wrap: balance; }
   <!-- 3 Events: black -->
   <section style="background: #111111; color: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
-      <div class="shot l" style="flex: 999 1 560px; min-width: 0">
-        <img class="full" src="/welcome/s-03.jpg" alt="Events in the musician demo: performances, a talk and a market">
-        <img class="zoom" src="/welcome/z-03.jpg" alt="Close-up of upcoming events: a tour, a market and a talk">
+      <div class="shot" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-03.jpg" alt="Events in the musician demo: performances, a talk and a market">
       </div>
       <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
         <p style="margin: 0 0 18px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">3</span>Events</p>
@@ -170,12 +167,11 @@ h1, h2, h3, p { text-wrap: balance; }
   <section style="background: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
       <div style="flex: 999 1 560px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
-        <div class="shot l" style="grid-column: 1 / -1">
-          <img class="full" src="/welcome/s-06.jpg" alt="The career timeline in the writer demo">
-          <img class="zoom" src="/welcome/z-06.jpg" alt="Close-up of the timeline: a launch, a reading, an interview and an award">
+        <div class="shot" style="grid-column: 1 / -1">
+          <img src="/welcome/s-06.jpg" alt="The career timeline in the writer demo">
         </div>
-        <img src="/welcome/s-07.jpg" alt="The career map in the illustrator demo" style="display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10)">
-        <img src="/welcome/s-08.jpg" alt="Press and awards in the musician demo" style="display: block; width: 100%; height: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.10)">
+        <div class="shot"><img src="/welcome/s-07.jpg" alt="The career map in the illustrator demo"></div>
+        <div class="shot"><img src="/welcome/s-08.jpg" alt="Press and awards in the musician demo"></div>
       </div>
       <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
         <p style="margin: 0 0 18px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">4</span>Career</p>
@@ -198,9 +194,8 @@ h1, h2, h3, p { text-wrap: balance; }
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12; color: #FFFFFF">A place to collect ideas and think about what you’d like to do next.</h3>
         <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #CFCFCF">Pictures in the middle, with your quotes, goals and references around them, connected. One board per project, or one per year.</p>
       </div>
-      <div class="shot r" style="flex: 999 1 560px; min-width: 0">
-        <img class="full" src="/welcome/s-09.jpg" alt="A Manifest board in the illustrator demo: pictures in the middle, quotes, goals and references around them, joined by connectors">
-        <img class="zoom" src="/welcome/z-09.jpg" alt="Close-up of the board: a quote and goals connected to a picture">
+      <div class="shot" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-09.jpg" alt="A Manifest board in the illustrator demo: pictures in the middle, quotes, goals and references around them, joined by connectors">
       </div>
     </div>
   </section>
@@ -270,5 +265,17 @@ h1, h2, h3, p { text-wrap: balance; }
   </footer>
 
 </div>
+<script>
+document.querySelectorAll('.shot').forEach(el => {
+  const img = el.querySelector('img')
+  let touch = false
+  const aim = e => { const r = el.getBoundingClientRect(); img.style.transformOrigin = `${(e.clientX - r.left) / r.width * 100}% ${(e.clientY - r.top) / r.height * 100}%` }
+  el.addEventListener('pointerdown', e => { touch = e.pointerType !== 'mouse' })
+  el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { aim(e); el.classList.add('on') } })
+  el.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') aim(e) })
+  el.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') el.classList.remove('on') })
+  el.addEventListener('click', e => { if (!touch) return; if (!el.classList.contains('on')) aim(e); el.classList.toggle('on') })
+})
+</script>
 </body>
 </html>
