@@ -95,6 +95,19 @@ function findFreeSlot(slots: Slot[], span: number, h: number) {
   return { col: 0, y: GRID }
 }
 
+// Blocks never overlap: in each column they stack in order, always one GAP apart.
+// `key` decides the order; the result is each block's top.
+function pack(blocks: Array<{ id: number; col: number; span: number; key: number; h: number }>) {
+  const bottom = Array<number>(COLS).fill(PAD - GAP)
+  const tops = new Map<number, number>()
+  for (const b of [...blocks].sort((a, c) => a.key - c.key || a.col - c.col || a.id - c.id)) {
+    const top = Math.max(...bottom.slice(b.col, b.col + b.span)) + GAP
+    for (let c = b.col; c < b.col + b.span; c++) bottom[c] = top + b.h
+    tops.set(b.id, top)
+  }
+  return tops
+}
+
 // ── blocks ────────────────────────────────────────────────────────────────────
 
 function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportunity[] }) {
@@ -350,6 +363,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   const [editingId, setEditingId] = useState<number | null>(null)
   const [picker, setPicker] = useState<Picker>(null)
   const [canvasH, setCanvasH] = useState(600)
+  const [heights, setHeights] = useState<Record<number, number>>({})
   const [deskW, setDeskW] = useState(0)
   const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches)
   const [minimised, setMinimised] = useState(() => {
@@ -473,9 +487,14 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     const el = canvasRef.current
     if (!el || narrow) return
     let bottom = 0
-    el.querySelectorAll<HTMLElement>('[data-block-id]').forEach(b => { bottom = Math.max(bottom, b.offsetTop + b.offsetHeight) })
+    const hs: Record<number, number> = {}
+    el.querySelectorAll<HTMLElement>('[data-block-id]').forEach(b => {
+      bottom = Math.max(bottom, b.offsetTop + b.offsetHeight)
+      hs[Number(b.dataset.blockId)] = b.offsetHeight
+    })
     const h = Math.max(560, bottom + 160)
     if (h !== canvasH) setCanvasH(h)
+    if (Object.keys(hs).some(id => hs[Number(id)] !== heights[Number(id)])) setHeights(hs)
   })
 
   const visible = (items ?? []).filter(i => {
@@ -609,7 +628,15 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       try { localStorage.setItem('desk-hint-done', '1') } catch { /* private mode */ }
     }
     if (d.mode === 'move') {
-      await db.boardItems.update(d.id, { x: colAt(g.left, item.w), y: snap(g.top) })
+      // Store every block at its packed top, so the order on the desk is the order saved.
+      const final = dropTops(d.id, g.left, g.top, d.height)
+      await db.transaction('rw', db.boardItems, async () => {
+        for (const i of visible) {
+          const y = final.get(i.id!) ?? i.y
+          if (i.id === d.id) await db.boardItems.update(d.id, { x: colAt(g.left, item.w), y })
+          else if (y !== i.y) await db.boardItems.update(i.id!, { y })
+        }
+      })
       window.dispatchEvent(new Event('wa:card-moved'))
     } else {
       const upd: Partial<BoardItem> = { w: spanFor(g.width, item.x) }
@@ -685,7 +712,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     const wrapper: React.CSSProperties = narrow
       ? { position: 'relative' }
       : {
-          position: 'absolute', left: mine ? mine.left : colLeft(item.x), top: mine ? mine.top : item.y,
+          position: 'absolute', left: mine ? mine.left : colLeft(item.x), top: mine ? mine.top : tops.get(item.id!) ?? item.y,
           width: mine ? mine.width : spanWidth(item.w), zIndex: mine ? 30 : 1, touchAction: 'none',
           cursor: editingId === item.id ? 'auto' : mine?.mode === 'move' ? 'grabbing' : 'grab',
         }
@@ -726,15 +753,21 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     )
   }
 
-  // Where a dragged block will land.
+  // Where every block sits. While one is dragged, the others make room where it would land.
   const liveItem = live ? visible.find(i => i.id === live.id) : undefined
+  const heightOf = (i: BoardItem) => heights[i.id!] ?? i.h
+  const restTops = pack(visible.map(i => ({ id: i.id!, col: i.x, span: i.w, key: i.y, h: heightOf(i) })))
+  const dropTops = (id: number, left: number, top: number, height: number) =>
+    pack(visible.map(i => i.id === id
+      ? { id, col: colAt(left, i.w), span: i.w, key: top, h: height }
+      : { id: i.id!, col: i.x, span: i.w, key: restTops.get(i.id!) ?? i.y, h: heightOf(i) }))
+  const tops = live?.mode === 'move' && liveItem ? dropTops(live.id, live.left, live.top, live.height) : restTops
+
   const preview = live && liveItem ? (() => {
-    if (live.mode === 'move') {
-      const col = colAt(live.left, liveItem.w)
-      return { left: colLeft(col), top: snap(live.top), width: spanWidth(liveItem.w), height: live.height }
-    }
+    const top = tops.get(liveItem.id!) ?? liveItem.y
+    if (live.mode === 'move') return { left: colLeft(colAt(live.left, liveItem.w)), top, width: spanWidth(liveItem.w), height: live.height }
     const span = spanFor(live.width, liveItem.x)
-    return { left: colLeft(liveItem.x), top: liveItem.y, width: spanWidth(span), height: liveItem.itemType === 'image' ? snap(live.height) : live.height }
+    return { left: colLeft(liveItem.x), top, width: spanWidth(span), height: liveItem.itemType === 'image' ? snap(live.height) : live.height }
   })() : null
 
   const earlierButton = pastProjects.length > 0 && (
