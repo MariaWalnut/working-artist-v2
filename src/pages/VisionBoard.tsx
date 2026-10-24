@@ -429,7 +429,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500, background: '#FFFFFF', borderRadius: 20 }}>
+    <div data-tour="manifest-board" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500, background: '#FFFFFF', borderRadius: 20 }}>
 
       {/* Header: board names on the left, toolbar on the right */}
       <FrameHeader right={
@@ -447,9 +447,9 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
             style={{ padding: '5px 11px', borderRadius: 999, border: 'none', background: addingImage ? '#F5F5F5' : 'none', fontSize: 10, fontWeight: 500, color: addingImage ? '#444' : '#888', cursor: 'pointer' }}>
             Image
           </button>
-          <button onClick={() => { setAdding(null); setEditingId(null); setMode(m => m === 'arrow' ? 'select' : 'arrow'); setArrowSrc(null) }}
+          <button data-tour="manifest-arrow" onClick={() => { setAdding(null); setEditingId(null); setMode(m => m === 'arrow' ? 'select' : 'arrow'); setArrowSrc(null) }}
             style={{ padding: '5px 11px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 500,
-              background: mode === 'arrow' ? 'var(--accent)' : 'none', color: mode === 'arrow' ? '#111' : '#888' }}>
+              background: mode === 'arrow' ? 'var(--accent)' : 'none', color: mode === 'arrow' ? '#111' : '#666' }}>
             Arrow
           </button>
         </div>

@@ -14,7 +14,7 @@ type CareerTab = typeof TABS[number]['key']
 export function CareerFrame({ active, right, children }: { active: CareerTab; right?: ReactNode; children: ReactNode }) {
   const navigate = useNavigate()
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
+    <div data-tour="career" style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
       <FrameHeader right={right}>
         <FrameTabs label="Career" tabs={TABS.map(t => ({ key: t.key, label: t.label }))} active={active}
           onSelect={k => navigate(TABS.find(t => t.key === k)!.to)} />

@@ -201,14 +201,14 @@ export function Opportunities() {
             + Add
           </button>
           <input ref={importRef} type="file" accept=".csv,.json,text/csv,application/json" hidden onChange={e => { void importFile(e.target.files?.[0]); e.target.value = '' }} />
-          <button onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ background: '#FFFFFF', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid #EEEEEE', color: '#666666', cursor: 'pointer' }}>
+          <button data-tour="subs-import" onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ background: '#FFFFFF', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid #EEEEEE', color: '#666666', cursor: 'pointer' }}>
             Import
           </button>
           {importMsg && <p role="status" style={{ fontSize: 11, color: '#666666', margin: '2px 8px 0', textAlign: 'center' }}>{importMsg}</p>}
         </div>
 
         {/* Right */}
-        <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div data-tour="subs-list" style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Column headers */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid #F5F5F5' }}>
             {['Title', 'Type', 'Deadline', 'Status', ''].map(h => (

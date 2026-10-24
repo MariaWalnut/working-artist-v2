@@ -106,7 +106,7 @@ export function Studio() {
         </div>
 
         {/* List */}
-        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
+        <div data-tour="works-list" style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
             <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{kindFilter ? `${kindFilter}s` : 'Works'}</p>
             <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#666666' }}>{shown.length}</span>

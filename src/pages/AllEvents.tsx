@@ -275,7 +275,7 @@ export function AllEvents() {
         </div>
 
         {/* ── Centre: table ─────────────────────────────────────── */}
-        <div style={{ flex: 1, background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
+        <div data-tour="events-list" style={{ flex: 1, background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', padding: '14px 20px 12px', borderBottom: '1px solid #F0F0F0', gap: 8 }}>
             <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111' }}>Events</span>
             <span style={{ fontSize: 10, color: '#767676', fontWeight: 500 }}>{filtered.length}</span>

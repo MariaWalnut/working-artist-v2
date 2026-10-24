@@ -6,10 +6,11 @@ import { downloadBackup, importData, summarise } from '../lib/backup'
 import { Shell } from '../components/layout/Shell'
 import { AccountSection } from '../components/auth/AccountSection'
 import { AccentPicker } from '../components/AccentPicker'
+import { startTour } from '../components/GuidedTour'
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, tour, children }: { title: string; tour?: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '22px 28px', marginBottom: 10 }}>
+    <div data-tour={tour} style={{ background: '#FFFFFF', borderRadius: 20, padding: '22px 28px', marginBottom: 10 }}>
       <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: '0 0 16px' }}>{title}</p>
       {children}
     </div>
@@ -155,8 +156,15 @@ export function Account() {
         </div>
       </Section>
 
-      <Section title="Appearance">
+      <Section title="Appearance" tour="appearance">
         <AccentPicker dept={d} />
+      </Section>
+
+      <Section title="Tour">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, color: '#444444' }}>A short walk through each part of Working Artist.</span>
+          <button onClick={startTour} style={{ background: '#111111', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '9px 18px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Take the tour</button>
+        </div>
       </Section>
 
       <Section title="Danger zone">

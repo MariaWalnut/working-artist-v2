@@ -690,7 +690,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         }
 
     return (
-      <div key={item.id} data-block-id={item.id} style={wrapper}
+      <div key={item.id} data-block-id={item.id} data-tour={`desk-${item.itemType}`} style={wrapper}
         onPointerDown={e => onPointerDown(e, item, 'move')}
         onPointerMove={onPointerMove}
         onPointerUp={e => void onPointerUp(e, item)}
@@ -788,12 +788,12 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     <>
       {topRow}
       {narrow ? (
-        <div ref={canvasRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 120 }}>
+        <div ref={canvasRef} data-tour="desk" style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 120 }}>
           {ordered.map(renderBlock)}
           {earlierButton}
         </div>
       ) : (
-        <div ref={canvasRef}
+        <div ref={canvasRef} data-tour="desk"
           style={{ position: 'relative', height: canvasH, background: '#E6E6E6', borderRadius: 20 }}>
           {live && Array.from({ length: COLS }, (_, c) => (
             <div key={c} aria-hidden="true"
@@ -823,12 +823,12 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
       {/* Toolbar */}
       {minimised ? (
-        <button aria-label="Show toolbar" onClick={() => toggleToolbar(false)}
+        <button aria-label="Show toolbar" data-tour="desk-toolbar" onClick={() => toggleToolbar(false)}
           style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', width: 48, height: 48, borderRadius: 999, background: 'var(--accent)', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 40 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="#111111" strokeWidth="1.8" strokeLinecap="round" /></svg>
         </button>
       ) : (
-        <div role="toolbar" aria-label="Add to desk"
+        <div role="toolbar" aria-label="Add to desk" data-tour="desk-toolbar"
           style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 32px)', overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 2, background: '#FFFFFF', borderRadius: 999, padding: '5px 6px', boxShadow: '0 4px 20px rgba(0,0,0,.12)', zIndex: 40, whiteSpace: 'nowrap' }}>
           <span style={{ ...smallLabel, color: '#767676', padding: '0 8px 0 10px' }}>Add</span>
           {toolButtons.map(b => (

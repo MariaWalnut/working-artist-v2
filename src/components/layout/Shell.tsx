@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useActiveDept } from '../../lib/useDept'
 import { demoField } from '../../lib/mode'
 import { applyAccent } from '../../lib/accent'
-import { DemoTips } from '../DemoTips'
+import { GuidedTour } from '../GuidedTour'
 
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
@@ -93,7 +93,7 @@ export function Shell({ children }: { children: ReactNode }) {
       )}
 
       <main className="flex-1">{children}
-      <DemoTips /></main>
+      <GuidedTour /></main>
     </div>
   )
 }
