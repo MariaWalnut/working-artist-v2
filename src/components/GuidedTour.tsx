@@ -8,17 +8,11 @@ import { demoField, userId } from '../lib/mode'
 interface Step { path: string; target: string; title: string; text: string }
 
 const STEPS: Step[] = [
-  { path: '/projects', target: 'desk', title: 'Your desk', text: 'Your projects, tasks and dates, together. This is where each day starts.' },
-  { path: '/projects', target: 'desk-project', title: 'Projects', text: 'Each card shows the next step and how far along it is. Click a card to open the project.' },
-  { path: '/projects', target: 'desk-tasks', title: 'Tasks', text: 'What is due this week, from every project. Tick one off when it is done.' },
-  { path: '/projects', target: 'desk-comingup', title: 'Coming up', text: 'Your next events and deadlines. Urgent ones show in your colour.' },
-  { path: '/projects', target: 'desk-project', title: 'Make it yours', text: 'Drag cards to move them and drag the side handle to resize. Hover a card and press the eye to hide it; hidden boxes wait above the desk.' },
-  { path: '/projects', target: 'desk-toolbar', title: 'Add more', text: 'Add projects, tasks, lists, notes, quotes and images to the desk.' },
+  { path: '/projects', target: 'desk', title: 'Your desk', text: 'Your projects, this week’s tasks and what is coming up, together. Click a project card to open it.' },
+  { path: '/projects', target: 'desk-project', title: 'Make it yours', text: 'Drag cards to move them and drag the side handle to resize. Hover a card and press the eye to hide it. The + at the bottom adds more.' },
   { path: '/projects/events', target: 'events-list', title: 'Events', text: 'Readings, shows, fairs and markets. Link the works you showed and set goals for the ones ahead.' },
-  { path: '/opportunities', target: 'subs-list', title: 'Submissions', text: 'Every open call, grant and residency, with its deadline and status. Sent ones stop counting down.' },
-  { path: '/opportunities', target: 'subs-import', title: 'Import', text: 'Bring in a list of calls from a spreadsheet, so nothing has to be typed twice.' },
-  { path: '/manifest', target: 'manifest-board', title: 'Manifest', text: 'A free board for where you are heading: pictures, quotes, goals and references.' },
-  { path: '/manifest', target: 'manifest-arrow', title: 'Connect ideas', text: 'Press Arrow, then click two items to join them with a line.' },
+  { path: '/opportunities', target: 'subs-list', title: 'Submissions', text: 'Every open call, grant and residency, with its deadline and status. Import brings in a list from a spreadsheet.' },
+  { path: '/manifest', target: 'manifest-board', title: 'Manifest', text: 'A free board for where you are heading: pictures, quotes, goals and references. Press Arrow, then two items, to connect them.' },
   { path: '/studio', target: 'works-list', title: 'Works', text: 'Everything you have made, from artworks to books and releases. Open a book to see its contract and foreign rights.' },
   { path: '/career', target: 'career', title: 'Career', text: 'A timeline, a map of where your work has been, and your press and awards, all drawn from what you entered.' },
   { path: '/account', target: 'appearance', title: 'Your colour', text: 'Choose the accent colour for the whole app. That is the tour; enjoy your studio.' },
