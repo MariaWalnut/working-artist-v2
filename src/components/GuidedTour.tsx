@@ -5,7 +5,7 @@ import { db, type EventEntry, type PressEntry, type Work } from '../db/db'
 import { demoField, type DemoField } from '../lib/mode'
 import { useNarrow } from '../lib/useNarrow'
 
-// The demo tour follows one work through the app, to show how entering something once
+// The demo tour (started from the ? button) follows one work through the app, to show how entering something once
 // makes it appear everywhere it matters. The last two steps are done, not read.
 // Elements opt in with data-tour="…" or data-tour-title="<their title>".
 
@@ -48,7 +48,6 @@ function buildSteps(w: Work, e: EventEntry | undefined, p: PressEntry | undefine
 // ── tour state, shared across pages ─────────────────────────────────────────
 
 const STEP_KEY = 'wa-tour-step'
-const doneKey = () => `wa-tour-done-demo-${demoField}`
 const read = (store: Storage, k: string) => { try { return store.getItem(k) } catch { return null } }
 const write = (store: Storage, k: string, v: string | null) => { try { if (v == null) store.removeItem(k); else store.setItem(k, v) } catch { /* private mode */ } }
 
@@ -62,7 +61,7 @@ function set(step: number | null) {
 const useStep = () => useSyncExternalStore(cb => { listeners.add(cb); return () => listeners.delete(cb) }, () => current)
 
 export const startTour = () => set(0)
-function endTour() { write(localStorage, doneKey(), '1'); set(null) }
+function endTour() { set(null) }
 
 // ── the tour ─────────────────────────────────────────────────────────────────
 
@@ -91,11 +90,6 @@ export function GuidedTour() {
   }, [])
   const steps = data ? buildSteps(data.w, data.e, data.p, deskFixed) : []
   const s = step == null ? null : steps[step]
-
-  // Demos start the tour by themselves the first time.
-  useEffect(() => {
-    if (demoField && current == null && read(localStorage, doneKey()) !== '1') set(0)
-  }, [])
 
   function next() {
     if (step == null) return
