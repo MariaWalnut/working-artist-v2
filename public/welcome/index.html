@@ -23,9 +23,12 @@ h1, h2, h3, p { text-wrap: balance; }
 .shot img { display: block; width: 100%; height: auto; transition: transform 0.3s ease; }
 .shot img[hidden] { display: none; }
 .shot.on { cursor: zoom-out; }
-.views { display: flex; gap: 6px; margin-bottom: 14px; }
-.views button { min-height: 36px; padding: 0 16px; border-radius: 999px; border: none; background: #F5F5F5; color: #444444; font-family: Recoleta, serif; font-size: 16px; cursor: pointer; }
-.views button[aria-selected="true"] { background: #111111; color: #FFFFFF; }
+.views { margin-top: 28px; border-top: 1px solid #E5E5E5; }
+.views button { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 14px 0; border: none; border-bottom: 1px solid #E5E5E5; background: none; text-align: left; cursor: pointer; font-family: inherit; }
+.views button span { font-family: Recoleta, serif; font-size: 22px; line-height: 1.1; color: #6E6E6E; padding: 0 4px; margin-left: -4px; }
+.views button small { font-size: 13px; color: #6E6E6E; }
+.views button:hover span { color: #111111; }
+.views button[aria-selected="true"] span { color: #111111; background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); }
 .shot.on img { transform: scale(1.8); }
 .band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
 @media (max-width: 640px) { .band { height: 260px; } }
@@ -173,12 +176,7 @@ h1, h2, h3, p { text-wrap: balance; }
   <section style="background: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
       <div style="flex: 999 1 560px; min-width: 0">
-        <div class="views" role="tablist" aria-label="Career views">
-          <button role="tab" aria-selected="true" data-view="0">Timeline</button>
-          <button role="tab" aria-selected="false" data-view="1">Map</button>
-          <button role="tab" aria-selected="false" data-view="2">Recognition</button>
-        </div>
-        <div class="shot on-white">
+        <div class="shot on-white" id="career-shot">
           <img src="/welcome/s-06.jpg" alt="The career timeline in the writer demo">
           <img src="/welcome/s-07.jpg" alt="The career map in the illustrator demo: every city where work was shown" hidden>
           <img src="/welcome/s-08.jpg" alt="Press and awards in the musician demo" hidden>
@@ -188,6 +186,11 @@ h1, h2, h3, p { text-wrap: balance; }
         <p style="margin: 0 0 18px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">4</span>Career</p>
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">A look back at what you’ve done and where your work has taken you.</h3>
         <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #555555">A timeline, a map and your press and awards, built from what you already entered.</p>
+        <div class="views" role="tablist" aria-label="Career views" data-for="career-shot">
+          <button role="tab" aria-selected="true" data-view="0"><span>Timeline</span><small>Every project, event and work by date</small></button>
+          <button role="tab" aria-selected="false" data-view="1"><span>Map</span><small>Every city your work has been to</small></button>
+          <button role="tab" aria-selected="false" data-view="2"><span>Recognition</span><small>Press and awards, with clippings</small></button>
+        </div>
       </div>
     </div>
   </section>
@@ -299,7 +302,7 @@ document.querySelectorAll('.shot').forEach(el => {
 })
 // Career views: one large screen at a time, like the tabs in the app
 document.querySelectorAll('.views').forEach(tabs => {
-  const shot = tabs.nextElementSibling
+  const shot = document.getElementById(tabs.dataset.for)
   tabs.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return
     tabs.querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', String(x === b)))
