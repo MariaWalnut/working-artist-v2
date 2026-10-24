@@ -15,6 +15,7 @@ const CITY_COORDS: Record<string, [number, number]> = {
   'Paris':       [2.3,    48.9],
   'London':      [-0.1,   51.5],
   'Vienna':      [16.4,   48.2],
+  'Bologna':     [11.3,   44.5],
   'Amsterdam':   [4.9,    52.4],
   'New York':    [-74.0,  40.7],
   'Los Angeles': [-118.2, 34.1],
@@ -142,7 +143,8 @@ export function WorldMapPanel() {
           width={MAP_W}
           height={MAP_H}
           projectionConfig={{ scale: 140 }}
-          style={{ width: '100%', height: 'auto', display: 'block', cursor: 'grab' }}
+          preserveAspectRatio="xMidYMid slice"
+          style={{ width: '100%', height: '100%', minHeight: 380, display: 'block', cursor: 'grab' }}
         >
           <ZoomableGroup
             center={view.center}
