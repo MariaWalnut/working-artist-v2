@@ -234,6 +234,8 @@ export interface BoardItem {
   h: number
   color?: string
   imageData?: string
+  imageOriginal?: string // Manifest pictures: the uncropped picture, kept so a crop can be changed
+  crop?: { x: number; y: number; w: number; h: number } // that crop, as fractions of the original
   createdAt: number
   hidden?: boolean // desk only: taken off the desk, listed under Hidden boxes
 }

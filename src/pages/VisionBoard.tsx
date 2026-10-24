@@ -5,6 +5,7 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { FrameHeader, FrameTabs } from '../components/FrameHeader'
 import { Hint } from '../components/Hint'
+import { CropDialog, type CropRect } from '../components/CropDialog'
 import { useNarrow } from '../lib/useNarrow'
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -118,6 +119,8 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 
 // ── EditPopup ─────────────────────────────────────────────────────────────────
 
+const pictureTool: React.CSSProperties = { flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid #EEEEEE', background: '#FFFFFF', fontSize: 11, fontWeight: 500, color: '#111111', cursor: 'pointer' }
+
 function EditPopup({
   capturedItem, liveItem, canvasEl, scale, onClose,
 }: {
@@ -133,6 +136,8 @@ function EditPopup({
   const [text, setText]           = useState(capturedItem.content)
   const [color, setColor]         = useState(capturedItem.color ?? '#FFFFFF')
   const [editedType, setEditedType] = useState(capturedItem.itemType)
+  const [cropping, setCropping] = useState(false)
+  const replaceRef = useRef<HTMLInputElement>(null)
 
   const currentStyle = TEXT_STYLES.find(s => s.type === editedType)
   const isQuoteStyle = editedType === 'quote'
@@ -154,6 +159,26 @@ function EditPopup({
     if (isTextItem) { upd.content = text.trim() || capturedItem.content; upd.itemType = editedType }
     await db.boardItems.update(capturedItem.id!, upd)
     onClose()
+  }
+
+  // A new picture keeps the frame's width and takes its own proportions.
+  async function replace(file?: File) {
+    if (!file || !file.type.startsWith('image/')) return
+    const data = await fileToBase64(file)
+    const natural = await imageSize(data)
+    await db.boardItems.update(capturedItem.id!, {
+      imageData: data, content: file.name, imageOriginal: undefined, crop: undefined,
+      h: natural ? Math.round(liveItem.w * natural.h / natural.w) : liveItem.h,
+    })
+  }
+
+  // Crops always start from the original, so a crop can be loosened again later.
+  async function applyCrop(dataUrl: string, rect: CropRect, ratio: number) {
+    await db.boardItems.update(capturedItem.id!, {
+      imageData: dataUrl, imageOriginal: liveItem.imageOriginal ?? liveItem.imageData, crop: rect,
+      h: Math.round(liveItem.w * ratio),
+    })
+    setCropping(false)
   }
 
   async function del() {
@@ -183,6 +208,19 @@ function EditPopup({
         boxShadow: '0 8px 36px rgba(0,0,0,.18)',
         border: '1px solid #EBEBEB',
       }}>
+      {/* Picture tools (images only) */}
+      {isImage && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          <input ref={replaceRef} type="file" accept="image/*" hidden onChange={e => { void replace(e.target.files?.[0]); e.target.value = '' }} />
+          <button onClick={() => replaceRef.current?.click()} style={pictureTool}>Replace</button>
+          <button onClick={() => setCropping(true)} disabled={!liveItem.imageData} style={{ ...pictureTool, opacity: liveItem.imageData ? 1 : 0.5 }}>Crop</button>
+        </div>
+      )}
+      {cropping && liveItem.imageData && (
+        <CropDialog src={liveItem.imageOriginal ?? liveItem.imageData} initial={liveItem.crop}
+          onApply={(url, rect, ratio) => void applyCrop(url, rect, ratio)} onClose={() => setCropping(false)} />
+      )}
+
       {/* Style picker (text items only) */}
       {isTextItem && (
         <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
