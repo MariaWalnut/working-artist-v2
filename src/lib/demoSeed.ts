@@ -5,7 +5,7 @@ import type { DemoField } from './mode'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-23c'
+export const DEMO_VERSION = '2026-10-24a'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -390,6 +390,77 @@ const SEEDS: Record<DemoField, () => Seed> = {
       goals: ['Finish by summer', 'Visit the coast', 'Read it aloud'],
       refs: ['Virginia Woolf, To the Lighthouse', 'Tove Ditlevsen, plainness', 'Jon Fosse, the sea'],
       tags: ['salt', 'light', 'keepers'] },
+  }),
+
+  fineart: () => ({
+    name: 'Working Artist',
+    activities: ['visual_artist'],
+    works: [
+      { title: 'Tidal Archive', kind: 'Artwork', medium: 'Installation: salt, glass and sound', dimensions: 'Room, 6 × 9 m', year: 2024, month: 4, location: 'Rotterdam' },
+      { title: 'Weight of Water', kind: 'Artwork', medium: 'Cast bronze', dimensions: '42 × 30 × 28 cm', year: 2023, month: 9, location: 'Vienna', collection: 'Private collection' },
+      { title: 'Small Monuments', kind: 'Artwork', medium: 'Glazed ceramic, 12 parts', dimensions: 'Variable', year: 2025, month: 3, location: 'Berlin', collection: 'Available' },
+      { title: 'Field Notes', kind: 'Artwork', medium: 'Single-channel video, 14 min', year: 2025, month: 8, location: 'Lisbon' },
+      { title: 'Cloud Index', kind: 'Artwork', medium: 'Graphite and ink on paper', dimensions: '70 × 100 cm', year: 2022, month: 6, location: 'Copenhagen', collection: 'Kunsthalle collection' },
+      { title: 'Breathing Wall', kind: 'Artwork', medium: 'Installation: textile and motors', dimensions: '4 × 12 m', year: 2026, month: 5, location: 'Venice' },
+      { title: 'Common Ground', kind: 'Artwork', medium: 'Public sculpture: concrete and moss', dimensions: '3 × 8 m', year: 2026, month: 9, location: 'Zurich' },
+    ],
+    projects: [
+      P('Biennale installation', 'Exhibition', { location: 'Venice', institution: 'Nordic Pavilion', dateStart: inDays(60), dateEnd: inDays(240) },
+        [['Finalise floor plan', 2], ['Ship the glass panels', 9], ['Write wall text', 15], ['Site visit', null, true]]),
+      P('Public sculpture: Common Ground', 'Commission', { client: 'City of Zurich' },
+        [['Send foundation drawings', 3], ['Choose the moss supplier', 11], ['Sign the contract', null, true]]),
+      P('Artist book', 'Publications', {},
+        [['Choose the images', 6], ['Ask printers for quotes', 13]]),
+      P('Residency: Kyoto', 'Residency', { location: 'Kyoto', institution: 'Villa Kamogawa', dateStart: inDays(150), dateEnd: inDays(240) },
+        [['Visa paperwork', 20], ['Plan the first month', 45]]),
+      P('Studio assistants', 'Other', {},
+        [['Interview two assistants', 5], ['Set up payroll', null, true]]),
+      P('Gallery dinner', 'Other', {},
+        [['Draft the guest list', 8]]),
+    ],
+    events: [
+      ev('Cloud Index, group show', 'Exhibition', 'Copenhagen', '2022-06-10', { endDate: '2022-08-21', workIds: [4] }),
+      ev('Weight of Water, solo show', 'Exhibition', 'Vienna', '2023-09-14', { endDate: '2023-11-12', workIds: [1] }),
+      ev('Tidal Archive premiere', 'Exhibition', 'Rotterdam', '2024-04-20', { endDate: '2024-07-14', workIds: [0] }),
+      ev('Tidal Archive on tour', 'Exhibition', 'Oslo', '2024-10-03', { endDate: '2025-01-12', workIds: [0] }),
+      ev('Small Monuments', 'Exhibition', 'Berlin', '2025-03-07', { endDate: '2025-04-26', workIds: [2] }),
+      ev('Screening: Field Notes', 'Other', 'Lisbon', '2025-09-18', { workIds: [3] }),
+      ev('Artist talk', 'Talk', 'London', '2025-11-20'),
+      ev('Art fair booth', 'Exhibition', 'Basel', '2026-06-16', { endDate: '2026-06-21', workIds: [2] }),
+      ev('Biennale opening', 'Exhibition', 'Venice', inDays(60), { endDate: inDays(240), workIds: [5], goals: 'Meet three curators\nFilm the installation' }),
+      ev('Common Ground unveiling', 'Other', 'Zurich', inDays(95), { workIds: [6] }),
+      ev('Studio open day', 'Other', 'Berlin', inDays(30)),
+    ],
+    opportunities: [
+      op('Sculpture prize 2027', 'Open call', 'Foundation for Sculpture', 16, 'Active'),
+      op('Production grant', 'Grant', 'Contemporary Art Fund', 28, 'Draft'),
+      op('Museum commission', 'Commission', 'Kunsthalle Nord', 40, 'Active'),
+      op('Video art festival', 'Open call', 'Moving Image Days', -30, 'Shortlisted'),
+      op('Travel grant', 'Grant', 'Arts Council Fund', -12, 'Applied'),
+      op('Residency in Kyoto', 'Residency', 'Villa Kamogawa', -60, 'Won'),
+      op('Public art competition', 'Commission', 'City of Zurich', -200, 'Won'),
+      op('Group show: Material', 'Open call', 'Kunstraum Ost', -120, 'Closed'),
+    ],
+    press: [
+      pr('Tidal Archive reviewed', 'Review', 'Art Monthly North', '2024-05', 0),
+      pr('Salt and sound', 'Feature', 'Sculpture Today', '2024-06', 0),
+      pr('Interview: working with water', 'Interview', 'Studio Radio', '2025-02'),
+      pr('Small Monuments review', 'Review', 'Berlin Art Letter', '2025-03', 2),
+      pr('Artists for the Biennale', 'Selection', 'The Art Paper', '2026-02'),
+      pr('Sculpture Prize, winner', undefined, 'Foundation for Sculpture', '2024-11', 1, 'award'),
+      pr('Moving Image Award, shortlist', undefined, 'Moving Image Days', '2025-10', 3, 'award'),
+    ],
+    desk: {
+      list: { title: 'Biennale shipping', items: [['Crate the glass panels'], ['Insurance papers'], ['Sound equipment list'], ['Salt, 400 kg', true]] },
+      quote: 'Make the room do the work.',
+      note: 'Curator call Thursday, 10 am',
+      submission: 0,
+    },
+    board: { name: 'Next five years',
+      quotes: ['Make the room do the work.', 'Stay curious about materials.'],
+      goals: ['A museum solo show', 'Work outside the gallery', 'Teach a summer school'],
+      refs: ['Ann Hamilton, sound rooms', 'Doris Salcedo, memory', 'Olafur Eliasson, light'],
+      tags: ['material', 'space', 'time'] },
   }),
 }
 

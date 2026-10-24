@@ -3,7 +3,7 @@ import { supabase, needsPassword } from '../../lib/supabase'
 import { DEMO_FIELDS } from '../../lib/mode'
 
 const DEMO_LABEL: Record<typeof DEMO_FIELDS[number], string> = {
-  musician: 'Musician', painter: 'Painter', illustrator: 'Illustrator', writer: 'Writer',
+  musician: 'Musician', painter: 'Painter', illustrator: 'Illustrator', writer: 'Writer', fineart: 'Fine art',
 }
 
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '11px 14px', fontSize: 13, color: '#111111', outline: 'none', fontFamily: 'inherit' }

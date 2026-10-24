@@ -4,7 +4,7 @@ import { SUPABASE_REF } from './supabase'
 // an open demo (/demo/<field>), the signed-in person's own studio, or nothing (signed out).
 // Signing in or out reloads the page, so this never changes while the app runs.
 
-export const DEMO_FIELDS = ['musician', 'painter', 'illustrator', 'writer'] as const
+export const DEMO_FIELDS = ['musician', 'painter', 'illustrator', 'writer', 'fineart'] as const
 export type DemoField = typeof DEMO_FIELDS[number]
 const DEMO_KEY = 'wa-demo'
 

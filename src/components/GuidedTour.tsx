@@ -24,6 +24,7 @@ const THREAD: Record<DemoField, string> = {
   painter: 'Salt Flats I',
   illustrator: 'The Fox Who Kept the Moon',
   writer: 'The Summer House',
+  fineart: 'Tidal Archive',
 }
 
 const byTitle = (t: string) => `[data-tour-title="${t.replace(/"/g, '\\"')}"]`
