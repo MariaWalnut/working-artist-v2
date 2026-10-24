@@ -14,7 +14,11 @@ body { margin: 0; background: #F5F5F5; }
 a { color: #111111; } a:hover { color: #444444; }
 h1, h2, h3, p { text-wrap: balance; }
 </style>
-<style>html { scroll-behavior: smooth; }</style>
+<style>html { scroll-behavior: smooth; }
+.band { display: grid; height: clamp(300px, 46vw, 680px); }
+.band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
+@media (max-width: 640px) { .band { grid-template-columns: 1fr !important; height: auto; } .band img { height: 340px; } }
+</style>
 </head>
 <body>
 <div style="background: #F5F5F5; color: #111111; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100%">
@@ -106,6 +110,12 @@ h1, h2, h3, p { text-wrap: balance; }
     </div>
   </section>
 
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 1fr 1fr">
+    <img src="/welcome/photo-1.jpg" alt="A musician working on a laptop in a home studio" loading="lazy" style="object-position: 50% 45%">
+    <img src="/welcome/photo-2.jpg" alt="A musician at a mixing desk" loading="lazy" style="object-position: 50% 40%">
+  </div>
+
   <!-- 2 Events: black -->
   <section style="background: #111111; color: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
@@ -130,6 +140,12 @@ h1, h2, h3, p { text-wrap: balance; }
     </div>
   </section>
 
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 4fr 9fr">
+    <img src="/welcome/photo-3.jpg" alt="An illustrator drawing on a tablet at a wooden desk" loading="lazy" style="object-position: 50% 50%">
+    <img src="/welcome/photo-4.jpg" alt="An illustrator sketching on a tablet" loading="lazy" style="object-position: 50% 40%">
+  </div>
+
   <!-- 4 Career: white -->
   <section style="background: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
@@ -146,6 +162,11 @@ h1, h2, h3, p { text-wrap: balance; }
     </div>
   </section>
 
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 1fr">
+    <img src="/welcome/photo-5.jpg" alt="A painter working at an easel in a studio full of canvases" loading="lazy" style="object-position: 50% 40%">
+  </div>
+
   <!-- 5 Manifest: black -->
   <section style="background: #111111; color: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 56px">
@@ -157,6 +178,12 @@ h1, h2, h3, p { text-wrap: balance; }
       <img src="/welcome/09.jpg" alt="A Manifest board in the illustrator demo: pictures in the middle, quotes, goals and references around them, joined by connectors" style="flex: 999 1 560px; min-width: 0; display: block; width: 100%; height: auto">
     </div>
   </section>
+
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 9fr 4fr">
+    <img src="/welcome/photo-6.jpg" alt="A painter mixing colours on a palette" loading="lazy" style="object-position: 50% 45%">
+    <img src="/welcome/photo-7.jpg" alt="A painter choosing a tube of paint" loading="lazy" style="object-position: 50% 50%">
+  </div>
 
   <!-- Phone: yellow -->
   <section style="background: #F5E642; overflow: hidden">
