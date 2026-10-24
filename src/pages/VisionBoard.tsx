@@ -5,6 +5,7 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { FrameHeader, FrameTabs } from '../components/FrameHeader'
 import { Hint } from '../components/Hint'
+import { useNarrow } from '../lib/useNarrow'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -118,11 +119,12 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 // ── EditPopup ─────────────────────────────────────────────────────────────────
 
 function EditPopup({
-  capturedItem, liveItem, canvasEl, onClose,
+  capturedItem, liveItem, canvasEl, scale, onClose,
 }: {
   capturedItem: BoardItem
   liveItem: BoardItem
   canvasEl: HTMLDivElement | null
+  scale: number
   onClose: () => void
 }) {
   const isImage = capturedItem.itemType === 'image'
@@ -140,10 +142,10 @@ function EditPopup({
   const approxH = isImage ? 140 : 290
   const cW = canvasEl?.clientWidth ?? 800
   const cH = canvasEl?.clientHeight ?? 600
-  let left = liveItem.x
-  let top = liveItem.y + liveItem.h + 10
+  let left = liveItem.x * scale
+  let top = (liveItem.y + liveItem.h) * scale + 10
   if (left + W > cW - 8) left = Math.max(8, cW - W - 8)
-  if (top + approxH > cH - 8) top = Math.max(8, liveItem.y - approxH - 10)
+  if (top + approxH > cH - 8) top = Math.max(8, liveItem.y * scale - approxH - 10)
   if (left < 8) left = 8
   if (top < 8) top = 8
 
@@ -172,7 +174,7 @@ function EditPopup({
 
   return (
     <div
-      onMouseDown={e => e.stopPropagation()}
+      onPointerDown={e => e.stopPropagation()}
       onClick={e => e.stopPropagation()}
       style={{
         position: 'absolute', left, top, zIndex: 200,
@@ -241,6 +243,21 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
   const items = allItems.filter(i => i.itemType !== 'arrow')
   const arrows = allItems.filter(i => i.itemType === 'arrow')
+
+  // A board wider than the screen shrinks to fit. On a phone it stops at a readable size,
+  // and the empty board can be swiped to see the rest.
+  const narrow = useNarrow()
+  const [canvasW, setCanvasW] = useState(0)
+  useEffect(() => {
+    const el = canvasRef.current; if (!el) return
+    const ro = new ResizeObserver(() => setCanvasW(el.clientWidth))
+    ro.observe(el); setCanvasW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
+  const extentW = items.reduce((m, i) => Math.max(m, i.x + i.w), 0) + 24
+  const extentH = items.reduce((m, i) => Math.max(m, i.y + (i.h || 80)), 0) + 24
+  const scale = canvasW && extentW > canvasW ? Math.max(narrow ? 0.6 : 0, canvasW / extentW) : 1
+  const pans = extentW * scale > canvasW + 1
 
   const [mode, setMode]             = useState<Mode>('select')
   const [arrowSrc, setArrowSrc]     = useState<number | null>(null)
@@ -330,7 +347,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
   }
 
   // ── drag handlers ──────────────────────────────────────────────────────────
-  const onItemMouseDown = useCallback((e: React.MouseEvent, item: BoardItem) => {
+  const onItemMouseDown = useCallback((e: React.PointerEvent, item: BoardItem) => {
     if (!item.id || e.button !== 0) return
     e.preventDefault(); e.stopPropagation()
     movedRef.current = false
@@ -338,15 +355,15 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
   }, [])
 
   // Images scale from their bottom-right corner and always keep the picture's own proportions.
-  const onResizeMouseDown = useCallback((e: React.MouseEvent, item: BoardItem) => {
+  const onResizeMouseDown = useCallback((e: React.PointerEvent, item: BoardItem) => {
     if (!item.id || e.button !== 0) return
     e.preventDefault(); e.stopPropagation()
     setResizing({ itemId: item.id, startX: e.clientX, startY: e.clientY, origW: item.w, origH: item.h })
   }, [])
 
-  const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+  const onCanvasMouseMove = useCallback((e: React.PointerEvent) => {
     if (resizing) {
-      const dx = e.clientX - resizing.startX
+      const dx = (e.clientX - resizing.startX) / scale
       const w = Math.max(60, Math.round(resizing.origW + dx))
       const h = Math.round(w * resizing.origH / resizing.origW)
       void db.boardItems.update(resizing.itemId, { w, h })
@@ -355,8 +372,8 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
     if (!drag) return
     const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY
     if (!movedRef.current && Math.hypot(dx, dy) > 4) movedRef.current = true
-    if (movedRef.current) void db.boardItems.update(drag.itemId, { x: drag.origX + dx, y: drag.origY + dy })
-  }, [drag, resizing])
+    if (movedRef.current) void db.boardItems.update(drag.itemId, { x: Math.round(drag.origX + dx / scale), y: Math.round(drag.origY + dy / scale) })
+  }, [drag, resizing, scale])
 
   const onCanvasMouseUp = useCallback(() => {
     if (resizing) { setResizing(null); return }
@@ -394,8 +411,8 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
     const el = canvasRef.current; if (!el) return
     const rect = el.getBoundingClientRect()
     const { w, h } = DEFAULTS.image
-    await addImages(e.dataTransfer, e.clientX - rect.left - w / 2, e.clientY - rect.top - h / 2)
-  }, [board.id])
+    await addImages(e.dataTransfer, (e.clientX - rect.left) / scale - w / 2, (e.clientY - rect.top) / scale - h / 2)
+  }, [board.id, scale])
 
   // Escape key
   useEffect(() => {
@@ -504,21 +521,23 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
         onChange={e => { void addImages(e.target.files ?? null); setAddingImage(false) }} />
 
       <div ref={canvasRef}
-        onMouseMove={onCanvasMouseMove}
-        onMouseUp={onCanvasMouseUp}
-        onMouseLeave={() => { setDrag(null); setResizing(null) }}
-        onMouseDown={onCanvasBgMouseDown}
+        onPointerMove={onCanvasMouseMove}
+        onPointerUp={onCanvasMouseUp}
+        onPointerLeave={() => { setDrag(null); setResizing(null) }}
+        onPointerDown={onCanvasBgMouseDown}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         style={{
-          flex: 1, position: 'relative', overflow: 'visible',
+          flex: 1, position: 'relative', overflow: pans ? 'auto' : 'visible',
           background: dropOver ? '#EFF7FF' : '#FAFAFA',
           borderRadius: '0 0 20px 20px', border: dropOver ? '2px dashed #78AECB' : 'none',
           cursor: resizing ? 'nwse-resize' : drag ? 'grabbing' : mode === 'arrow' ? 'crosshair' : 'default',
           transition: 'background 0.1s, border 0.1s',
         }}>
+
+        {pans && <div aria-hidden="true" style={{ width: extentW * scale, height: extentH * scale, pointerEvents: 'none' }} />}
 
         {/* Dot grid — clipped inside the rounded rect via clipPath */}
         <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, borderRadius: '0 0 20px 20px', pointerEvents: 'none', overflow: 'hidden', opacity: 0.5 }}>
@@ -530,6 +549,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
           <rect width="100%" height="100%" fill={`url(#dots-${board.id})`} />
         </svg>
 
+        <div style={{ position: 'absolute', left: 0, top: 0, width: `${100 / scale}%`, height: `${100 / scale}%`, transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: '0 0' }}>
         {/* Arrows SVG */}
         <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none', zIndex: 1 }}>
           <defs>
@@ -566,7 +586,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
           return (
             <div key={item.id}
-              onMouseDown={e => onItemMouseDown(e, item)}
+              onPointerDown={e => onItemMouseDown(e, item)}
               onMouseEnter={() => setHoverId(item.id ?? null)}
               onMouseLeave={() => setHoverId(h => (h === item.id ? null : h))}
               style={{
@@ -581,14 +601,14 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
                   ? '0 0 0 2px #78AECB, 0 4px 16px rgba(0,0,0,.12)'
                   : '0 2px 12px rgba(0,0,0,.08)',
                 cursor: drag?.itemId === item.id ? 'grabbing' : 'grab',
-                userSelect: 'none',
+                userSelect: 'none', touchAction: 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 overflow: isImg ? 'visible' : 'hidden',
                 zIndex: 2,
               }}>
               {isImg && mode !== 'arrow' && (hoverId === item.id || isEdit || resizing?.itemId === item.id) && (
                 <div aria-hidden="true" title="Drag to scale"
-                  onMouseDown={e => onResizeMouseDown(e, item)}
+                  onPointerDown={e => onResizeMouseDown(e, item)}
                   style={{ position: 'absolute', right: -6, bottom: -6, width: 14, height: 14, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 3, cursor: 'nwse-resize', zIndex: 3, boxShadow: '0 1px 4px rgba(0,0,0,.15)' }} />
               )}
               {isImg ? (
@@ -628,6 +648,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
             </div>
           )
         })}
+        </div>
 
         {/* Edit popup — rendered inside canvas so overflow:visible keeps it unclipped */}
         {editingId != null && editingItem && capturedRef.current && (
@@ -635,13 +656,14 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
             capturedItem={capturedRef.current}
             liveItem={editingItem}
             canvasEl={canvasRef.current}
+            scale={scale}
             onClose={() => setEditingId(null)} />
         )}
 
         {/* Image drop overlay */}
         {addingImage && (
           <div
-            onMouseDown={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
             onClick={e => e.stopPropagation()}
             onDragEnter={e => { e.preventDefault(); e.stopPropagation(); overlayDragCountRef.current++; setImageDropActive(true) }}
             onDragOver={e => { e.preventDefault(); e.stopPropagation() }}

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry, type PressEntry, type Work } from '../db/db'
 import { demoField, type DemoField } from '../lib/mode'
+import { useNarrow } from '../lib/useNarrow'
 
 // The demo tour follows one work through the app, to show how entering something once
 // makes it appear everywhere it matters. The last two steps are done, not read.
@@ -27,7 +28,8 @@ const THREAD: Record<DemoField, string> = {
 
 const byTitle = (t: string) => `[data-tour-title="${t.replace(/"/g, '\\"')}"]`
 
-function buildSteps(w: Work, e?: EventEntry, p?: PressEntry): Step[] {
+// On a narrow screen the desk is a fixed list, so the last step shows instead of asking for a drag.
+function buildSteps(w: Work, e: EventEntry | undefined, p: PressEntry | undefined, deskFixed: boolean): Step[] {
   const steps: Array<Step | null> = [
     { path: '/studio', target: byTitle(w.title), title: 'Start with a work', text: `Everything in Working Artist connects back to your works. Open ${w.title}.`, doneWhen: { route: /^\/studio\/\d+$/ }, doLabel: 'Click it' },
     e ? { path: `/studio/${w.id}`, target: '[data-tour="work-shown"]', title: 'Where it has been', text: `${w.title} was shown at ${e.title}. Link a work and an event once, and both show up everywhere else.` } : null,
@@ -36,7 +38,9 @@ function buildSteps(w: Work, e?: EventEntry, p?: PressEntry): Step[] {
     e?.location ? { path: '/career/map', target: byTitle(e.location), title: 'And on the map', text: `${e.location} is on your map because ${e.title} happened there.` } : null,
     p ? { path: '/career/recognition', target: byTitle(p.title), title: 'Press that follows the work', text: `${p.title} is linked to ${w.title}. Add a clipping and it opens right here.` } : null,
     { path: '/projects', target: '[data-tour="desk-tasks"]', title: 'Now you', text: 'Back on your desk: tick off one of this week’s tasks.', doneWhen: { event: 'wa:task-done' }, doLabel: 'Tick one' },
-    { path: '/projects', target: '[data-tour="desk-project"]', title: 'Arrange your desk', text: 'Drag this card somewhere else. Hover any card and press the eye to hide it. Your colour lives under Account › Appearance.', doneWhen: { event: 'wa:card-moved' }, doLabel: 'Drag it' },
+    deskFixed
+      ? { path: '/projects', target: '[data-tour="desk-project"]', title: 'Make it yours', text: 'Press the eye on any card to hide it. Your colour lives under Account › Appearance. On a larger screen you can drag the cards into your own order.' }
+      : { path: '/projects', target: '[data-tour="desk-project"]', title: 'Arrange your desk', text: 'Drag this card somewhere else. Hover any card and press the eye to hide it. Your colour lives under Account › Appearance.', doneWhen: { event: 'wa:card-moved' }, doLabel: 'Drag it' },
   ]
   return steps.filter((s): s is Step => s !== null)
 }
@@ -74,6 +78,8 @@ export function GuidedTour() {
   const [rect, setRect] = useState<DOMRect | null>(null)
   const [tipH, setTipH] = useState(200)
   const tipRef = useRef<HTMLDivElement>(null)
+  const deskFixed = useNarrow('(max-width: 900px)')
+  const phone = useNarrow()
 
   const data = useLiveQuery(async () => {
     if (!demoField) return null
@@ -83,7 +89,7 @@ export function GuidedTour() {
     const press = await db.pressEntries.filter(x => x.workId === w.id && x.category !== 'award').first()
     return { w, e: events[0], p: press }
   }, [])
-  const steps = data ? buildSteps(data.w, data.e, data.p) : []
+  const steps = data ? buildSteps(data.w, data.e, data.p, deskFixed) : []
   const s = step == null ? null : steps[step]
 
   // Demos start the tour by themselves the first time.
@@ -139,9 +145,9 @@ export function GuidedTour() {
   if (!s) {
     return (
       <button onClick={startTour} aria-label="Start the tour"
-        style={{ ...btn, position: 'fixed', right: 16, bottom: 88, zIndex: 70, background: '#111111', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(0,0,0,.18)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        style={{ ...btn, position: 'fixed', right: 16, bottom: phone ? 80 : 88, zIndex: 70, background: '#111111', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(0,0,0,.18)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(phone ? { width: 44, height: 44, padding: 0 } : {}) }}>
         <span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 999, background: 'var(--accent)', color: '#111111', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>?</span>
-        Tour
+        {!phone && 'Tour'}
       </button>
     )
   }

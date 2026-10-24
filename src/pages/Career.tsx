@@ -9,6 +9,7 @@ import { ClippingViewer } from '../components/ClippingViewer'
 import { CareerFrame } from '../components/CareerTabs'
 import type { PressEntry } from '../db/db'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
+import { useNarrow } from '../lib/useNarrow'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
@@ -174,6 +175,31 @@ function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, 
   )
 }
 
+// ─── Year list (phones) ──────────────────────────────────────────────────────
+// The month grid needs a wide screen; on a phone each year is a plain list, newest first.
+
+function YearList({ year, events, onSelect }: { year: number; events: CareerEvent[]; onSelect: (e: CareerEvent) => void }) {
+  const sorted = [...events].sort((a, b) => b.month - a.month)
+  return (
+    <section style={{ padding: '18px 16px 8px', borderTop: '1px solid #EEEEEE' }}>
+      <h3 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 22, color: '#111111', margin: '0 0 6px' }}>{year}</h3>
+      {sorted.map(e => (
+        <button key={e.key} data-tour-title={e.label} onClick={() => onSelect(e)}
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', padding: '11px 0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+          <span style={{ width: 34, flexShrink: 0, paddingTop: 2, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6E6E6E' }}>
+            {e.month > 0 ? new Date(year, e.month - 1).toLocaleDateString('en-GB', { month: 'short' }) : ''}
+          </span>
+          <span style={{ width: 8, height: 8, flexShrink: 0, marginTop: 5, borderRadius: '50%', background: KIND_DOT[e.kind] }} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#111111', lineHeight: 1.3 }}>{e.label}</span>
+            <span style={{ display: 'block', fontSize: 11, color: '#6E6E6E', marginTop: 2 }}>{e.sub}</span>
+          </span>
+        </button>
+      ))}
+    </section>
+  )
+}
+
 // ─── Event popup ─────────────────────────────────────────────────────────────
 
 function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
@@ -221,6 +247,7 @@ export function Career() {
   const events = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const press = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
 
+  const narrow = useNarrow()
   const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true, award: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
@@ -320,6 +347,12 @@ export function Career() {
       {isEmpty ? (
         <div style={{ padding: '64px 20px', textAlign: 'center', color: '#6E6E6E', fontSize: 13, fontStyle: 'italic' }}>
           Add dated projects, events, works, press or awards to build your career timeline.
+        </div>
+      ) : narrow ? (
+        <div style={{ paddingBottom: 8 }}>
+          {years.filter(y => all.some(e => e.year === y)).map(year => (
+            <YearList key={year} year={year} events={all.filter(e => e.year === year)} onSelect={setSelected} />
+          ))}
         </div>
       ) : (
         <div style={{ padding: '10px 6px' }}>
