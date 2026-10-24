@@ -21,7 +21,11 @@ h1, h2, h3, p { text-wrap: balance; }
 .shot.on-white { outline: 1px solid #E2E2E2; }
 .shot.on-yellow { outline: 1px solid rgba(17, 17, 17, 0.14); }
 .shot img { display: block; width: 100%; height: auto; transition: transform 0.3s ease; }
+.shot img[hidden] { display: none; }
 .shot.on { cursor: zoom-out; }
+.views { display: flex; gap: 6px; margin-bottom: 14px; }
+.views button { min-height: 36px; padding: 0 16px; border-radius: 999px; border: none; background: #F5F5F5; color: #444444; font-family: Recoleta, serif; font-size: 16px; cursor: pointer; }
+.views button[aria-selected="true"] { background: #111111; color: #FFFFFF; }
 .shot.on img { transform: scale(1.8); }
 .band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
 @media (max-width: 640px) { .band { height: 260px; } }
@@ -168,15 +172,22 @@ h1, h2, h3, p { text-wrap: balance; }
   <!-- 4 Career: white -->
   <section style="background: #FFFFFF">
     <div style="max-width: 1240px; margin: 0 auto; padding: 120px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 56px">
-      <div style="flex: 999 1 560px; min-width: 0; display: grid; gap: 14px">
-        <div class="shot on-white" style="grid-column: 1 / -1">
+      <div style="flex: 999 1 560px; min-width: 0">
+        <div class="views" role="tablist" aria-label="Career views">
+          <button role="tab" aria-selected="true" data-view="0">Timeline</button>
+          <button role="tab" aria-selected="false" data-view="1">Map</button>
+          <button role="tab" aria-selected="false" data-view="2">Recognition</button>
+        </div>
+        <div class="shot on-white">
           <img src="/welcome/s-06.jpg" alt="The career timeline in the writer demo">
+          <img src="/welcome/s-07.jpg" alt="The career map in the illustrator demo: every city where work was shown" hidden>
+          <img src="/welcome/s-08.jpg" alt="Press and awards in the musician demo" hidden>
         </div>
       </div>
       <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
         <p style="margin: 0 0 18px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">4</span>Career</p>
         <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">A look back at what you’ve done and where your work has taken you.</h3>
-        <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #555555">A timeline built from what you already entered, with a map and your press and awards alongside.</p>
+        <p style="margin: 18px 0 0; font-size: 17px; line-height: 1.65; color: #555555">A timeline, a map and your press and awards, built from what you already entered.</p>
       </div>
     </div>
   </section>
@@ -277,14 +288,24 @@ h1, h2, h3, p { text-wrap: balance; }
 </div>
 <script>
 document.querySelectorAll('.shot').forEach(el => {
-  const img = el.querySelector('img')
+  const img = () => el.querySelector('img:not([hidden])')
   let touch = false
-  const aim = e => { const r = el.getBoundingClientRect(); img.style.transformOrigin = `${(e.clientX - r.left) / r.width * 100}% ${(e.clientY - r.top) / r.height * 100}%` }
+  const aim = e => { const r = el.getBoundingClientRect(); img().style.transformOrigin = `${(e.clientX - r.left) / r.width * 100}% ${(e.clientY - r.top) / r.height * 100}%` }
   el.addEventListener('pointerdown', e => { touch = e.pointerType !== 'mouse' })
   el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { aim(e); el.classList.add('on') } })
   el.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') aim(e) })
   el.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') el.classList.remove('on') })
   el.addEventListener('click', e => { if (!touch) return; if (!el.classList.contains('on')) aim(e); el.classList.toggle('on') })
+})
+// Career views: one large screen at a time, like the tabs in the app
+document.querySelectorAll('.views').forEach(tabs => {
+  const shot = tabs.nextElementSibling
+  tabs.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return
+    tabs.querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', String(x === b)))
+    shot.querySelectorAll('img').forEach((im, i) => { im.hidden = i !== Number(b.dataset.view) })
+    shot.classList.remove('on')
+  })
 })
 </script>
 </body>
