@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Contact, type ContactList } from '../db/db'
@@ -17,15 +17,22 @@ const panel: React.CSSProperties = { background: '#FFFFFF', borderRadius: 20, pa
 const primary: React.CSSProperties = { background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', cursor: 'pointer', color: '#111111' }
 const quiet: React.CSSProperties = { background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '6px 12px', fontSize: 11, color: '#444444', cursor: 'pointer', fontFamily: 'inherit' }
 
-function Modal({ children, onClose, width = 520 }: { children: React.ReactNode; onClose: () => void; width?: number }) {
+// Closes on Escape or a click on the dim background, but never while something is unsaved,
+// and only when the click also began on the background (a text selection dragged out does not count).
+function Modal({ children, onClose, dirty = false, width = 520 }: { children: React.ReactNode; onClose: () => void; dirty?: boolean; width?: number }) {
+  const downOnBackdrop = useRef(false)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const onKey = (e: KeyboardEvent) => {
+      const inField = (e.target as HTMLElement | null)?.closest?.('input, textarea, select')
+      if (e.key === 'Escape' && !dirty && !inField) onClose()
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, dirty])
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, width, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+    <div onPointerDown={e => { downOnBackdrop.current = e.target === e.currentTarget }}
+      onClick={e => { if (e.target === e.currentTarget && downOnBackdrop.current && !dirty) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, width, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         {children}
       </div>
     </div>
@@ -79,6 +86,8 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
   const [projectIds, setProjectIds] = useState<number[]>(contact?.projectIds ?? [])
   const [onLists, setOnLists] = useState<number[]>(() => contact?.id == null ? [] : lists.filter(l => l.members.some(m => m.contactId === contact.id)).map(l => l.id!))
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [initial] = useState(() => JSON.stringify([f, tags, workIds, eventIds, projectIds, onLists]))
+  const dirty = JSON.stringify([f, tags, workIds, eventIds, projectIds, onLists]) !== initial || !!tagText.trim() || !!newCategory?.trim()
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF(v => ({ ...v, [k]: e.target.value }))
   const toggle = (ids: number[], id: number) => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
 
@@ -115,7 +124,7 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
   const chipRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto' }
 
   return (
-    <Modal onClose={onDone}>
+    <Modal onClose={onDone} dirty={dirty}>
       <p style={{ ...smallLabel, marginBottom: 14 }}>{contact ? 'Edit contact' : 'New contact'}</p>
       <input autoFocus value={f.name} onChange={set('name')} placeholder="Name" aria-label="Name" style={{ ...inp, fontSize: 16, fontFamily: 'Recoleta, serif', marginBottom: 8 }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginBottom: 8 }}>
@@ -180,7 +189,7 @@ function ListForm({ list, deptId, onDone, onDeleted }: { list: ContactList | nul
     else onDone(await db.contactLists.add({ ...data, departmentId: deptId, members: [], createdAt: Date.now() }) as number)
   }
   return (
-    <Modal onClose={() => onDone()} width={420}>
+    <Modal onClose={() => onDone()} dirty={name.trim() !== (list?.name ?? '')} width={420}>
       <p style={{ ...smallLabel, marginBottom: 14 }}>{list ? 'Edit list' : 'New list'}</p>
       <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void save() }}
         placeholder="e.g. Christmas Card 2026" aria-label="List name" style={{ ...inp, marginBottom: 8 }} />
@@ -208,7 +217,7 @@ function PeoplePicker({ list, contacts, onDone }: { list: ContactList; contacts:
     onDone()
   }
   return (
-    <Modal onClose={onDone} width={440}>
+    <Modal onClose={onDone} dirty={chosen.join() !== list.members.map(m => m.contactId).join()} width={440}>
       <p style={{ ...smallLabel, marginBottom: 14 }}>People on {list.name}</p>
       <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, category or tag" aria-label="Search" style={{ ...inp, marginBottom: 10 }} />
       <div style={{ maxHeight: 340, overflowY: 'auto', borderTop: '1px solid #F5F5F5' }}>
