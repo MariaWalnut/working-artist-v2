@@ -1,11 +1,12 @@
 import { db, type Activity, type BoardItem, type EventEntry, type Opportunity, type PressEntry, type Project, type Work } from '../db/db'
 import type { DemoField } from './mode'
+import { DEMO_CONTACTS } from './demoContacts'
 
 // Sample studios for the open demos. Everyone and everything here is invented.
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-24a'
+export const DEMO_VERSION = '2026-10-29b'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -484,10 +485,32 @@ export async function seedDemo(field: DemoField) {
       }
     }
 
-    for (const e of s.events) await db.eventEntries.add({ ...e, departmentId, workIds: e.workIds?.map(i => workIds[i]) })
+    const eventIds: number[] = []
+    for (const e of s.events) eventIds.push(await db.eventEntries.add({ ...e, departmentId, workIds: e.workIds?.map(i => workIds[i]) }) as number)
     const oppIds: number[] = []
     for (const o of s.opportunities) oppIds.push(await db.opportunities.add({ ...o, departmentId }) as number)
     for (const p of s.press) await db.pressEntries.add({ ...p, departmentId, workId: p.workId == null ? undefined : workIds[p.workId] })
+
+    // Contacts, linked by title to the works, events and projects above, and their lists.
+    const { contacts, lists } = DEMO_CONTACTS[field]
+    const idOf = (titles: string[] | undefined, all: Array<{ title: string }>, ids: number[]) => {
+      const found = (titles ?? []).map(t => ids[all.findIndex(x => x.title === t)]).filter((id): id is number => id != null)
+      return found.length ? found : undefined
+    }
+    const contactIds: Record<string, number> = {}
+    for (const { works, events, projects, ...c } of contacts) {
+      contactIds[c.name] = await db.contacts.add({
+        ...c, departmentId, createdAt: now,
+        workIds: idOf(works, s.works, workIds), eventIds: idOf(events, s.events, eventIds), projectIds: idOf(projects, s.projects.map(p => p.project), projectIds),
+      }) as number
+    }
+    for (const [i, l] of lists.entries()) {
+      const projectId = l.project ? projectIds[s.projects.findIndex(p => p.project.title === l.project)] : undefined
+      await db.contactLists.add({
+        departmentId, name: l.name, projectId, createdAt: now - i,
+        members: l.members.map(([name, done]) => ({ contactId: contactIds[name], done: done || undefined })).filter(m => m.contactId != null),
+      })
+    }
 
     // The desk, laid out in its four columns: projects on the left, tasks and a list beside them,
     // coming up, a quote, a submission and a note on the right.

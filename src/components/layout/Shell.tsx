@@ -12,6 +12,7 @@ const NAV = [
   { label: 'Manifest', to: '/manifest' },
   { label: 'Career', to: '/career' },
   { label: 'Works', to: '/studio' },
+  { label: 'Contacts', to: '/contacts' },
   { label: 'Account', to: '/account' },
 ]
 

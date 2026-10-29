@@ -19,6 +19,7 @@ import { VisionBoard } from './pages/VisionBoard'
 import { WorldMap } from './pages/WorldMap'
 import { Career } from './pages/Career'
 import { Press } from './pages/Press'
+import { Contacts } from './pages/Contacts'
 
 // Shown instead of a blank page if the local database can't be opened (e.g. an upgrade fails).
 function DataError({ detail }: { detail: string }) {
@@ -99,6 +100,7 @@ function AppRoutes() {
       <Route path="/projects/events" element={<AllEvents />} />
       <Route path="/projects/:id" element={<ProjectDetail />} />
       <Route path="/opportunities" element={<Opportunities />} />
+      <Route path="/contacts" element={<Contacts />} />
       <Route path="/manifest" element={<VisionBoard />} />
       <Route path="/the-map" element={<Navigate to="/manifest" replace />} />
       <Route path="/the-map/vision" element={<Navigate to="/manifest" replace />} />

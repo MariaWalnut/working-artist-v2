@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
+import { PeopleCard } from '../components/PeopleCard'
 import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
 import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
@@ -319,6 +320,7 @@ export function WorkDetail() {
                 </div>
               ))}
             </div>
+            {w.id != null && <PeopleCard kind="work" id={w.id} deptId={w.departmentId} style={{ ...card }} />}
             {(wKind === 'Book' || w.contract) && <ContractCard key={w.id} work={w} />}
             <div style={{ ...card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>

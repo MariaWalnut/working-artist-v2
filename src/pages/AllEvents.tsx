@@ -5,6 +5,7 @@ import { useActiveDept } from '../lib/useDept'
 import { currentMonth, formatEventDate, isOngoing, isUpcoming } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
+import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
 
 
@@ -142,6 +143,8 @@ function EventForm({ entry, works, onDone }: {
             </div>
           </div>
         )}
+
+        {entry?.id != null && <PeopleCard kind="event" id={entry.id} deptId={dept?.id} style={{ marginBottom: 12 }} />}
 
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (optional)" rows={2}
           style={{ ...inp, resize: 'vertical', marginBottom: 16 }} />

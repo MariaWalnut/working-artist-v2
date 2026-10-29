@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Project, type Todo } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
+import { PeopleCard } from '../components/PeopleCard'
 import { PROJECT_TYPES } from './Projects'
 
 const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%' }
@@ -373,6 +374,8 @@ export function ProjectDetail() {
             ) : (
               <p style={{ fontSize: 13, color: '#767676', fontStyle: 'italic', margin: '0 0 28px' }}>No notes yet. <button onClick={startEdit} style={{ background: 'none', border: 'none', fontSize: 13, color: '#6E6E6E', cursor: 'pointer', padding: 0, fontStyle: 'italic' }}>Add one →</button></p>
             )}
+
+            {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} style={{ maxWidth: 520, marginBottom: 32 }} />}
 
             {project.id != null && (
               <div style={{ marginBottom: 32 }}>

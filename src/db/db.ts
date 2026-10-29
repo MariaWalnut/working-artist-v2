@@ -14,6 +14,7 @@ export interface Department {
   createdAt: number
   coverImage?: string
   accent?: string // hex, set in Account › Appearance
+  contactCategories?: string[] // categories added on the Contacts page, beyond the presets
 }
 
 export interface Project {
@@ -240,6 +241,36 @@ export interface BoardItem {
   hidden?: boolean // desk only: taken off the desk, listed under Hidden boxes
 }
 
+// Someone the artist works with. Linked works, events and projects show them as people there too.
+export interface Contact {
+  id?: number
+  departmentId: number
+  name: string
+  organisation?: string
+  role?: string
+  category?: string
+  tags?: string[]
+  email?: string
+  phone?: string
+  website?: string
+  address?: string // postal, one line per row
+  note?: string
+  workIds?: number[]
+  eventIds?: number[]
+  projectIds?: number[]
+  createdAt: number
+}
+
+// A list of contacts for one occasion, like a card mailing or the guests for a show.
+export interface ContactList {
+  id?: number
+  departmentId: number
+  name: string
+  projectId?: number
+  members: Array<{ contactId: number; done?: boolean }> // done: ticked off, e.g. card sent
+  createdAt: number
+}
+
 export class AppDB extends Dexie {
   departments!: Table<Department>
   projects!: Table<Project>
@@ -253,6 +284,8 @@ export class AppDB extends Dexie {
   todos!: Table<Todo>
   pressEntries!: Table<PressEntry>
   eventEntries!: Table<EventEntry>
+  contacts!: Table<Contact>
+  contactLists!: Table<ContactList>
 
   constructor(name: string) {
     super(name)
@@ -375,6 +408,22 @@ export class AppDB extends Dexie {
       works: tx.table('works'),
       pressEntries: tx.table('pressEntries'),
     }))
+    this.version(10).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
+      eventEntries: '++id, departmentId',
+      contacts: '++id, departmentId',
+      contactLists: '++id, departmentId',
+    })
   }
 }
 
