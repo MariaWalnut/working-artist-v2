@@ -137,10 +137,10 @@ export function WorldMapPanel() {
   const view: View = saved.key === fitKey ? saved : fit
   const setView = (v: View) => setSaved({ ...v, key: fitKey })
   const markerScale = 1 / (movingZoom ?? view.zoom)
-  const zoomBtn: React.CSSProperties = { width: 32, height: 32, background: '#FFFFFF', border: 'none', borderRadius: 8, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontSize: 15, color: '#444444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }
+  const zoomBtn: React.CSSProperties = { width: 32, height: 32, background: 'var(--wa-surface)', border: 'none', borderRadius: 8, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontSize: 15, color: 'var(--wa-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }
 
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 380 }}>
+    <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 380 }}>
       {/* Map; the city list drops below it on narrow screens */}
       <div style={{ flex: '999 1 420px', minWidth: 0, position: 'relative' }}>
         <ComposableMap
@@ -167,8 +167,8 @@ export function WorldMapPanel() {
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  fill="#EFEFEF"
-                  stroke="#FAFAFA"
+                  fill="var(--wa-map-land)"
+                  stroke="var(--wa-surface)"
                   strokeWidth={0.5 * markerScale}
                   style={{ outline: 'none' }}
                 />
@@ -186,7 +186,7 @@ export function WorldMapPanel() {
                 <g transform={`scale(${markerScale})`}>
                 <circle
                   r={isHub ? 9 : 5}
-                  style={{ fill: isHub ? 'var(--accent)' : hasWork && !hasEvent ? 'var(--accent)' : '#111111' }}
+                  style={{ fill: isHub ? 'var(--accent)' : hasWork && !hasEvent ? 'var(--accent)' : 'var(--wa-ink)' }}
                   stroke={isHub || (hasWork && !hasEvent) ? '#111111' : 'none'}
                   strokeWidth={isHub || (hasWork && !hasEvent) ? 1.5 : 0}
                 />
@@ -202,7 +202,7 @@ export function WorldMapPanel() {
                 <text
                   y={isHub ? 22 : 16}
                   textAnchor="middle"
-                  style={{ fontFamily: 'sans-serif', fontSize: 7, fontWeight: 600, fill: '#888888', letterSpacing: '0.04em', pointerEvents: 'none' }}
+                  style={{ fontFamily: 'sans-serif', fontSize: 7, fontWeight: 600, fill: 'var(--wa-muted)', letterSpacing: '0.04em', pointerEvents: 'none' }}
                 >
                   {city.slice(0, 12).toUpperCase()}
                 </text>
@@ -221,48 +221,48 @@ export function WorldMapPanel() {
         </div>
 
         {/* Legend */}
-        <div style={{ position: 'absolute', bottom: 12, left: 12, maxWidth: 'calc(100% - 24px)', background: 'rgba(255,255,255,0.92)', borderRadius: 10, padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: '6px 14px', backdropFilter: 'blur(4px)' }}>
+        <div style={{ position: 'absolute', bottom: 12, left: 12, maxWidth: 'calc(100% - 24px)', background: 'color-mix(in srgb, var(--wa-surface) 92%, transparent)', borderRadius: 10, padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: '6px 14px', backdropFilter: 'blur(4px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#111111' }} />
-            <span style={{ fontSize: 9, color: '#666666' }}>Event</span>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--wa-ink)' }} />
+            <span style={{ fontSize: 9, color: 'var(--wa-text-2)' }}>Event</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid #111111' }} />
-            <span style={{ fontSize: 9, color: '#666666' }}>Work</span>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--wa-ink)' }} />
+            <span style={{ fontSize: 9, color: 'var(--wa-text-2)' }}>Work</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid #111111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--wa-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: 5, fontWeight: 700 }}>3</span>
             </div>
-            <span style={{ fontSize: 9, color: '#666666' }}>Hub (3+)</span>
+            <span style={{ fontSize: 9, color: 'var(--wa-text-2)' }}>Hub (3+)</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 9, color: '#767676' }}>{cities.length} cities · {total} items</span>
+            <span style={{ fontSize: 9, color: 'var(--wa-muted)' }}>{cities.length} cities · {total} items</span>
           </div>
         </div>
       </div>
 
       {/* Right panel */}
-      <div style={{ flex: '1 1 220px', borderLeft: '1px solid #F5F5F5', borderTop: '1px solid #F5F5F5', padding: '20px 18px', overflowY: 'auto' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, color: '#767676', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 14px' }}>By city</p>
+      <div style={{ flex: '1 1 220px', borderLeft: '1px solid var(--wa-line)', borderTop: '1px solid var(--wa-line)', padding: '20px 18px', overflowY: 'auto' }}>
+        <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 14px' }}>By city</p>
         {cities.length === 0 ? (
-          <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>Add locations to events or works to see them here.</p>
+          <p style={{ fontSize: 12, color: 'var(--wa-muted)', fontStyle: 'italic', margin: 0 }}>Add locations to events or works to see them here.</p>
         ) : cities.map(([city, items], i) => {
           const eventItems = items.filter(x => x.kind === 'event')
           const workItems = items.filter(x => x.kind === 'work')
           return (
             <div key={city} data-tour-title={city}>
-              {i > 0 && <div style={{ height: 1, background: '#F5F5F5', margin: '14px 0' }} />}
+              {i > 0 && <div style={{ height: 1, background: 'var(--wa-fill)', margin: '14px 0' }} />}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: '#111111' }}>{city}</span>
-                <span style={{ fontSize: 9, color: '#6E6E6E', background: '#F5F5F5', padding: '2px 7px', borderRadius: 999 }}>{items.length}</span>
+                <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: 'var(--wa-ink)' }}>{city}</span>
+                <span style={{ fontSize: 9, color: 'var(--wa-muted)', background: 'var(--wa-fill)', padding: '2px 7px', borderRadius: 999 }}>{items.length}</span>
               </div>
               {eventItems.length > 0 && (
                 <div style={{ marginBottom: 4 }}>
                   {eventItems.slice(0, 3).map((e, j) => (
                     <div key={j} style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 2 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#111111', flexShrink: 0, marginTop: 4 }} />
-                      <span style={{ fontSize: 10, color: '#666666', lineHeight: 1.4 }}>{e.title}</span>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--wa-ink)', flexShrink: 0, marginTop: 4 }} />
+                      <span style={{ fontSize: 10, color: 'var(--wa-text-2)', lineHeight: 1.4 }}>{e.title}</span>
                     </div>
                   ))}
                 </div>
@@ -272,7 +272,7 @@ export function WorldMapPanel() {
                   {workItems.slice(0, 2).map((w, j) => (
                     <div key={j} style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 2 }}>
                       <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', border: '1px solid #999', flexShrink: 0, marginTop: 4 }} />
-                      <span style={{ fontSize: 10, color: '#666666', lineHeight: 1.4 }}>{w.title}</span>
+                      <span style={{ fontSize: 10, color: 'var(--wa-text-2)', lineHeight: 1.4 }}>{w.title}</span>
                     </div>
                   ))}
                 </div>

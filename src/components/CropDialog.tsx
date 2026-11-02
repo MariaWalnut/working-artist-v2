@@ -23,7 +23,7 @@ function load(src: string): Promise<HTMLImageElement> {
 }
 
 const btn: React.CSSProperties = { minHeight: 36, padding: '0 16px', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600 }
-const handle: React.CSSProperties = { position: 'absolute', width: 16, height: 16, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 3, touchAction: 'none' }
+const handle: React.CSSProperties = { position: 'absolute', width: 16, height: 16, background: 'var(--wa-surface)', border: '1.5px solid var(--wa-ink)', borderRadius: 3, touchAction: 'none' }
 
 export function CropDialog({ src, initial, onApply, onClose }: {
   src: string
@@ -93,8 +93,8 @@ export function CropDialog({ src, initial, onApply, onClose }: {
   return createPortal(
     <div role="dialog" aria-label="Crop picture" onPointerDown={e => e.stopPropagation()}
       style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(17,17,17,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 20, maxWidth: '100%', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
-        <p style={{ margin: '0 0 14px', fontFamily: 'Recoleta, serif', fontSize: 22, color: '#111111' }}>Crop</p>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 20, maxWidth: '100%', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
+        <p style={{ margin: '0 0 14px', fontFamily: 'Recoleta, serif', fontSize: 22, color: 'var(--wa-ink)' }}>Crop</p>
         {/* The shade is clipped to the picture; the handles sit above it so they stay whole at the edges. */}
         <div ref={boxRef} onPointerMove={onMove} onPointerUp={() => { drag.current = null }}
           style={{ position: 'relative', lineHeight: 0, userSelect: 'none', margin: '8px auto', width: 'fit-content' }}>
@@ -110,11 +110,11 @@ export function CropDialog({ src, initial, onApply, onClose }: {
             {corner('se', { right: -8, bottom: -8 })}
           </div>
         </div>
-        {error && <p role="alert" style={{ margin: '12px 0 0', maxWidth: 420, fontSize: 13, lineHeight: 1.5, color: '#C53030' }}>{error}</p>}
+        {error && <p role="alert" style={{ margin: '12px 0 0', maxWidth: 420, fontSize: 13, lineHeight: 1.5, color: 'var(--wa-red)' }}>{error}</p>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
-          <button onClick={() => setRect(FULL)} style={{ ...btn, background: '#F5F5F5', color: '#444444' }}>Reset</button>
+          <button onClick={() => setRect(FULL)} style={{ ...btn, background: 'var(--wa-fill)', color: 'var(--wa-text)' }}>Reset</button>
           <span style={{ flex: 1 }} />
-          <button onClick={onClose} style={{ ...btn, background: 'none', color: '#666666', fontWeight: 400 }}>Cancel</button>
+          <button onClick={onClose} style={{ ...btn, background: 'none', color: 'var(--wa-text-2)', fontWeight: 400 }}>Cancel</button>
           <button onClick={() => void apply()} style={{ ...btn, background: 'var(--accent)', color: '#111111' }}>Apply</button>
         </div>
       </div>

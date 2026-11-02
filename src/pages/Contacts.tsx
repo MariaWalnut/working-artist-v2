@@ -11,11 +11,11 @@ import { formatEventDate } from '../lib/eventDates'
 
 type View = { kind: 'all' } | { kind: 'category'; name: string } | { kind: 'list'; id: number }
 
-const inp: React.CSSProperties = { minHeight: 38, borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }
-const smallLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: '0 0 6px' }
-const panel: React.CSSProperties = { background: '#FFFFFF', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
+const inp: React.CSSProperties = { minHeight: 38, borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '9px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }
+const smallLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 6px' }
+const panel: React.CSSProperties = { background: 'var(--wa-surface)', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
 const primary: React.CSSProperties = { background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', cursor: 'pointer', color: '#111111' }
-const quiet: React.CSSProperties = { background: 'none', border: '1px solid #EEEEEE', borderRadius: 8, padding: '6px 12px', fontSize: 11, color: '#444444', cursor: 'pointer', fontFamily: 'inherit' }
+const quiet: React.CSSProperties = { background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '6px 12px', fontSize: 11, color: 'var(--wa-text)', cursor: 'pointer', fontFamily: 'inherit' }
 
 // Closes on Escape or a click on the dim background, but never while something is unsaved,
 // and only when the click also began on the background (a text selection dragged out does not count).
@@ -32,7 +32,7 @@ function Modal({ children, onClose, dirty = false, width = 520 }: { children: Re
   return (
     <div onPointerDown={e => { downOnBackdrop.current = e.target === e.currentTarget }}
       onClick={e => { if (e.target === e.currentTarget && downOnBackdrop.current && !dirty) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, width, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         {children}
       </div>
     </div>
@@ -42,7 +42,7 @@ function Modal({ children, onClose, dirty = false, width = 520 }: { children: Re
 function Chip({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      style={{ padding: '4px 11px', borderRadius: 999, border: on ? '1px solid transparent' : '1px solid #E8E8E8', background: on ? 'var(--accent)' : 'transparent', color: on ? '#111111' : '#555555', fontSize: 11, fontWeight: on ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+      style={{ padding: '4px 11px', borderRadius: 999, border: on ? '1px solid transparent' : '1px solid var(--wa-line)', background: on ? 'var(--accent)' : 'transparent', color: on ? '#111111' : 'var(--wa-text)', fontSize: 11, fontWeight: on ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
       {label}
     </button>
   )
@@ -50,16 +50,16 @@ function Chip({ label, on, onClick }: { label: string; on: boolean; onClick: () 
 
 function FilterItem({ label, count, active, onClick }: { label: string; count?: number; active: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? '#F5F5F5' : 'none', color: active ? '#111111' : '#555555', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text)', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
       <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-      {count != null && <span style={{ fontSize: 10, color: '#6E6E6E', fontWeight: 400 }}>{count}</span>}
+      {count != null && <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 400 }}>{count}</span>}
     </button>
   )
 }
 
 function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: active ? '#111111' : '#FFFFFF', color: active ? '#FFFFFF' : '#444444', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+    <button onClick={onClick} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: active ? 'var(--wa-ink)' : 'var(--wa-surface)', color: active ? 'var(--wa-surface)' : 'var(--wa-text)', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
       {label}
     </button>
   )
@@ -149,8 +149,8 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
       {groupLabel('Tags')}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
         {tags.map(t => (
-          <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 6px 3px 10px', borderRadius: 999, background: '#F0F0F0', fontSize: 11 }}>
-            {t}<button type="button" aria-label={`Remove tag ${t}`} onClick={() => setTags(tags.filter(x => x !== t))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666666', fontSize: 13, padding: '0 2px' }}>×</button>
+          <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 6px 3px 10px', borderRadius: 999, background: 'var(--wa-fill-2)', fontSize: 11 }}>
+            {t}<button type="button" aria-label={`Remove tag ${t}`} onClick={() => setTags(tags.filter(x => x !== t))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wa-text-2)', fontSize: 13, padding: '0 2px' }}>×</button>
           </span>
         ))}
         <input value={tagText} onChange={e => setTagText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() } }}
@@ -164,13 +164,13 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 20 }}>
         <button onClick={() => void save()} style={primary}>{contact ? 'Save' : 'Add'}</button>
-        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
+        <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
         {contact?.id != null && (confirmDelete
           ? <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: '#666666' }}>Delete?</span>
+              <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>Delete?</span>
               <button onClick={async () => { await deleteContact(contact.id!); onDone() }} style={{ background: '#C53030', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete</button>
             </span>
-          : <button onClick={() => setConfirmDelete(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#767676', cursor: 'pointer' }}>Delete</button>)}
+          : <button onClick={() => setConfirmDelete(true)} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Delete</button>)}
       </div>
     </Modal>
   )
@@ -199,8 +199,8 @@ function ListForm({ list, deptId, onDone, onDeleted }: { list: ContactList | nul
       </select>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 18 }}>
         <button onClick={() => void save()} style={primary}>{list ? 'Save' : 'Create'}</button>
-        <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
-        {list?.id != null && <button onClick={async () => { await db.contactLists.delete(list.id!); onDeleted() }} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#767676', cursor: 'pointer' }}>Delete list</button>}
+        <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
+        {list?.id != null && <button onClick={async () => { await db.contactLists.delete(list.id!); onDeleted() }} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Delete list</button>}
       </div>
     </Modal>
   )
@@ -220,21 +220,21 @@ function PeoplePicker({ list, contacts, onDone }: { list: ContactList; contacts:
     <Modal onClose={onDone} dirty={chosen.join() !== list.members.map(m => m.contactId).join()} width={440}>
       <p style={{ ...smallLabel, marginBottom: 14 }}>People on {list.name}</p>
       <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, category or tag" aria-label="Search" style={{ ...inp, marginBottom: 10 }} />
-      <div style={{ maxHeight: 340, overflowY: 'auto', borderTop: '1px solid #F5F5F5' }}>
+      <div style={{ maxHeight: 340, overflowY: 'auto', borderTop: '1px solid var(--wa-line)' }}>
         {shown.map(c => (
-          <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: '1px solid #F5F5F5', cursor: 'pointer' }}>
+          <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 2px', borderBottom: '1px solid var(--wa-line)', cursor: 'pointer' }}>
             <input type="checkbox" checked={chosen.includes(c.id!)} onChange={() => setChosen(ch => ch.includes(c.id!) ? ch.filter(x => x !== c.id) : [...ch, c.id!])} />
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontSize: 13, color: '#111111' }}>{c.name}</span>
-              <span style={{ display: 'block', fontSize: 11, color: '#6E6E6E' }}>{[c.organisation, c.category].filter(Boolean).join(' · ')}</span>
+              <span style={{ display: 'block', fontSize: 13, color: 'var(--wa-ink)' }}>{c.name}</span>
+              <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-muted)' }}>{[c.organisation, c.category].filter(Boolean).join(' · ')}</span>
             </span>
           </label>
         ))}
-        {shown.length === 0 && <p style={{ fontSize: 12, color: '#767676', padding: '16px 0', textAlign: 'center' }}>No one matches</p>}
+        {shown.length === 0 && <p style={{ fontSize: 12, color: 'var(--wa-muted)', padding: '16px 0', textAlign: 'center' }}>No one matches</p>}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>
         <button onClick={() => void save()} style={primary}>Done</button>
-        <span style={{ fontSize: 11, color: '#6E6E6E' }}>{chosen.length} chosen</span>
+        <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{chosen.length} chosen</span>
       </div>
     </Modal>
   )
@@ -311,7 +311,7 @@ export function Contacts() {
       {listForm !== null && <ListForm list={listForm === 'new' ? null : listForm} deptId={deptId}
         onDone={id => { setListForm(null); if (id != null) select({ kind: 'list', id }) }} onDeleted={() => { setListForm(null); select({ kind: 'all' }) }} />}
       {picking && list && <PeoplePicker list={list} contacts={contacts} onDone={() => setPicking(false)} />}
-      {toast && <p role="status" style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 60, margin: 0, padding: '10px 18px', borderRadius: 999, background: '#111111', color: '#FFFFFF', fontSize: 12 }}>{toast}</p>}
+      {toast && <p role="status" style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 60, margin: 0, padding: '10px 18px', borderRadius: 999, background: 'var(--wa-black)', color: '#FFFFFF', fontSize: 12 }}>{toast}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '230px 1fr', gap: 10, minHeight: narrow ? undefined : 600, alignItems: 'start' }}>
         {/* Left: people by category, then lists */}
@@ -335,21 +335,21 @@ export function Contacts() {
             <div style={panel}>
               <p style={{ ...smallLabel, padding: '0 8px 2px' }}>Lists</p>
               {lists.map(l => <FilterItem key={l.id} label={l.name} count={l.members.length} active={list?.id === l.id} onClick={() => select({ kind: 'list', id: l.id! })} />)}
-              <button onClick={() => setListForm('new')} style={{ textAlign: 'left', padding: '8px 10px', border: 'none', background: 'none', fontSize: 12, color: '#555555', cursor: 'pointer', fontFamily: 'inherit' }}>+ New list</button>
+              <button onClick={() => setListForm('new')} style={{ textAlign: 'left', padding: '8px 10px', border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer', fontFamily: 'inherit' }}>+ New list</button>
             </div>
           </>}
         </div>
 
         {/* Right */}
-        <div style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden' }}>
-          <div style={{ padding: narrow ? '18px 16px 12px' : '22px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
+        <div style={{ background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden' }}>
+          <div style={{ padding: narrow ? '18px 16px 12px' : '22px 24px 14px', borderBottom: '1px solid var(--wa-line)' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <h1 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: '#111111' }}>{title}</h1>
+              <h1 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: 'var(--wa-ink)' }}>{title}</h1>
               {list
-                ? <span style={{ fontSize: 12, color: '#6E6E6E' }}>{doneCount} of {list.members.length} ticked off</span>
-                : <span style={{ fontSize: 12, color: '#6E6E6E' }}>{people.length}</span>}
+                ? <span style={{ fontSize: 12, color: 'var(--wa-muted)' }}>{doneCount} of {list.members.length} ticked off</span>
+                : <span style={{ fontSize: 12, color: 'var(--wa-muted)' }}>{people.length}</span>}
               {listProject && (
-                <button onClick={() => navigate(`/projects/${listProject.id}`)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#111111', cursor: 'pointer', borderBottom: '2px solid var(--accent)', fontFamily: 'inherit' }}>
+                <button onClick={() => navigate(`/projects/${listProject.id}`)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', borderBottom: '2px solid var(--accent)', fontFamily: 'inherit' }}>
                   {listProject.title}
                 </button>
               )}
@@ -373,49 +373,49 @@ export function Contacts() {
 
           {contacts.length === 0 ? (
             <div style={{ padding: '40px 24px' }}>
-              <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No contacts yet</p>
+              <p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No contacts yet</p>
               <Hint id="contacts-start" style={{ maxWidth: 440, margin: '0 auto' }}>Add the people you work with: galleries, editors, curators, collectors. Then gather them into lists, like everyone who gets a card at Christmas.</Hint>
             </div>
           ) : people.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '48px 24px', margin: 0, fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <p style={{ textAlign: 'center', padding: '48px 24px', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {list && list.members.length === 0 ? 'No one on this list yet' : 'Nothing matches'}
             </p>
           ) : people.map(c => {
             const done = isDone(c)
             return (
               <div key={c.id} onClick={() => setEditing(c)}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: narrow ? '13px 16px' : '14px 24px', borderBottom: '1px solid #F5F5F5', cursor: 'pointer' }}>
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: narrow ? '13px 16px' : '14px 24px', borderBottom: '1px solid var(--wa-line)', cursor: 'pointer' }}>
                 {list && (
                   <input type="checkbox" checked={done} aria-label={`Tick off ${c.name}`} onClick={e => e.stopPropagation()} onChange={() => void toggleDone(c)}
-                    style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: '#111111' }} />
+                    style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: 'var(--wa-ink)' }} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 500, color: done ? '#6E6E6E' : '#111111', textDecoration: done ? 'line-through' : undefined }}>{c.name}</span>
-                    {c.category && !list && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555555', background: '#F5F5F5', padding: '2px 7px', borderRadius: 999 }}>{c.category}</span>}
+                    <span style={{ fontSize: 14, fontWeight: 500, color: done ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: done ? 'line-through' : undefined }}>{c.name}</span>
+                    {c.category && !list && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--wa-text)', background: 'var(--wa-fill)', padding: '2px 7px', borderRadius: 999 }}>{c.category}</span>}
                   </div>
-                  {(c.organisation || c.role) && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6E6E6E' }}>{[c.role, c.organisation].filter(Boolean).join(', ')}</p>}
+                  {(c.organisation || c.role) && <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--wa-muted)' }}>{[c.role, c.organisation].filter(Boolean).join(', ')}</p>}
                   {narrow && (c.email || c.phone) && (
                     <p style={{ margin: '3px 0 0', fontSize: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
-                      {c.email && <a href={`mailto:${c.email}`} style={{ color: '#111111', textDecoration: 'none' }}>{c.email}</a>}
-                      {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} style={{ color: '#6E6E6E', textDecoration: 'none' }}>{c.phone}</a>}
+                      {c.email && <a href={`mailto:${c.email}`} style={{ color: 'var(--wa-ink)', textDecoration: 'none' }}>{c.email}</a>}
+                      {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} style={{ color: 'var(--wa-muted)', textDecoration: 'none' }}>{c.phone}</a>}
                     </p>
                   )}
-                  {list && c.address && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#444444', whiteSpace: 'pre-line' }}>{c.address}</p>}
+                  {list && c.address && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--wa-text)', whiteSpace: 'pre-line' }}>{c.address}</p>}
                   {(c.tags?.length ?? 0) > 0 && !list && (
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                      {c.tags!.map(t => <span key={t} style={{ fontSize: 10, color: '#555555', background: '#F5F5F5', padding: '1px 7px', borderRadius: 999 }}>{t}</span>)}
+                      {c.tags!.map(t => <span key={t} style={{ fontSize: 10, color: 'var(--wa-text)', background: 'var(--wa-fill)', padding: '1px 7px', borderRadius: 999 }}>{t}</span>)}
                     </div>
                   )}
                 </div>
                 <div style={{ display: narrow ? 'none' : 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0, maxWidth: 260 }} onClick={e => e.stopPropagation()}>
-                  {c.email && <a href={`mailto:${c.email}`} style={{ fontSize: 12, color: '#111111', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{c.email}</a>}
-                  {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} style={{ fontSize: 12, color: '#6E6E6E', textDecoration: 'none' }}>{c.phone}</a>}
-                  {c.website && <a href={websiteHref(c.website)} target="_blank" rel="noopener" style={{ fontSize: 12, color: '#6E6E6E', textDecoration: 'none' }}>{c.website.replace(/^https?:\/\//, '')}</a>}
+                  {c.email && <a href={`mailto:${c.email}`} style={{ fontSize: 12, color: 'var(--wa-ink)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{c.email}</a>}
+                  {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} style={{ fontSize: 12, color: 'var(--wa-muted)', textDecoration: 'none' }}>{c.phone}</a>}
+                  {c.website && <a href={websiteHref(c.website)} target="_blank" rel="noopener" style={{ fontSize: 12, color: 'var(--wa-muted)', textDecoration: 'none' }}>{c.website.replace(/^https?:\/\//, '')}</a>}
                 </div>
                 {list && (
                   <button aria-label={`Take ${c.name} off this list`} onClick={e => { e.stopPropagation(); void setOnList(list, c.id!, false) }}
-                    style={{ background: 'none', border: 'none', fontSize: 14, color: '#767676', cursor: 'pointer', flexShrink: 0, padding: '0 2px' }}>×</button>
+                    style={{ background: 'none', border: 'none', fontSize: 14, color: 'var(--wa-muted)', cursor: 'pointer', flexShrink: 0, padding: '0 2px' }}>×</button>
                 )}
               </div>
             )

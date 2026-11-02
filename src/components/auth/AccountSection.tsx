@@ -8,13 +8,13 @@ const STATUS_LABEL = {
   idle: '', loading: 'Loading', saving: 'Saving', saved: 'Saved online', offline: 'Offline, saves when back online', error: 'Not saved yet',
 } as const
 
-const quiet: React.CSSProperties = { background: '#F5F5F5', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: '#666666', cursor: 'pointer' }
-const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid #F5F5F5' }
+const quiet: React.CSSProperties = { background: 'var(--wa-fill)', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }
+const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--wa-line)' }
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '22px 28px', marginBottom: 10 }}>
-      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: '0 0 16px' }}>{title}</p>
+    <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '22px 28px', marginBottom: 10 }}>
+      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 16px' }}>{title}</p>
       {children}
     </div>
   )
@@ -24,7 +24,7 @@ function DemoCard() {
   const [busy, setBusy] = useState(false)
   return (
     <Card title="Demo">
-      <p style={{ fontSize: 13, color: '#444444', lineHeight: 1.6, margin: '0 0 14px' }}>
+      <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, margin: '0 0 14px' }}>
         A sample {demoField} studio. Change anything you like; it stays in this browser only.
       </p>
       <div style={{ display: 'flex', gap: 8 }}>
@@ -62,28 +62,28 @@ function SignedInCard() {
   return (
     <Card title="Account">
       <div style={row}>
-        <span style={{ fontSize: 13, color: '#444444' }}>Email</span>
-        <span style={{ fontSize: 13, color: '#111111' }}>{email}</span>
+        <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Email</span>
+        <span style={{ fontSize: 13, color: 'var(--wa-ink)' }}>{email}</span>
       </div>
       <div style={row}>
-        <span style={{ fontSize: 13, color: '#444444' }}>Studio</span>
+        <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Studio</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: status === 'error' || status === 'offline' ? '#A86400' : '#666666' }}>{STATUS_LABEL[status]}</span>
+          <span style={{ fontSize: 12, color: status === 'error' || status === 'offline' ? 'var(--wa-amber)' : 'var(--wa-text-2)' }}>{STATUS_LABEL[status]}</span>
           {status === 'error' && <button onClick={retryCloud} style={quiet}>Try again</button>}
         </span>
       </div>
       <div style={row}>
-        <span style={{ fontSize: 13, color: '#444444' }}>Password</span>
+        <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Password</span>
         {changing ? (
           <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input type="password" autoComplete="new-password" autoFocus value={pw} onChange={e => setPw(e.target.value)} placeholder="New password"
               onKeyDown={e => { if (e.key === 'Enter') void savePassword(); if (e.key === 'Escape') setChanging(false) }}
-              style={{ borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '7px 12px', fontSize: 13, outline: 'none', width: 170 }} />
+              style={{ borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '7px 12px', fontSize: 13, outline: 'none', width: 170 }} />
             <button onClick={() => void savePassword()} style={{ ...quiet, background: 'var(--accent)', color: '#111111', fontWeight: 600 }}>Save</button>
           </span>
         ) : (
           <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {pwMsg && <span style={{ fontSize: 12, color: '#666666' }}>{pwMsg}</span>}
+            {pwMsg && <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>{pwMsg}</span>}
             <button onClick={() => { setChanging(true); setPw(''); setPwMsg('') }} style={quiet}>Change</button>
           </span>
         )}

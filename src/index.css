@@ -20,6 +20,59 @@
 :root {
   /* The studio's accent colour, set in Account › Appearance. */
   --accent: #F5E642;
+
+  /* Light and dark themes, chosen in Account › Appearance (lib/theme.ts sets data-theme). */
+  --wa-page: #F5F5F5;
+  --wa-surface: #FFFFFF;
+  --wa-fill: #F5F5F5;
+  --wa-fill-2: #FAFAFA;
+  --wa-desk: #E6E6E6;
+  --wa-line: #EEEEEE;
+  --wa-line-strong: #DDDDDD;
+  --wa-ink: #111111;
+  --wa-text: #444444;
+  --wa-text-2: #666666;
+  --wa-muted: #6E6E6E;
+  --wa-black: #111111;
+  --wa-red: #C53030;
+  --wa-amber: #A86400;
+  --wa-map-land: #EFEFEF;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --wa-page: #121212;
+  --wa-surface: #1C1C1C;
+  --wa-fill: #262626;
+  --wa-fill-2: #222222;
+  --wa-desk: #0B0B0B;
+  --wa-line: #2E2E2E;
+  --wa-line-strong: #444444;
+  --wa-ink: #EDEDED;
+  --wa-text: #CFCFCF;
+  --wa-text-2: #B5B5B5;
+  --wa-muted: #9E9E9E;
+  --wa-black: #000000;
+  --wa-red: #FF8A80;
+  --wa-amber: #F2B45C;
+  --wa-map-land: #2F2F2F;
+  color-scheme: dark;
+}
+
+/* Boxes on the accent or another light colour keep dark text in both themes.
+   Anything with the accent as its inline background gets the same, so yellow buttons stay readable. */
+.wa-light,
+[style*="background: var(--accent)"],
+[style*="background-color: var(--accent)"] {
+  color: #111111;
+  --wa-ink: #111111;
+  --wa-text: #333333;
+  --wa-text-2: #444444;
+  --wa-muted: #555555;
+  --wa-line: rgba(17, 17, 17, 0.12);
+  --wa-fill: rgba(255, 255, 255, 0.45);
+  --wa-surface: #FFFFFF;
+  color-scheme: light;
 }
 
 * {
@@ -29,8 +82,8 @@
 body {
   margin: 0;
   font-family: theme(--font-sans);
-  background: #F5F5F5;
-  color: #111111;
+  background: var(--wa-page);
+  color: var(--wa-ink);
   -webkit-font-smoothing: antialiased;
 }
 

@@ -24,12 +24,12 @@ import { Contacts } from './pages/Contacts'
 // Shown instead of a blank page if the local database can't be opened (e.g. an upgrade fails).
 function DataError({ detail }: { detail: string }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F5F5F5' }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '32px 36px', maxWidth: 440, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
-        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>Your data couldn't be opened</h1>
-        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>Nothing has been deleted. Reload to try again.</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'var(--wa-fill)' }}>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '32px 36px', maxWidth: 440, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: 'var(--wa-ink)' }}>Your data couldn't be opened</h1>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--wa-text-2)', margin: '0 0 18px' }}>Nothing has been deleted. Reload to try again.</p>
         <button onClick={() => location.reload()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reload</button>
-        <p style={{ fontSize: 10, color: '#6E6E6E', margin: '18px 0 0', wordBreak: 'break-word' }}>{detail}</p>
+        <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: '18px 0 0', wordBreak: 'break-word' }}>{detail}</p>
       </div>
     </div>
   )
@@ -38,17 +38,17 @@ function DataError({ detail }: { detail: string }) {
 // Shown while the data takes long to open, e.g. an update waiting for another tab to let go of it.
 function OpeningData({ blocked }: { blocked: boolean }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F5F5F5' }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '32px 36px', maxWidth: 440, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
-        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'var(--wa-fill)' }}>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '32px 36px', maxWidth: 440, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: 'var(--wa-ink)' }}>
           {blocked ? 'Another tab is holding your data' : 'Still opening your data'}
         </h1>
-        <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>
+        <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--wa-text-2)', margin: '0 0 18px' }}>
           {blocked
             ? 'Working Artist is updating your data and needs every other Working Artist tab or window closed. Close them, and this page continues by itself.'
             : 'If this takes long, close any other Working Artist tabs or windows, then reload.'}
         </p>
-        <button onClick={() => location.reload()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
+        <button onClick={() => location.reload()} style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
       </div>
     </div>
   )
@@ -87,8 +87,8 @@ function AppRoutes() {
   if (depts === undefined) {
     if (waiting !== 'no') return <OpeningData blocked={waiting === 'blocked'} />
     return userId ? (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F5F5' }}>
-        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: '#6E6E6E' }}>Opening your studio</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--wa-fill)' }}>
+        <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: 'var(--wa-muted)' }}>Opening your studio</p>
       </div>
     ) : null
   }
@@ -129,15 +129,15 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
     const { error, where } = this.state
     if (!error) return this.props.children
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F5F5F5' }}>
-        <div style={{ background: '#FFFFFF', borderRadius: 20, padding: '32px 36px', maxWidth: 460, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
-          <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: '#111111' }}>This page hit a problem</h1>
-          <p style={{ fontSize: 13, lineHeight: 1.6, color: '#666666', margin: '0 0 18px' }}>Your data is safe. Go back to your desk, or reload to try again.</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'var(--wa-fill)' }}>
+        <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '32px 36px', maxWidth: 460, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
+          <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 22, fontWeight: 400, margin: '0 0 10px', color: 'var(--wa-ink)' }}>This page hit a problem</h1>
+          <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--wa-text-2)', margin: '0 0 18px' }}>Your data is safe. Go back to your desk, or reload to try again.</p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => { location.href = '/projects' }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>On My Desk</button>
-            <button onClick={() => location.reload()} style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
+            <button onClick={() => location.reload()} style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 11, cursor: 'pointer' }}>Reload</button>
           </div>
-          <p style={{ fontSize: 10, color: '#6E6E6E', margin: '18px 0 0', wordBreak: 'break-word' }}>{where} · {error.name}: {error.message}</p>
+          <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: '18px 0 0', wordBreak: 'break-word' }}>{where} · {error.name}: {error.message}</p>
         </div>
       </div>
     )

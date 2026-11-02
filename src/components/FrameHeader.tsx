@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 // actions on the right.
 export function FrameHeader({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '14px 20px 12px', borderBottom: '1px solid #F0F0F0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '14px 20px 12px', borderBottom: '1px solid var(--wa-line)' }}>
       {children}
       {right && <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>{right}</div>}
     </div>
@@ -23,9 +23,9 @@ export function FrameTabs<K extends string | number>({ tabs, active, onSelect, l
     <div role="tablist" aria-label={label} style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 14, rowGap: 4 }}>
       {tabs.map(t => replace?.key === t.key ? <span key={t.key}>{replace.node}</span> : (
         <button key={t.key} role="tab" aria-selected={active === t.key} onClick={() => onSelect(t.key)} onDoubleClick={onOpen && (() => onOpen(t.key))}
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Recoleta, serif', fontSize: 16, color: active === t.key ? '#111111' : '#767676' }}>
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'Recoleta, serif', fontSize: 16, color: active === t.key ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
           {t.label}
-          {t.count != null && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: '#767676', fontWeight: 500, marginLeft: 6 }}>{t.count}</span>}
+          {t.count != null && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 10, color: 'var(--wa-muted)', fontWeight: 500, marginLeft: 6 }}>{t.count}</span>}
         </button>
       ))}
     </div>

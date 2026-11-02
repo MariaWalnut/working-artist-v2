@@ -12,14 +12,14 @@ const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Close
 const BADGE: Record<string, string> = {
   Shortlisted: 'bg-[var(--accent)] text-[#111111]',
   Won:         'bg-[var(--accent)] text-[#111111]',
-  Applied:     'bg-[#F5F5F5] text-[#666666]',
-  Active:      'bg-[#F5F5F5] text-[#111111]',
-  Draft:       'text-[#6E6E6E]',
-  Closed:      'bg-[#F5F5F5] text-[#767676]',
+  Applied:     'bg-[var(--wa-fill)] text-[var(--wa-text-2)]',
+  Active:      'bg-[var(--wa-fill)] text-[var(--wa-ink)]',
+  Draft:       'text-[var(--wa-muted)]',
+  Closed:      'bg-[var(--wa-fill)] text-[var(--wa-muted)]',
 }
 
 const BADGE_BORDER: Record<string, string> = {
-  Draft: 'border border-dashed border-[#DDDDDD]',
+  Draft: 'border border-dashed border-[var(--wa-line)]',
 }
 
 function badge(status: string) {
@@ -43,12 +43,12 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
     onDone()
   }
 
-  const inp = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none' as const, width: '100%' }
+  const inp = { borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '9px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none' as const, width: '100%' }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, width: 480, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', marginBottom: 16 }}>{opp ? 'Edit' : 'New opportunity'}</p>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width: 480, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginBottom: 16 }}>{opp ? 'Edit' : 'New opportunity'}</p>
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Opportunity name" style={{ ...inp, marginBottom: 10, fontSize: 14 }} />
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <select value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1 }}>{OPP_TYPES.map(t => <option key={t}>{t}</option>)}</select>
@@ -60,9 +60,9 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
           style={{ ...inp, resize: 'none', marginBottom: 16 }} />
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{opp ? 'Save' : 'Add'}</button>
-          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
           {opp && <button onClick={async () => { if (opp.id) await db.opportunities.delete(opp.id); onDone() }}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: '#767676', cursor: 'pointer' }}>Delete</button>}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Delete</button>}
         </div>
       </div>
     </div>
@@ -71,16 +71,16 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
 
 function FilterItem({ label, active, count, onClick }: { label: string; active: boolean; count?: number; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? '#F5F5F5' : 'none', color: active ? '#111111' : '#666666', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
+    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
       <span>{label}</span>
-      {count != null && <span style={{ fontSize: 10, color: '#6E6E6E', fontWeight: 400 }}>{count}</span>}
+      {count != null && <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 400 }}>{count}</span>}
     </button>
   )
 }
 
 function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: active ? '#111111' : '#FFFFFF', color: active ? '#FFFFFF' : '#444444', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+    <button onClick={onClick} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: active ? 'var(--wa-ink)' : 'var(--wa-surface)', color: active ? 'var(--wa-surface)' : 'var(--wa-text)', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
       {label}
     </button>
   )
@@ -175,8 +175,8 @@ export function Opportunities() {
   const shortCount = opps.filter(o => o.status === 'Shortlisted').length
   const closedCount = opps.filter(o => o.status === 'Closed').length
 
-  const sidePanel: React.CSSProperties = { background: '#FFFFFF', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
-  const sectionLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', padding: '0 8px 8px' }
+  const sidePanel: React.CSSProperties = { background: 'var(--wa-surface)', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
+  const sectionLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px' }
 
   return (
     <Shell>
@@ -186,11 +186,11 @@ export function Opportunities() {
         {/* Left */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* Stats */}
-          <div style={{ background: '#FFFFFF', borderRadius: 20, display: 'grid', gridTemplateColumns: narrow ? 'repeat(4, 1fr)' : '1fr 1fr' }}>
+          <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'grid', gridTemplateColumns: narrow ? 'repeat(4, 1fr)' : '1fr 1fr' }}>
             {[{ label: 'Active', v: activeCount, muted: false }, { label: 'Won', v: wonCount, muted: false }, { label: 'Shortlisted', v: shortCount, muted: false }, { label: 'Closed', v: closedCount, muted: true }].map((s, i) => (
-              <div key={s.label} style={{ textAlign: 'center', padding: '14px 0', borderTop: !narrow && i >= 2 ? '1px solid #F5F5F5' : undefined, borderLeft: (narrow ? i > 0 : i % 2 === 1) ? '1px solid #F5F5F5' : undefined }}>
-                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, color: s.muted ? '#6E6E6E' : '#111111', margin: '0 0 2px', lineHeight: 1.1 }}>{s.v}</p>
-                <p style={{ fontSize: 9, color: s.muted ? '#767676' : '#6E6E6E', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
+              <div key={s.label} style={{ textAlign: 'center', padding: '14px 0', borderTop: !narrow && i >= 2 ? '1px solid var(--wa-line)' : undefined, borderLeft: (narrow ? i > 0 : i % 2 === 1) ? '1px solid var(--wa-line)' : undefined }}>
+                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, color: s.muted ? 'var(--wa-muted)' : 'var(--wa-ink)', margin: '0 0 2px', lineHeight: 1.1 }}>{s.v}</p>
+                <p style={{ fontSize: 9, color: s.muted ? 'var(--wa-muted)' : 'var(--wa-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -224,24 +224,24 @@ export function Opportunities() {
             + Add
           </button>
           <input ref={importRef} type="file" accept=".csv,.json,text/csv,application/json" hidden onChange={e => { void importFile(e.target.files?.[0]); e.target.value = '' }} />
-          <button data-tour="subs-import" onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ flex: 1, background: '#FFFFFF', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid #EEEEEE', color: '#666666', cursor: 'pointer' }}>
+          <button data-tour="subs-import" onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ flex: 1, background: 'var(--wa-surface)', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid var(--wa-line)', color: 'var(--wa-text-2)', cursor: 'pointer' }}>
             Import
           </button>
           </div>
-          {importMsg && <p role="status" style={{ fontSize: 11, color: '#666666', margin: '2px 8px 0', textAlign: 'center' }}>{importMsg}</p>}
+          {importMsg && <p role="status" style={{ fontSize: 11, color: 'var(--wa-text-2)', margin: '2px 8px 0', textAlign: 'center' }}>{importMsg}</p>}
         </div>
 
         {/* Right */}
-        <div data-tour="subs-list" style={{ background: '#FFFFFF', borderRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div data-tour="subs-list" style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Column headers */}
-          {!narrow && <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid #F5F5F5' }}>
+          {!narrow && <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid var(--wa-line)' }}>
             {['Title', 'Type', 'Deadline', 'Status', ''].map(h => (
-              <span key={h} style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6E6E6E' }}>{h}</span>
+              <span key={h} style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{h}</span>
             ))}
           </div>}
 
           {filtered.length === 0 ? (
-            <div style={{ padding: '40px 24px' }}><p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p><Hint id="subs-start" style={{ maxWidth: 420, margin: '0 auto' }}>Add a call with + Add, or bring in a whole list with Import, from a spreadsheet with Title, Type, Organisation, Deadline and Status.</Hint></div>
+            <div style={{ padding: '40px 24px' }}><p style={{ textAlign: 'center', margin: '0 0 16px', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No submissions</p><Hint id="subs-start" style={{ maxWidth: 420, margin: '0 auto' }}>Add a call with + Add, or bring in a whole list with Import, from a spreadsheet with Title, Type, Organisation, Deadline and Status.</Hint></div>
           ) : filtered.map(o => {
             const today = new Date().toISOString().slice(0, 10)
             const notSent = o.status === 'Active' || o.status === 'Draft'
@@ -253,23 +253,23 @@ export function Opportunities() {
             const critical = days !== null && days <= 2
             const urgent = days !== null && days <= 7
             const rowBg = critical ? 'rgba(224,82,82,0.04)' : urgent ? 'rgba(240,160,32,0.05)' : 'transparent'
-            const deadlineColor = overdue ? '#C53030' : critical ? '#C53030' : urgent ? '#A86400' : (isDraft ? '#767676' : '#6E6E6E')
+            const deadlineColor = overdue ? 'var(--wa-red)' : critical ? 'var(--wa-red)' : urgent ? 'var(--wa-amber)' : 'var(--wa-muted)'
             const deadlineCell = (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 10, color: deadlineColor }}>
                     {o.deadline ? new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
                   </span>
-                  {overdue && <span style={{ fontSize: 8, fontWeight: 700, color: '#C53030', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>overdue</span>}
-                  {!overdue && critical && <span style={{ fontSize: 8, fontWeight: 700, color: '#C53030', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days === 0 ? 'today' : days === 1 ? '1d' : `${days}d`}</span>}
-                  {!overdue && !critical && urgent && <span style={{ fontSize: 8, fontWeight: 700, color: '#A86400', background: 'rgba(240,160,32,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days}d</span>}
+                  {overdue && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--wa-red)', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>overdue</span>}
+                  {!overdue && critical && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--wa-red)', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days === 0 ? 'today' : days === 1 ? '1d' : `${days}d`}</span>}
+                  {!overdue && !critical && urgent && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--wa-amber)', background: 'rgba(240,160,32,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days}d</span>}
                 </div>
             )
-            const rowStyle: React.CSSProperties = { borderBottom: '1px solid #F5F5F5', cursor: 'pointer', background: rowBg, borderLeft: critical ? '3px solid #E05252' : urgent ? '3px solid #F0A020' : '3px solid transparent' }
+            const rowStyle: React.CSSProperties = { borderBottom: '1px solid var(--wa-line)', cursor: 'pointer', background: rowBg, borderLeft: critical ? '3px solid #E05252' : urgent ? '3px solid #F0A020' : '3px solid transparent' }
             if (narrow) return (
               <div key={o.id} onClick={() => setEditing(o)} style={{ ...rowStyle, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: isDraft ? '#666666' : '#111111', margin: '0 0 3px' }}>{o.title}</p>
-                  <p style={{ fontSize: 11, color: isDraft ? '#767676' : '#6E6E6E', margin: 0 }}>{[o.opportunityType, o.organisation].filter(Boolean).join(' · ')}</p>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: isDraft ? 'var(--wa-text-2)' : 'var(--wa-ink)', margin: '0 0 3px' }}>{o.title}</p>
+                  <p style={{ fontSize: 11, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{[o.opportunityType, o.organisation].filter(Boolean).join(' · ')}</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
                   <span className={badge(o.status)}>{o.status}</span>
@@ -280,13 +280,13 @@ export function Opportunities() {
             return (
               <div key={o.id} onClick={() => setEditing(o)} style={{ ...rowStyle, display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', alignItems: 'center' }}>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? '#666666' : '#111111', margin: '0 0 2px' }}>{o.title}</p>
-                  {o.organisation && <p style={{ fontSize: 10, color: isDraft ? '#767676' : '#6E6E6E', margin: 0 }}>{o.organisation}</p>}
+                  <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? 'var(--wa-text-2)' : 'var(--wa-ink)', margin: '0 0 2px' }}>{o.title}</p>
+                  {o.organisation && <p style={{ fontSize: 10, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{o.organisation}</p>}
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? '#767676' : '#666666' }}>{o.opportunityType ?? '—'}</span>
+                <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-text-2)' }}>{o.opportunityType ?? '—'}</span>
                 {deadlineCell}
                 <span className={badge(o.status)}>{o.status}</span>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: o.status === 'Shortlisted' || o.status === 'Won' ? 'var(--accent)' : (isDraft ? '#EEEEEE' : '#DDDDDD'), margin: 'auto' }} />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: o.status === 'Shortlisted' || o.status === 'Won' ? 'var(--accent)' : (isDraft ? 'var(--wa-line)' : 'var(--wa-line)'), margin: 'auto' }} />
               </div>
             )
           })}

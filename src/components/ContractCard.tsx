@@ -46,7 +46,7 @@ function fromDraft(d: Draft): BookContract {
   return out as BookContract
 }
 
-const label: React.CSSProperties = { fontSize: 9, color: '#6E6E6E', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+const label: React.CSSProperties = { fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
 export function ContractCard({ work }: { work: Work }) {
   const c = work.contract ?? {}
@@ -81,7 +81,7 @@ export function ContractCard({ work }: { work: Work }) {
   ]
   const shown = rows.filter(([, v]) => v)
 
-  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '7px 10px', fontSize: 12, color: '#111111', outline: 'none', width: '100%', boxSizing: 'border-box' }
+  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '7px 10px', fontSize: 12, color: 'var(--wa-ink)', outline: 'none', width: '100%', boxSizing: 'border-box' }
   const field = (k: keyof BookContract, text: string, placeholder?: string, numeric = false) => (
     <label>
       <span style={label}>{text}</span>
@@ -91,24 +91,24 @@ export function ContractCard({ work }: { work: Work }) {
   const select = (k: keyof BookContract, text: string, options: Array<[string, string]>) => (
     <label>
       <span style={label}>{text}</span>
-      <select value={draft[k]} onChange={e => set(k, e.target.value)} style={{ ...inp, color: draft[k] ? '#111111' : '#6E6E6E' }}>
+      <select value={draft[k]} onChange={e => set(k, e.target.value)} style={{ ...inp, color: draft[k] ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </label>
   )
 
   return (
-    <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '18px 20px' }}>
+    <div style={{ background: 'var(--wa-surface)', borderRadius: 16, padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', margin: 0 }}>Contract</p>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: 0 }}>Contract</p>
         {editing ? (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: '#6E6E6E', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
             <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
           </div>
         ) : (
           <button onClick={() => { setDraft(toDraft(c)); setEditing(true) }}
-            style={{ background: 'none', border: '1px solid #EBEBEB', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: '#6E6E6E', cursor: 'pointer' }}>
+            style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>
             {shown.length ? 'Edit' : '+ Add'}
           </button>
         )}
@@ -140,16 +140,16 @@ export function ContractCard({ work }: { work: Work }) {
           </label>
         </div>
       ) : shown.length === 0 && !c.notes ? (
-        <p style={{ fontSize: 12, color: '#767676', fontStyle: 'italic', margin: 0 }}>No contract terms yet</p>
+        <p style={{ fontSize: 12, color: 'var(--wa-muted)', fontStyle: 'italic', margin: 0 }}>No contract terms yet</p>
       ) : (
         <>
           {shown.map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid #F5F5F5' }}>
-              <span style={{ fontSize: 10, color: '#6E6E6E', flexShrink: 0 }}>{k}</span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#111111', textAlign: 'right' }}>{v}</span>
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--wa-line)' }}>
+              <span style={{ fontSize: 10, color: 'var(--wa-muted)', flexShrink: 0 }}>{k}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--wa-ink)', textAlign: 'right' }}>{v}</span>
             </div>
           ))}
-          {c.notes && <p style={{ fontSize: 12, color: '#666666', lineHeight: 1.6, margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{c.notes}</p>}
+          {c.notes && <p style={{ fontSize: 12, color: 'var(--wa-text-2)', lineHeight: 1.6, margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{c.notes}</p>}
         </>
       )}
     </div>

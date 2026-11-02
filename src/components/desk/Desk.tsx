@@ -37,10 +37,10 @@ const SPAN: Record<DeskType, { span: number; h: number }> = {
   title: { span: 1, h: 56 },
 }
 
-const cardStyle: React.CSSProperties = { background: '#FFFFFF', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }
-const smallLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6E6E6E' }
+const cardStyle: React.CSSProperties = { background: 'var(--wa-surface)', borderRadius: 16, boxShadow: '0 2px 12px rgba(0,0,0,.06)' }
+const smallLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)' }
 const plainBtn: React.CSSProperties = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit', textAlign: 'left' }
-const bareInput: React.CSSProperties = { border: 'none', outline: 'none', background: 'none', padding: 0, width: '100%', font: 'inherit', color: '#111111' }
+const bareInput: React.CSSProperties = { border: 'none', outline: 'none', background: 'none', padding: 0, width: '100%', font: 'inherit', color: 'var(--wa-ink)' }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -168,18 +168,18 @@ function ProjectBlock({ p, todos, compact, onOpen }: { p: Project; todos: Todo[]
         <span style={smallLabel}>{p.projectType ?? 'Project'}</span>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
       </div>
-      <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: '#111111' }}>{p.title}</button>
-      {sub && <div style={{ fontSize: 11, color: '#6E6E6E', marginTop: 3 }}>{sub}</div>}
+      <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: 'var(--wa-ink)' }}>{p.title}</button>
+      {sub && <div style={{ fontSize: 11, color: 'var(--wa-muted)', marginTop: 3 }}>{sub}</div>}
       <div style={{ marginTop: 'auto', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {next && <div style={{ fontSize: 11, color: '#444444' }}><span style={{ color: '#6E6E6E' }}>Next </span>{next.title}</div>}
+        {next && <div style={{ fontSize: 11, color: 'var(--wa-text)' }}><span style={{ color: 'var(--wa-muted)' }}>Next </span>{next.title}</div>}
         {mine.length > 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, height: 4, borderRadius: 2, background: '#F0F0F0', overflow: 'hidden' }}>
-              <div style={{ width: `${(done / mine.length) * 100}%`, height: '100%', background: '#111111' }} />
+            <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--wa-fill-2)', overflow: 'hidden' }}>
+              <div style={{ width: `${(done / mine.length) * 100}%`, height: '100%', background: 'var(--wa-ink)' }} />
             </div>
-            <span style={{ fontSize: 9, color: '#6E6E6E' }}>{done}/{mine.length}</span>
+            <span style={{ fontSize: 9, color: 'var(--wa-muted)' }}>{done}/{mine.length}</span>
           </div>
-        ) : date ? <div style={{ fontSize: 10, color: '#6E6E6E' }}>{date}</div> : null}
+        ) : date ? <div style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{date}</div> : null}
       </div>
     </div>
   )
@@ -204,9 +204,9 @@ function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos:
   return (
     <div style={{ padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: '#111111' }}>Tasks</span>
+        <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)' }}>Tasks</span>
         <button onClick={() => void db.boardItems.update(item.id!, { content: range === 'week' ? 'all' : 'week' })}
-          style={{ fontSize: 10, color: '#222222', background: 'rgba(0,0,0,.08)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ fontSize: 10, color: 'var(--wa-text)', background: 'rgba(0,0,0,.08)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
           {range === 'week' ? 'This week' : 'All open'}
         </button>
       </div>
@@ -220,13 +220,13 @@ function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos:
           <label key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)', cursor: 'pointer' }}>
             <input type="checkbox" checked={false}
               onChange={() => { void db.todos.update(t.id!, { done: true, kanbanStatus: 'done' }); window.dispatchEvent(new Event('wa:task-done')) }}
-              style={{ accentColor: '#111111', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0 }} />
+              style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0 }} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-              <span style={{ fontSize: 12, color: '#111111' }}>{t.title}</span>
+              <span style={{ fontSize: 12, color: 'var(--wa-ink)' }}>{t.title}</span>
               {(project || due) && (
                 <span style={{ fontSize: 10, color: 'rgba(0,0,0,.62)' }}>
                   {project?.title}{project && due ? ' · ' : ''}
-                  {due && <span style={due.overdue ? { color: '#C53030', fontWeight: 600 } : undefined}>{due.text}</span>}
+                  {due && <span style={due.overdue ? { color: 'var(--wa-red)', fontWeight: 600 } : undefined}>{due.text}</span>}
                 </span>
               )}
             </span>
@@ -261,14 +261,14 @@ function ListBlock({ item }: { item: BoardItem }) {
         style={{ ...bareInput, fontFamily: 'Recoleta, serif', fontSize: 15, marginBottom: 6 }} />
       {data.items.map(it => (
         <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? '#6E6E6E' : '#333333', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
+          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? 'var(--wa-muted)' : 'var(--wa-text)', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
             <input type="checkbox" checked={it.done}
               onChange={() => void save({ ...data, items: data.items.map(x => x.id === it.id ? { ...x, done: !x.done } : x) })}
-              style={{ accentColor: '#111111', width: 14, height: 14, margin: 0, flexShrink: 0 }} />
+              style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: 0, flexShrink: 0 }} />
             {it.text}
           </label>
           <button aria-label={`Remove ${it.text}`} onClick={() => void save({ ...data, items: data.items.filter(x => x.id !== it.id) })}
-            style={{ ...plainBtn, fontSize: 12, color: '#767676', padding: '2px 4px' }}>×</button>
+            style={{ ...plainBtn, fontSize: 12, color: 'var(--wa-muted)', padding: '2px 4px' }}>×</button>
         </div>
       ))}
       <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addItem() }}
@@ -281,19 +281,19 @@ function ListBlock({ item }: { item: BoardItem }) {
 function SubmissionBlock({ o }: { o: Opportunity }) {
   const n = o.deadline && notSent(o) ? daysUntil(o.deadline) : null
   let badge: { text: string; color: string; bg: string } | null = null
-  if (n !== null && n < 0) badge = { text: 'Overdue', color: '#C53030', bg: 'rgba(224,82,82,.12)' }
-  else if (n !== null && n <= 2) badge = { text: n === 0 ? 'Today' : `${n}d`, color: '#C53030', bg: 'rgba(224,82,82,.12)' }
-  else if (n !== null && n <= 7) badge = { text: `${n}d`, color: '#A86400', bg: 'rgba(240,160,32,.14)' }
+  if (n !== null && n < 0) badge = { text: 'Overdue', color: 'var(--wa-red)', bg: 'rgba(224,82,82,.12)' }
+  else if (n !== null && n <= 2) badge = { text: n === 0 ? 'Today' : `${n}d`, color: 'var(--wa-red)', bg: 'rgba(224,82,82,.12)' }
+  else if (n !== null && n <= 7) badge = { text: `${n}d`, color: 'var(--wa-amber)', bg: 'rgba(240,160,32,.14)' }
 
   return (
     <div style={{ padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={smallLabel}>Submission</span>
-        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6E6E6E', border: '1px solid #EEEEEE', borderRadius: 999, padding: '3px 8px' }}>{o.status}</span>
+        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--wa-muted)', border: '1px solid var(--wa-line)', borderRadius: 999, padding: '3px 8px' }}>{o.status}</span>
       </div>
-      <div style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: '#111111' }}>{o.title}</div>
+      <div style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: 'var(--wa-ink)' }}>{o.title}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-        <span style={{ fontSize: 11, color: '#666666' }}>{o.deadline ? `Deadline ${fmtDay(o.deadline)}` : 'No deadline'}</span>
+        <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{o.deadline ? `Deadline ${fmtDay(o.deadline)}` : 'No deadline'}</span>
         {badge && <span style={{ fontSize: 9, fontWeight: 700, color: badge.color, background: badge.bg, borderRadius: 4, padding: '1px 6px' }}>{badge.text}</span>}
       </div>
     </div>
@@ -301,9 +301,9 @@ function SubmissionBlock({ o }: { o: Opportunity }) {
 }
 
 const TEXT_LOOK: Record<string, React.CSSProperties> = {
-  note: { padding: '14px 16px', fontSize: 12.5, lineHeight: 1.6, color: '#222222' },
+  note: { padding: '14px 16px', fontSize: 12.5, lineHeight: 1.6, color: 'var(--wa-text)' },
   quote: { padding: '20px 22px', fontFamily: 'Recoleta, serif', fontSize: 20, lineHeight: 1.3, color: 'var(--accent)' },
-  title: { padding: '2px 4px', fontFamily: 'Recoleta, serif', fontSize: 34, lineHeight: 1.15, color: '#111111' },
+  title: { padding: '2px 4px', fontFamily: 'Recoleta, serif', fontSize: 34, lineHeight: 1.15, color: 'var(--wa-ink)' },
 }
 const TEXT_PLACEHOLDER: Record<string, string> = { note: 'Note', quote: 'Quote', title: 'Heading' }
 
@@ -331,10 +331,10 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
     <div role="dialog" aria-modal="true" aria-label={title}
       onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.2)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 24, width: 420, maxWidth: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width: 420, maxWidth: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ ...smallLabel, color: '#767676' }}>{title}</span>
-          <button onClick={onClose} style={{ ...plainBtn, fontSize: 12, color: '#6E6E6E' }}>Close</button>
+          <span style={{ ...smallLabel, color: 'var(--wa-muted)' }}>{title}</span>
+          <button onClick={onClose} style={{ ...plainBtn, fontSize: 12, color: 'var(--wa-muted)' }}>Close</button>
         </div>
         {children}
       </div>
@@ -344,9 +344,9 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 
 function PickRow({ title, sub, onClick }: { title: string; sub?: string | null; onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ ...plainBtn, display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', padding: '11px 0', borderBottom: '1px solid #F5F5F5' }}>
-      <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: '#111111', flex: 1 }}>{title}</span>
-      {sub && <span style={{ fontSize: 10, color: '#6E6E6E', flexShrink: 0 }}>{sub}</span>}
+    <button onClick={onClick} style={{ ...plainBtn, display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', padding: '11px 0', borderBottom: '1px solid var(--wa-line)' }}>
+      <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)', flex: 1 }}>{title}</span>
+      {sub && <span style={{ fontSize: 10, color: 'var(--wa-muted)', flexShrink: 0 }}>{sub}</span>}
     </button>
   )
 }
@@ -667,9 +667,9 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   // ── rendering ─────────────────────────────────────────────────────────────
   function blockShell(t: DeskType): React.CSSProperties {
     if (t === 'note' || t === 'tasks') return { ...cardStyle, background: 'var(--accent)' }
-    if (t === 'quote' || t === 'comingup') return { ...cardStyle, background: '#111111' }
+    if (t === 'quote' || t === 'comingup') return { ...cardStyle, background: 'var(--wa-black)' }
     if (t === 'title') return {}
-    if (t === 'image') return { borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.08)', background: '#EEEEEE' }
+    if (t === 'image') return { borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.08)', background: 'var(--wa-line)' }
     return cardStyle
   }
 
@@ -726,19 +726,19 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         onPointerEnter={() => setHovered(item.id!)}
         onPointerLeave={() => setHovered(h => (h === item.id ? null : h))}
         onClick={narrow ? e => { if (!(e.target as HTMLElement).closest(INTERACTIVE)) onBlockClick(item) } : undefined}>
-        <div style={{ ...shell, height: t === 'image' && !narrow ? imageHeight : undefined, boxShadow: mine ? '0 12px 32px rgba(0,0,0,.14)' : shell.boxShadow }}>
+        <div className={t === 'note' || t === 'tasks' ? 'wa-light' : undefined} style={{ ...shell, height: t === 'image' && !narrow ? imageHeight : undefined, boxShadow: mine ? '0 12px 32px rgba(0,0,0,.14)' : shell.boxShadow }}>
           {blockContent(item)}
         </div>
         {showRemove && (
           <div style={{ position: 'absolute', top: -10, right: -8, display: 'flex', gap: 4, zIndex: 2 }}>
             <button aria-label="Hide this box" title="Hide" onClick={() => void setHidden(item, true)}
-              style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: '#FFFFFF', border: '1px solid #E5E5E5', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8s2.2-4.2 6-4.2S14 8 14 8s-2.2 4.2-6 4.2S2 8 2 8z" stroke="#666666" strokeWidth="1.4" strokeLinejoin="round" /><circle cx="8" cy="8" r="1.8" stroke="#666666" strokeWidth="1.4" /><path d="M3 13L13 3" stroke="#666666" strokeWidth="1.4" strokeLinecap="round" /></svg>
+              style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8s2.2-4.2 6-4.2S14 8 14 8s-2.2 4.2-6 4.2S2 8 2 8z" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinejoin="round" /><circle cx="8" cy="8" r="1.8" stroke="var(--wa-muted)" strokeWidth="1.4" /><path d="M3 13L13 3" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinecap="round" /></svg>
             </button>
             {CONFIRM_TYPES.includes(t) && (
               <button aria-label="Delete this box" title="Delete" onClick={() => void removeBlock(item)}
-                style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: '#FFFFFF', border: '1px solid #E5E5E5', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-                <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="#888888" strokeWidth="1.4" strokeLinecap="round" /></svg>
+                style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinecap="round" /></svg>
               </button>
             )}
           </div>
@@ -746,8 +746,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         {showHandle && (
           <div aria-hidden="true" onPointerDown={e => onPointerDown(e, item, 'resize')}
             style={t === 'image'
-              ? { position: 'absolute', right: -5, bottom: -5, width: 10, height: 10, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 2, cursor: 'nwse-resize', touchAction: 'none', zIndex: 2 }
-              : { position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 28, background: '#FFFFFF', border: '1.5px solid #111111', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 2 }} />
+              ? { position: 'absolute', right: -5, bottom: -5, width: 10, height: 10, background: 'var(--wa-surface)', border: '1.5px solid var(--wa-ink)', borderRadius: 2, cursor: 'nwse-resize', touchAction: 'none', zIndex: 2 }
+              : { position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 8, height: 28, background: 'var(--wa-surface)', border: '1.5px solid var(--wa-ink)', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 2 }} />
         )}
       </div>
     )
@@ -772,9 +772,9 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   const earlierButton = pastProjects.length > 0 && (
     <button onClick={() => setPicker('earlier')}
-      style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FFFFFF', border: '1px solid #EEEEEE', borderRadius: 999, padding: '9px 14px', fontSize: 11, color: '#666666', cursor: 'pointer', fontFamily: 'inherit', width: 'fit-content', ...(narrow ? {} : { position: 'absolute', left: PAD, bottom: 20 }) }}>
+      style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', borderRadius: 999, padding: '9px 14px', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit', width: 'fit-content', ...(narrow ? {} : { position: 'absolute', left: PAD, bottom: 20 }) }}>
       Earlier work
-      <span style={{ fontSize: 9, fontWeight: 600, color: '#666666', background: '#F5F5F5', borderRadius: 999, padding: '2px 6px' }}>{pastProjects.length}</span>
+      <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-text-2)', background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 6px' }}>{pastProjects.length}</span>
     </button>
   )
 
@@ -797,18 +797,18 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       {hiddenItems.length > 0 && (
         <div style={{ position: 'relative' }}>
           <button onClick={() => setTrayOpen(o => !o)} aria-expanded={trayOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 34, padding: '0 14px', border: '1px solid #DDDDDD', borderRadius: 999, background: '#FFFFFF', color: '#111111', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 34, padding: '0 14px', border: '1px solid var(--wa-line)', borderRadius: 999, background: 'var(--wa-surface)', color: 'var(--wa-ink)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
             Hidden boxes
             <span style={{ minWidth: 20, height: 20, padding: '0 6px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 999, background: 'var(--accent)', fontSize: 11, fontWeight: 600 }}>{hiddenItems.length}</span>
           </button>
           {trayOpen && (
-            <div style={{ position: 'absolute', right: 0, top: 42, zIndex: 50, width: 280, maxWidth: 'calc(100vw - 40px)', background: '#FFFFFF', borderRadius: 14, boxShadow: '0 14px 44px rgba(0,0,0,.18)', padding: '12px 16px' }}>
+            <div style={{ position: 'absolute', right: 0, top: 42, zIndex: 50, width: 280, maxWidth: 'calc(100vw - 40px)', background: 'var(--wa-surface)', borderRadius: 14, boxShadow: '0 14px 44px rgba(0,0,0,.18)', padding: '12px 16px' }}>
               <p style={{ ...smallLabel, margin: '0 0 6px' }}>Hidden boxes</p>
               {hiddenItems.map(i => (
-                <div key={i.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid #F0F0F0' }}>
+                <div key={i.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid var(--wa-line)' }}>
                   <span style={{ fontSize: 13, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{labelOf(i)}</span>
                   <button onClick={() => { void setHidden(i, false); if (hiddenItems.length === 1) setTrayOpen(false) }}
-                    style={{ flexShrink: 0, minHeight: 30, padding: '0 12px', border: 'none', borderRadius: 999, background: '#111111', color: '#FFFFFF', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Show</button>
+                    style={{ flexShrink: 0, minHeight: 30, padding: '0 12px', border: 'none', borderRadius: 999, background: 'var(--wa-black)', color: '#FFFFFF', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Show</button>
                 </div>
               ))}
             </div>
@@ -828,18 +828,18 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         </div>
       ) : (
         <div ref={canvasRef} data-tour="desk"
-          style={{ position: 'relative', height: canvasH, background: '#E6E6E6', borderRadius: 20 }}>
+          style={{ position: 'relative', height: canvasH, background: 'var(--wa-desk)', borderRadius: 20 }}>
           {live && Array.from({ length: COLS }, (_, c) => (
             <div key={c} aria-hidden="true"
               style={{ position: 'absolute', top: 12, bottom: 12, left: colLeft(c), width: colW, borderRadius: 12, background: 'rgba(0,0,0,.025)', pointerEvents: 'none' }} />
           ))}
           {preview && (
             <div aria-hidden="true"
-              style={{ position: 'absolute', ...preview, borderRadius: 16, border: '1.5px dashed #D8D8D8', background: 'rgba(0,0,0,.03)', pointerEvents: 'none' }} />
+              style={{ position: 'absolute', ...preview, borderRadius: 16, border: '1.5px dashed var(--wa-line)', background: 'rgba(0,0,0,.03)', pointerEvents: 'none' }} />
           )}
           {deskW > 0 && ordered.map(renderBlock)}
           {loaded && visible.length === 0 && (
-            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: '#767676' }}>Nothing on the desk yet. Add a project from the toolbar below.</p>
+            <p style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, fontSize: 12, color: 'var(--wa-muted)' }}>Nothing on the desk yet. Add a project from the toolbar below.</p>
           )}
           {earlierButton}
         </div>
@@ -849,8 +849,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
       {/* Hint, just above the toolbar, until the first card is moved */}
       {!narrow && !hintDone && (
-        <p style={{ position: 'fixed', bottom: minimised ? 80 : 74, left: '50%', transform: 'translateX(-50%)', zIndex: 40, margin: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 999, background: 'rgba(255,255,255,.92)', boxShadow: '0 2px 10px rgba(0,0,0,.08)', fontSize: 12, color: '#555555', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-          <svg width="10" height="14" viewBox="0 0 12 16" fill="none" aria-hidden="true"><circle cx="3" cy="3" r="1.4" fill="#555555" /><circle cx="9" cy="3" r="1.4" fill="#555555" /><circle cx="3" cy="8" r="1.4" fill="#555555" /><circle cx="9" cy="8" r="1.4" fill="#555555" /><circle cx="3" cy="13" r="1.4" fill="#555555" /><circle cx="9" cy="13" r="1.4" fill="#555555" /></svg>
+        <p style={{ position: 'fixed', bottom: minimised ? 80 : 74, left: '50%', transform: 'translateX(-50%)', zIndex: 40, margin: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', borderRadius: 999, background: 'color-mix(in srgb, var(--wa-surface) 92%, transparent)', boxShadow: '0 2px 10px rgba(0,0,0,.08)', fontSize: 12, color: 'var(--wa-text)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+          <svg width="10" height="14" viewBox="0 0 12 16" fill="none" aria-hidden="true"><circle cx="3" cy="3" r="1.4" fill="var(--wa-text)" /><circle cx="9" cy="3" r="1.4" fill="var(--wa-text)" /><circle cx="3" cy="8" r="1.4" fill="var(--wa-text)" /><circle cx="9" cy="8" r="1.4" fill="var(--wa-text)" /><circle cx="3" cy="13" r="1.4" fill="var(--wa-text)" /><circle cx="9" cy="13" r="1.4" fill="var(--wa-text)" /></svg>
           Drag cards to arrange your desk. Drag the side handle to resize.
         </p>
       )}
@@ -859,24 +859,24 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       {minimised ? (
         <button aria-label="Show toolbar" data-tour="desk-toolbar" onClick={() => toggleToolbar(false)}
           style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', width: 48, height: 48, borderRadius: 999, background: 'var(--accent)', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 40 }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="#111111" strokeWidth="1.8" strokeLinecap="round" /></svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="var(--wa-ink)" strokeWidth="1.8" strokeLinecap="round" /></svg>
         </button>
       ) : (
         <div role="toolbar" aria-label="Add to desk" data-tour="desk-toolbar"
-          style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 32px)', overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 2, background: '#FFFFFF', borderRadius: 999, padding: '5px 6px', boxShadow: '0 4px 20px rgba(0,0,0,.12)', zIndex: 40, whiteSpace: 'nowrap' }}>
-          <span style={{ ...smallLabel, color: '#767676', padding: '0 8px 0 10px' }}>Add</span>
+          style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 32px)', overflowX: 'auto', display: 'flex', alignItems: 'center', gap: 2, background: 'var(--wa-surface)', borderRadius: 999, padding: '5px 6px', boxShadow: '0 4px 20px rgba(0,0,0,.12)', zIndex: 40, whiteSpace: 'nowrap' }}>
+          <span style={{ ...smallLabel, color: 'var(--wa-muted)', padding: '0 8px 0 10px' }}>Add</span>
           {toolButtons.map(b => (
             <button key={b.label} onClick={b.run}
-              style={{ fontSize: 11, color: '#555555', background: 'none', border: 'none', borderRadius: 999, padding: '8px 12px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+              style={{ fontSize: 11, color: 'var(--wa-text)', background: 'none', border: 'none', borderRadius: 999, padding: '8px 12px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
               onMouseEnter={e => (e.currentTarget.style.background = '#F5F5F5')}
               onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
               {b.label}
             </button>
           ))}
-          <div style={{ width: 1, height: 16, background: '#EEEEEE', margin: '0 4px', flexShrink: 0 }} />
+          <div style={{ width: 1, height: 16, background: 'var(--wa-line)', margin: '0 4px', flexShrink: 0 }} />
           <button aria-label="Minimise toolbar" onClick={() => toggleToolbar(true)}
             style={{ width: 32, height: 32, borderRadius: 999, background: 'none', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="var(--wa-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </div>
       )}
@@ -888,7 +888,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
             New project
           </button>
           {offDesk.length === 0
-            ? <p style={{ fontSize: 12, color: '#767676', margin: 0 }}>Every active project is on the desk.</p>
+            ? <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: 0 }}>Every active project is on the desk.</p>
             : offDesk.map(p => <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => void restoreProject(p)} />)}
         </Modal>
       )}
@@ -896,7 +896,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       {picker === 'submission' && (
         <Modal title="Submission" onClose={() => setPicker(null)}>
           {openSubs.length === 0
-            ? <p style={{ fontSize: 12, color: '#767676', margin: 0 }}>No open submissions to add.</p>
+            ? <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: 0 }}>No open submissions to add.</p>
             : openSubs.map(o => (
               <PickRow key={o.id} title={o.title} sub={o.deadline ? fmtDay(o.deadline) : o.status}
                 onClick={() => { setPicker(null); void addBlock('submission', String(o.id)) }} />

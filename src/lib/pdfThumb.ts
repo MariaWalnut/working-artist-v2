@@ -17,7 +17,7 @@ export async function pdfThumbnail(dataUrl: string, width = 320): Promise<string
       const canvas = document.createElement('canvas')
       canvas.width = Math.ceil(viewport.width)
       canvas.height = Math.ceil(viewport.height)
-      await page.render({ canvas, viewport, background: '#FFFFFF' }).promise
+      await page.render({ canvas, viewport, background: 'var(--wa-surface)' }).promise
       return canvas.toDataURL('image/jpeg', 0.8)
     } finally {
       await task.destroy()

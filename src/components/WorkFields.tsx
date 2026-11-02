@@ -68,7 +68,7 @@ async function lookupIsbn(isbn: string): Promise<IsbnResult | null> {
   }
 }
 
-const label: React.CSSProperties = { fontSize: 9, color: '#6E6E6E', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+const label: React.CSSProperties = { fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
 export function KindSelect({ value, onChange, style }: { value: WorkKind; onChange: (k: WorkKind) => void; style: React.CSSProperties }) {
   return (
@@ -125,7 +125,7 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
             value={normalizeDate(values.publishedDate) ?? ''}
             onChange={v => onChange({ ...values, publishedDate: v })} />
           {values.publishedDate && !normalizeDate(values.publishedDate) && (
-            <p style={{ fontSize: 10, color: '#A86400', margin: '-4px 0 0' }}>Previously typed as “{values.publishedDate}”. Pick the date above to replace it.</p>
+            <p style={{ fontSize: 10, color: 'var(--wa-amber)', margin: '-4px 0 0' }}>Previously typed as “{values.publishedDate}”. Pick the date above to replace it.</p>
           )}
         </div>
       ) : (
@@ -136,7 +136,7 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
               <input value={values.isbn} onChange={e => { onChange({ ...values, isbn: e.target.value }); setLookup('idle') }}
                 placeholder={f.placeholder} style={{ ...inp, flex: 1, minWidth: 0 }} />
               <button type="button" onClick={() => void runLookup()} disabled={!isbnReady || lookup === 'loading'}
-                style={{ background: '#F5F5F5', border: 'none', borderRadius: 8, padding: '0 10px', fontSize: 10, fontWeight: 600, color: '#555555', cursor: isbnReady ? 'pointer' : 'default', opacity: isbnReady ? 1 : 0.45, whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '0 10px', fontSize: 10, fontWeight: 600, color: 'var(--wa-text)', cursor: isbnReady ? 'pointer' : 'default', opacity: isbnReady ? 1 : 0.45, whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
                 {lookup === 'loading' ? '…' : lookup === 'notfound' ? 'Not found' : lookup === 'error' ? 'Error' : 'Look up'}
               </button>
             </div>

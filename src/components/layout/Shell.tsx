@@ -31,10 +31,10 @@ export function Shell({ children }: { children: ReactNode }) {
       <header className="mb-8 flex items-baseline justify-between">
         <button
           onClick={() => navigate('/today')}
-          style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 18, color: '#111111', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 18, color: 'var(--wa-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {wordmark}
-          {demoField && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#6E6E6E', marginLeft: 10 }}>Demo</span>}
+          {demoField && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginLeft: 10 }}>Demo</span>}
         </button>
         <nav className="hidden items-baseline gap-7 lg:flex">
           {NAV.map((item) => {
@@ -46,7 +46,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 style={{
                   fontFamily: 'Recoleta, serif',
                   fontSize: 15,
-                  color: active ? '#111111' : '#767676',
+                  color: active ? 'var(--wa-ink)' : 'var(--wa-muted)',
                   background: 'none',
                   border: 'none',
                   borderBottom: active ? '3px solid var(--accent)' : '3px solid transparent',
@@ -69,21 +69,21 @@ export function Shell({ children }: { children: ReactNode }) {
         >
           <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
             {menuOpen
-              ? <path d="M3 1l12 12M15 1L3 13" stroke="#111111" strokeWidth="1.6" strokeLinecap="round" />
-              : <path d="M1 1h16M1 7h16M1 13h16" stroke="#111111" strokeWidth="1.6" strokeLinecap="round" />}
+              ? <path d="M3 1l12 12M15 1L3 13" stroke="var(--wa-ink)" strokeWidth="1.6" strokeLinecap="round" />
+              : <path d="M1 1h16M1 7h16M1 13h16" stroke="var(--wa-ink)" strokeWidth="1.6" strokeLinecap="round" />}
           </svg>
         </button>
       </header>
 
       {menuOpen && (
-        <nav className="lg:hidden" style={{ background: '#FFFFFF', borderRadius: 20, padding: '8px 20px', marginTop: -16, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
+        <nav className="lg:hidden" style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '8px 20px', marginTop: -16, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
           {NAV.map((item, i) => {
             const active = isActive(item.to)
             return (
               <button
                 key={item.to}
                 onClick={() => { setMenuOpen(false); navigate(item.to) }}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 48, fontFamily: 'Recoleta, serif', fontSize: 17, color: active ? '#111111' : '#666666', background: 'none', border: 'none', borderBottom: i < NAV.length - 1 ? '1px solid #F5F5F5' : 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 48, fontFamily: 'Recoleta, serif', fontSize: 17, color: active ? 'var(--wa-ink)' : 'var(--wa-text-2)', background: 'none', border: 'none', borderBottom: i < NAV.length - 1 ? '1px solid var(--wa-line)' : 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
               >
                 {item.label}
                 {active && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />}

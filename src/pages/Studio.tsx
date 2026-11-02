@@ -34,12 +34,12 @@ function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (
     onDone(id)
   }
 
-  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid #EEEEEE', background: '#F5F5F5', padding: '9px 12px', fontSize: 13, color: '#111111', outline: 'none', width: '100%', boxSizing: 'border-box' }
+  const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '9px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', width: '100%', boxSizing: 'border-box' }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20 }}>
-      <div style={{ background: '#FFFFFF', borderRadius: 20, padding: 28, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', marginBottom: 16 }}>Add work</p>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 28, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginBottom: 16 }}>Add work</p>
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" aria-label="Title"
           onKeyDown={e => { if (e.key === 'Enter') void save() }}
           style={{ ...inp, marginBottom: 12, fontSize: 14 }} />
@@ -50,7 +50,7 @@ function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (
           onIsbnFound={r => { if (r.title && !title.trim()) setTitle(r.title); if (r.image) setImage(r.image) }} />
         <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
           <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
-          <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: '#666666', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -74,12 +74,12 @@ export function Studio() {
     .filter(w => !kindFilter || kindOf(w) === kindFilter)
     .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
-  const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6E6E6E' }}>{t}</span>
+  const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{t}</span>
   const filterBtn = (label: string, count: number, active: boolean, onClick: () => void) => (
     <button key={label} onClick={onClick}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: narrow ? 'auto' : '100%', flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? '#F5F5F5' : 'none', color: active ? '#111111' : '#666666', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: narrow ? 'auto' : '100%', flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
       <span>{label}</span>
-      <span style={{ fontSize: 10, color: '#6E6E6E', fontWeight: 400 }}>{count}</span>
+      <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 400 }}>{count}</span>
     </button>
   )
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
@@ -92,8 +92,8 @@ export function Studio() {
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {usedKinds.length > 1 && (
-            <div style={{ background: '#FFFFFF', borderRadius: 20, padding: narrow ? 10 : '18px 16px', display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 2, overflowX: narrow ? 'auto' : undefined }}>
-              {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#767676', padding: '0 8px 8px', margin: 0 }}>Kind</p>}
+            <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? 10 : '18px 16px', display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 2, overflowX: narrow ? 'auto' : undefined }}>
+              {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px', margin: 0 }}>Kind</p>}
               {filterBtn('All', works.length, kindFilter === null, () => setKindFilter(null))}
               {usedKinds.map(k => filterBtn(k, works.filter(w => kindOf(w) === k).length, kindFilter === k, () => setKindFilter(kindFilter === k ? null : k)))}
             </div>
@@ -106,18 +106,18 @@ export function Studio() {
         </div>
 
         {/* List */}
-        <div data-tour="works-list" style={{ background: '#FFFFFF', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid #F5F5F5' }}>
+        <div data-tour="works-list" style={{ background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid var(--wa-line)' }}>
             <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{kindFilter ? `${kindFilter}s` : 'Works'}</p>
-            <span style={{ marginLeft: 8, background: '#F5F5F5', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: '#666666' }}>{shown.length}</span>
-            <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? 'var(--accent)' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : '#6E6E6E', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
+            <span style={{ marginLeft: 8, background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: 'var(--wa-text-2)' }}>{shown.length}</span>
+            <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? 'var(--accent)' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : 'var(--wa-muted)', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
           </div>
           {shown.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: '#767676', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>
+            <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>
           ) : (
             <>
               {!narrow && (
-                <div style={{ display: 'grid', gridTemplateColumns: columns, padding: '10px 24px', borderBottom: '1px solid #F5F5F5' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: columns, padding: '10px 24px', borderBottom: '1px solid var(--wa-line)' }}>
                   {['', 'Title', 'Kind', 'Location', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
                 </div>
               )}
@@ -125,19 +125,19 @@ export function Studio() {
                 const sub = workSubtitle(w)
                 return (
                   <button key={w.id} data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)}
-                    style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: '1px solid #F9F9F9', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
-                    <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, #EEEEEE 0%, #DDDDDD 100%)', overflow: 'hidden' }}>
+                    style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: '1px solid var(--wa-line)', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
+                    <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, var(--wa-line) 0%, var(--wa-line) 100%)', overflow: 'hidden' }}>
                       {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 12.5, fontWeight: 500, color: '#111111', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
-                      <p style={{ fontSize: 10, color: '#6E6E6E', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
+                      <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {narrow ? [kindOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
                       </p>
                     </div>
-                    {!narrow && <span style={{ fontSize: 11, color: '#666666' }}>{kindOf(w)}</span>}
-                    {!narrow && <span style={{ fontSize: 11, color: '#666666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
-                    <span style={{ fontSize: 10, color: '#767676', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
+                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{kindOf(w)}</span>}
+                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
+                    <span style={{ fontSize: 10, color: 'var(--wa-muted)', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
                   </button>
                 )
               })}

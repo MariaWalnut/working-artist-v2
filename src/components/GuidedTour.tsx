@@ -140,7 +140,7 @@ export function GuidedTour() {
   if (!s) {
     return (
       <button onClick={startTour} aria-label="Start the tour"
-        style={{ ...btn, position: 'fixed', right: 16, bottom: phone ? 80 : 88, zIndex: 70, background: '#111111', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(0,0,0,.18)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(phone ? { width: 44, height: 44, padding: 0 } : {}) }}>
+        style={{ ...btn, position: 'fixed', right: 16, bottom: phone ? 80 : 88, zIndex: 70, background: 'var(--wa-black)', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(0,0,0,.18)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(phone ? { width: 44, height: 44, padding: 0 } : {}) }}>
         <span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 999, background: 'var(--accent)', color: '#111111', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>?</span>
         {!phone && 'Tour'}
       </button>
@@ -179,7 +179,7 @@ export function GuidedTour() {
         <div aria-hidden="true" style={{ position: 'fixed', zIndex: 81, pointerEvents: 'none', left: rect.left - PAD, top: rect.top - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2, borderRadius: 18, boxShadow: `0 0 0 9999px ${DIM}`, outline: '2px solid var(--accent)', transition: 'all .25s ease' }} />
       )}
       <div ref={tipRef} role="dialog" aria-label={`Tour, step ${step! + 1} of ${steps.length}: ${s.title}`}
-        style={{ position: 'fixed', zIndex: 82, ...pos, width: w, background: '#111111', color: '#FFFFFF', borderRadius: 18, padding: '18px 20px 16px', boxShadow: '0 16px 48px rgba(0,0,0,.35)' }}>
+        style={{ position: 'fixed', zIndex: 82, ...pos, width: w, background: 'var(--wa-black)', color: '#FFFFFF', borderRadius: 18, padding: '18px 20px 16px', boxShadow: '0 16px 48px rgba(0,0,0,.35)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, padding: '0 10px', borderRadius: 999, background: 'var(--accent)', color: '#111111', fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
