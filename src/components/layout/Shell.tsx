@@ -4,6 +4,7 @@ import { useActiveDept } from '../../lib/useDept'
 import { demoField } from '../../lib/mode'
 import { applyAccent } from '../../lib/accent'
 import { GuidedTour } from '../GuidedTour'
+import { WaitlistBar } from '../WaitlistBar'
 
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
@@ -27,6 +28,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[1280px] flex-col px-5 pb-16 pt-6 sm:px-9 sm:pt-8">
+      <WaitlistBar />
       {/* Top bar */}
       <header className="mb-8 flex items-baseline justify-between">
         <button

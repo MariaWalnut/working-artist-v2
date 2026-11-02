@@ -144,7 +144,15 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
   }
 }
 
+// Visitors who aren't signed in start on the welcome page; sign-in lives at /signin.
+// Links from sign-in emails carry their token in the address and must reach the sign-in screen.
+const signedOut = !needsPassword && !demoField && !userId
+const fromAuthEmail = /access_token|error_description/.test(location.hash) || /[?&]code=/.test(location.search)
+const toWelcome = signedOut && !fromAuthEmail && location.pathname !== '/signin' && !location.pathname.startsWith('/welcome')
+if (toWelcome) location.replace('/welcome')
+
 export default function App() {
+  if (toWelcome) return null
   return (
     <BrowserRouter>
       <PageErrorBoundary>
