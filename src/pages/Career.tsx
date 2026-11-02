@@ -32,6 +32,7 @@ function projectDate(p: { projectType?: string; dateStart?: string; dateEnd?: st
   const raw = p.projectType === 'Award' ? (p.awardYear ? `${p.awardYear}-01` : null)
     : (p.projectType === 'Books' || p.projectType === 'Publications') ? p.publishedDate
     : p.projectType === 'Release' ? p.releaseDate
+    : p.projectType === 'Film' ? (p.releaseDate ?? p.dateStart ?? p.dateEnd)
     : (p.dateStart ?? p.dateEnd)
   if (!raw) return null
   const y = parseInt(raw.slice(0, 4), 10)

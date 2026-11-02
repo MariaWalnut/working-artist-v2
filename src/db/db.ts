@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie'
 import { migrateLegacyWorks, movePressToEntries, normalizePressDates } from '../lib/works'
 import { studioDbName } from '../lib/mode'
 
-export type Activity = 'visual_artist' | 'musician' | 'writer' | 'picture_book' | 'photographer' | 'designer' | 'performer' | 'other'
+export type Activity = 'visual_artist' | 'musician' | 'writer' | 'picture_book' | 'photographer' | 'filmmaker' | 'designer' | 'performer' | 'other'
 
 export interface Department {
   id?: number
@@ -63,7 +63,7 @@ export interface Work {
   id?: number
   departmentId?: number
   title: string
-  kind?: string // Artwork (default) / Illustration / Book / Release / Other
+  kind?: string // Artwork (default) / Illustration / Book / Release / Film / Other
   medium?: string
   dimensions?: string
   year?: number
@@ -86,6 +86,9 @@ export interface Work {
   // releases
   format?: string
   label?: string
+  // films
+  runtime?: string // e.g. 14 min
+  production?: string // production company
   contract?: BookContract
   // set when copied over from the old books / releases tables
   legacyBookId?: number

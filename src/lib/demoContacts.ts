@@ -92,4 +92,19 @@ export const DEMO_CONTACTS: Record<DemoField, { contacts: DemoContact[]; lists: 
       { name: 'Gallery dinner guests', project: 'Gallery dinner', members: [['Daniel Roth'], ['Victor Lenz'], ['Selma Haug'], ['Ingrid Solberg']] },
     ],
   },
+  filmmaker: {
+    contacts: [
+      C('Anouk Visser', 'Client', 'Northlight Films', 'Producer', { phone: '+31 10 555 0418', website: 'northlightfilms.example', address: 'Northlight Films\nWitte de Withstraat 50\n3012 BR Rotterdam\nNetherlands', tags: ['producer'], note: 'Prefers voice notes to long emails.', works: ['Salt Road', 'Tidewater'], projects: ['Tidewater', 'Salt Road festival run'] }),
+      C('Laurent Petit', 'Institution', 'Arte Kurzfilm', 'Commissioning editor', { address: 'Arte Kurzfilm\n8 Rue de la Fonderie\n67080 Strasbourg\nFrance', tags: ['broadcaster'], works: ['Borrowed Rooms'], projects: ['Borrowed Rooms, episode 3'] }),
+      C('Greta Holm', 'Curator', 'Rotterdam Shorts', 'Programmer', { address: 'Rotterdam Shorts\nSchouwburgplein 25\n3012 CL Rotterdam\nNetherlands', tags: ['festival'], events: ['Short film festival'], works: ['The Quiet Hour'] }),
+      C('Matteo Ricci', 'Client', 'Lumen Sales', 'Sales agent', { phone: '+39 06 555 0193', address: 'Lumen Sales\nVia Margutta 33\n00187 Rome\nItaly', tags: ['sales'], note: 'Met at Clermont-Ferrand. Wants to see Tidewater early.', events: ['Salt Road at Clermont-Ferrand'] }),
+      C('Jonas Weber', 'Client', 'Northbound Records', 'Label manager', { address: 'Northbound Records\nLinienstraße 41\n10119 Berlin\nGermany', works: ['Harbour Lights'], projects: ['Music video: Glass Hour'] }),
+      C('Rita Gomes', 'Artist', 'Studio Gomes', 'Editor', { phone: '+351 21 555 0281', address: 'Rua do Século 40\n1200-433 Lisbon\nPortugal', tags: ['crew', 'edit'], works: ['Salt Road'], projects: ['Borrowed Rooms, episode 3'] }),
+      C('Ben Archer', 'Press', 'Screen Notes', 'Critic', { address: '17 Old Compton Street\nLondon W1D 5JU\nUnited Kingdom', tags: ['press'], works: ['Salt Road'] }),
+    ],
+    lists: [
+      { name: 'Christmas Card 2026', members: [['Anouk Visser', true], ['Laurent Petit', true], ['Greta Holm'], ['Matteo Ricci'], ['Rita Gomes'], ['Jonas Weber']] },
+      { name: 'Tidewater crew', project: 'Tidewater', members: [['Anouk Visser'], ['Rita Gomes']] },
+    ],
+  },
 }

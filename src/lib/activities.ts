@@ -6,6 +6,7 @@ export const PRACTICE_OPTIONS: Array<{ key: Activity; label: string }> = [
   { key: 'writer',         label: 'Writer' },
   { key: 'picture_book',   label: "Children's books" },
   { key: 'photographer',   label: 'Photographer' },
+  { key: 'filmmaker',      label: 'Filmmaker' },
   { key: 'designer',       label: 'Designer' },
   { key: 'performer',      label: 'Performer' },
   { key: 'other',          label: 'Other' },

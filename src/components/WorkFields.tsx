@@ -8,7 +8,7 @@ export type FieldValues = Record<WorkField, string>
 
 const ALL_FIELDS: WorkField[] = [
   'year', 'month', 'medium', 'dimensions', 'location', 'collection', 'subtitle', 'publisher', 'publishedDate',
-  'isbn', 'language', 'credits', 'pages', 'technique', 'format', 'label',
+  'isbn', 'language', 'credits', 'pages', 'technique', 'format', 'label', 'runtime', 'production',
 ]
 
 export function fieldsFromWork(w: Partial<Work> | null): FieldValues {

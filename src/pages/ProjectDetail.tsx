@@ -63,6 +63,14 @@ function EditTypeFields({ type, state, set }: {
     </>
   )
 
+  if (type === 'Film') return (
+    <>
+      <Row>{field('client', 'Production company')}{field('location', 'Shooting location')}</Row>
+      <Row>{monthField('dateStart', 'Shoot starts')}{monthField('dateEnd', 'Shoot ends')}</Row>
+      <Row>{monthField('releaseDate', 'Premiere')}</Row>
+    </>
+  )
+
   if (type === 'Award') return (
     <>
       <Row>{field('organisation', 'Organisation / Prize')}{field('awardYear', 'Year')}</Row>
@@ -112,6 +120,8 @@ function ProjectMeta({ p }: { p: Project }) {
     items.push(['Author', p.author], ['Illustrator', p.illustrator], ['Designer', p.designer], ['Publisher', p.publisher], ['Published', p.publishedDate ? fmt(p.publishedDate) : null], ['ISBN', p.isbn])
   } else if (t === 'Release') {
     items.push(['Label', p.label], ['Format', p.releaseFormat], ['Released', p.releaseDate ? fmt(p.releaseDate) : null])
+  } else if (t === 'Film') {
+    items.push(['Production', p.client], ['Location', p.location], ['Shoot', dateRange], ['Premiere', p.releaseDate ? fmt(p.releaseDate) : null])
   } else if (t === 'Award') {
     items.push(['Organisation', p.organisation], ['Year', p.awardYear])
   } else if (t === 'Commission') {

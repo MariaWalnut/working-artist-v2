@@ -1,7 +1,8 @@
 import type { Project } from '../db/db'
 
 export function isActive(p: Project) {
-  const end = p.dateEnd ?? p.publishedDate ?? p.releaseDate
+  // A film stays active until its premiere, even after the shoot ends.
+  const end = p.projectType === 'Film' ? (p.releaseDate ?? p.dateEnd) : (p.dateEnd ?? p.publishedDate ?? p.releaseDate)
   if (!end) return true
   return end >= new Date().toISOString().slice(0, 7)
 }
@@ -12,6 +13,7 @@ export function projectSubtitle(p: Project) {
   if (t === 'Release') return [p.label, p.releaseFormat].filter(Boolean).join(' · ')
   if (t === 'Award') return p.organisation
   if (t === 'Commission') return p.client
+  if (t === 'Film') return [p.client, p.location].filter(Boolean).join(' · ')
   return [p.location, p.institution].filter(Boolean).join(' · ')
 }
 

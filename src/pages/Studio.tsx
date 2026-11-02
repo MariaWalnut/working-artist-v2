@@ -63,7 +63,8 @@ export function Studio() {
   const narrow = useNarrow()
   const activities = getActivities(dept)
   const defaultKind: WorkKind = activities.length === 1 && activities[0] === 'musician' ? 'Release'
-    : activities.length === 1 && activities[0] === 'writer' ? 'Book' : 'Artwork'
+    : activities.length === 1 && activities[0] === 'writer' ? 'Book'
+    : activities.length === 1 && activities[0] === 'filmmaker' ? 'Film' : 'Artwork'
 
   const [adding, setAdding] = useState(false)
   const [kindFilter, setKindFilter] = useState<WorkKind | null>(null)

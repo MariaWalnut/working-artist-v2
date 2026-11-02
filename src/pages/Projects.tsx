@@ -4,7 +4,7 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { Desk } from '../components/desk/Desk'
 
-export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Award', 'Commission', 'Books', 'Publications', 'Other']
+export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Film', 'Award', 'Commission', 'Books', 'Publications', 'Other']
 
 const inp: React.CSSProperties = { width: '100%', borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '9px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none' }
 const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--wa-muted)' }

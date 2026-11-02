@@ -9,7 +9,7 @@ import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
 
 
-const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Award', 'Residency', 'Other']
+const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Festival', 'Award', 'Residency', 'Other']
 
 const TYPE_DOT: Record<string, string> = {
   Reading:     '#8CB4D4',
@@ -19,6 +19,7 @@ const TYPE_DOT: Record<string, string> = {
   Talk:        '#B8C8A8',
   Performance: '#D4A8C8',
   Screening:   '#A8B4D4',
+  Festival:    '#E0A030',
   Award:       'var(--accent)',
   Residency:   'var(--wa-muted)',
   Other:       'var(--wa-line-strong)',

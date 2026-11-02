@@ -6,7 +6,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-10-29b'
+export const DEMO_VERSION = '2026-11-02a'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -462,6 +462,76 @@ const SEEDS: Record<DemoField, () => Seed> = {
       goals: ['A museum solo show', 'Work outside the gallery', 'Teach a summer school'],
       refs: ['Ann Hamilton, sound rooms', 'Doris Salcedo, memory', 'Olafur Eliasson, light'],
       tags: ['material', 'space', 'time'] },
+  }),
+
+  filmmaker: () => ({
+    name: 'Working Artist',
+    activities: ['filmmaker'],
+    works: [
+      { title: 'Salt Road', kind: 'Film', format: 'Short documentary', runtime: '24 min', production: 'Northlight Films', credits: 'Written and directed by the artist', language: 'Portuguese, English', publishedDate: '2025-02', year: 2025, month: 2, location: 'Lisbon' },
+      { title: 'The Quiet Hour', kind: 'Film', format: 'Short fiction', runtime: '14 min', production: 'Self-produced', credits: 'Written and directed by the artist', language: 'English', publishedDate: '2023-06', year: 2023, month: 6, location: 'London' },
+      { title: 'Field Recordings', kind: 'Film', format: 'Experimental short', runtime: '9 min', production: 'Self-produced', language: 'No dialogue', publishedDate: '2022-10', year: 2022, month: 10, location: 'Copenhagen' },
+      { title: 'Harbour Lights', kind: 'Film', format: 'Music video', runtime: '4 min', production: 'Northbound Records', credits: 'Directed by the artist', publishedDate: '2024-05', year: 2024, month: 5, location: 'Berlin' },
+      { title: 'Borrowed Rooms', kind: 'Film', format: 'Documentary series, 3 episodes', runtime: '3 × 18 min', production: 'Arte Kurzfilm', language: 'German, French', publishedDate: '2026-04', year: 2026, month: 4, location: 'Berlin' },
+      { title: 'Tidewater', kind: 'Film', format: 'Feature fiction (in development)', runtime: '95 min', production: 'Northlight Films', credits: 'Written and directed by the artist', language: 'English', year: 2027, month: 9, location: 'Rotterdam' },
+    ],
+    projects: [
+      P('Tidewater', 'Film', { client: 'Northlight Films', location: 'Rotterdam', dateStart: inDays(160), dateEnd: inDays(200), releaseDate: inDays(420).slice(0, 7) },
+        [['Send revised script to producer', 2], ['Casting call for the lead', 9], ['Location scout in Rotterdam', 18], ['Apply to the script lab', null, true]]),
+      P('Salt Road festival run', 'Film', { client: 'Northlight Films', releaseDate: '2025-02' },
+        [['Export DCP for Venice', 3], ['Subtitles in French', 7], ['Update press kit', 12], ['Submit to Clermont-Ferrand', null, true]]),
+      P('Music video: Glass Hour', 'Commission', { client: 'Northbound Records' },
+        [['Treatment to the band', 1], ['Book the camera', 6]]),
+      P('Borrowed Rooms, episode 3', 'Film', { client: 'Arte Kurzfilm', location: 'Paris', dateStart: inDays(20), dateEnd: inDays(34) },
+        [['Interview schedule', 4], ['Archive footage licence', 10], ['Rough cut to the editor', 30]]),
+      P('Residency: Berlinale Talents', 'Residency', { location: 'Berlin', institution: 'Berlinale Talents', dateStart: inDays(100), dateEnd: inDays(106) },
+        [['Prepare the pitch', 40]]),
+      P('Teaching: film school workshop', 'Other', {},
+        [['Choose three clips', 5], ['Send the reading list', 11]]),
+    ],
+    events: [
+      ev('Field Recordings premiere', 'Screening', 'Copenhagen', '2022-10-14', { workIds: [2] }),
+      ev('The Quiet Hour premiere', 'Screening', 'London', '2023-06-09', { workIds: [1] }),
+      ev('Short film festival', 'Festival', 'Rotterdam', '2024-01-27', { endDate: '2024-02-04', workIds: [1] }),
+      ev('Harbour Lights launch', 'Screening', 'Berlin', '2024-05-17', { workIds: [3] }),
+      ev('Salt Road world premiere', 'Festival', 'Berlin', '2025-02-16', { endDate: '2025-02-23', workIds: [0] }),
+      ev('Salt Road at Clermont-Ferrand', 'Festival', 'Paris', '2025-09-12', { workIds: [0] }),
+      ev('Q&A after the screening', 'Talk', 'Lisbon', '2025-11-08', { workIds: [0] }),
+      ev('Borrowed Rooms broadcast', 'Screening', 'Paris', '2026-04-20', { workIds: [4] }),
+      ev('Salt Road in Venice', 'Festival', 'Venice', inDays(40), { endDate: inDays(50), workIds: [0], goals: 'Meet two sales agents\nFind a co-producer for Tidewater' }),
+      ev('Film school workshop', 'Talk', 'Amsterdam', inDays(26)),
+      ev('Tidewater pitch', 'Talk', 'Berlin', inDays(100), { workIds: [5] }),
+    ],
+    opportunities: [
+      op('Script development fund', 'Grant', 'Film Fund North', 12, 'Active'),
+      op('Short film festival 2027', 'Open call', 'Rotterdam Shorts', 21, 'Active'),
+      op('Co-production market', 'Open call', 'CineLink', 34, 'Draft'),
+      op('Directors lab', 'Residency', 'Script Lab Europe', -30, 'Shortlisted'),
+      op('Production grant', 'Grant', 'Media Fund', -15, 'Applied'),
+      op('Berlinale Talents', 'Residency', 'Berlinale Talents', -90, 'Won'),
+      op('Documentary pitch forum', 'Open call', 'DocForum', -160, 'Won'),
+      op('TV commission round', 'Commission', 'Arte Kurzfilm', -200, 'Closed'),
+    ],
+    press: [
+      pr('The Quiet Hour reviewed', 'Review', 'Short Film Weekly', '2023-07', 1),
+      pr('New voices in documentary', 'Selection', 'Screen Notes', '2025-01'),
+      pr('Salt Road reviewed', 'Review', 'Festival Daily', '2025-02', 0),
+      pr('Interview: filming the coast', 'Interview', 'Cinema Podcast', '2025-03', 0),
+      pr('Borrowed Rooms feature', 'Feature', 'TV Guide Europe', '2026-04', 4),
+      pr('Best Short Documentary, winner', undefined, 'Rotterdam Shorts', '2025-02', 0, 'award'),
+      pr('Young Director Award, shortlist', undefined, 'European Film Forum', '2023-11', 1, 'award'),
+    ],
+    desk: {
+      list: { title: 'Shoot kit', items: [['Spare batteries'], ['Lav mics ×2'], ['Release forms'], ['Hard drives, 4 TB', true]] },
+      quote: 'Cut what you love if it isn’t the film.',
+      note: 'Producer call Monday, 11 am',
+      submission: 0,
+    },
+    board: { name: 'Next five years',
+      quotes: ['Cut what you love if it isn’t the film.', 'Find the story in the edit.'],
+      goals: ['Shoot the first feature', 'A film in Cannes', 'Work with a sales agent'],
+      refs: ['Agnès Varda, essay films', 'Chantal Akerman, long takes', 'Kelly Reichardt, landscapes'],
+      tags: ['coast', 'light', 'time'] },
   }),
 }
 

@@ -2,7 +2,7 @@ import type { Table } from 'dexie'
 import type { Book, PressEntry, Release, Work } from '../db/db'
 import { formatAnyDate, normalizeDate } from './eventDates'
 
-export const WORK_KINDS = ['Artwork', 'Illustration', 'Book', 'Release', 'Other'] as const
+export const WORK_KINDS = ['Artwork', 'Illustration', 'Book', 'Release', 'Film', 'Other'] as const
 export type WorkKind = typeof WORK_KINDS[number]
 
 export const kindOf = (w: Pick<Work, 'kind'>): WorkKind =>
@@ -11,7 +11,7 @@ export const kindOf = (w: Pick<Work, 'kind'>): WorkKind =>
 export type WorkField =
   | 'year' | 'month' | 'medium' | 'dimensions' | 'location' | 'collection'
   | 'subtitle' | 'publisher' | 'publishedDate' | 'isbn' | 'language' | 'credits' | 'pages' | 'technique'
-  | 'format' | 'label'
+  | 'format' | 'label' | 'runtime' | 'production'
 
 export const NUMERIC_FIELDS: WorkField[] = ['year', 'month', 'pages']
 
@@ -50,6 +50,11 @@ export const KIND_FIELDS: Record<WorkKind, FieldSpec[]> = {
   Release: [
     f('year', 'Date'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
   ],
+  Film: [
+    f('publishedDate', 'Premiere'), f('format', 'Format', 'Short, feature, documentary'), f('runtime', 'Runtime', '14 min'),
+    f('production', 'Production', 'Production company'), f('credits', 'Credits', 'Written and directed by…'),
+    f('language', 'Language'), f('location', 'Location', 'Where it was shot'),
+  ],
   Other: [
     f('year', 'Date'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'),
   ],
@@ -61,6 +66,7 @@ export function workSubtitle(w: Work) {
     case 'Book': return [w.subtitle, w.publisher].filter(Boolean).join(' · ')
     case 'Illustration': return [w.publisher, w.medium].filter(Boolean).join(' · ')
     case 'Release': return [w.format, w.label].filter(Boolean).join(' · ')
+    case 'Film': return [w.format, w.runtime].filter(Boolean).join(' · ')
     default: return [w.medium, w.dimensions].filter(Boolean).join(' · ')
   }
 }
