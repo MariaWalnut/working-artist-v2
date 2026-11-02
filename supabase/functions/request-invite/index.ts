@@ -1,7 +1,7 @@
-// Supabase Edge Function: someone asks for an invite on the welcome page.
+// Supabase Edge Function: someone joins the waiting list on the welcome page.
 //
-// Saves the request in `invite_requests`, then (when RESEND_API_KEY is set) emails
-// Maria about it and sends the person a short thank-you. Without the key it only saves,
+// Saves them in `invite_requests`, then (when RESEND_API_KEY is set) emails
+// Maria about it and sends the person a short confirmation. Without the key it only saves,
 // so the form keeps working before email is set up.
 //
 // Secrets (Supabase dashboard → Edge Functions → Secrets):
@@ -59,19 +59,19 @@ Deno.serve(async (req) => {
 
     const notified = await send(key, {
       from, to: notifyTo, reply_to: email,
-      subject: `Invite request: ${discipline}`,
-      text: `${email} asked for an invite to Working Artist.\nWhat they make: ${discipline}\n\nRequests so far: ${count ?? '?'}\nInvite them in Supabase: Authentication › Users › Invite user.`,
-      html: `<p><strong>${esc(email)}</strong> asked for an invite to Working Artist.</p><p>What they make: ${esc(discipline)}</p><p style="color:#666">Requests so far: ${count ?? '?'}<br>Invite them in Supabase: Authentication › Users › Invite user.</p>`,
+      subject: `Waiting list: ${discipline}`,
+      text: `${email} joined the Working Artist waiting list.\nWhat they make: ${discipline}\n\nOn the list so far: ${count ?? '?'}`,
+      html: `<p><strong>${esc(email)}</strong> joined the Working Artist waiting list.</p><p>What they make: ${esc(discipline)}</p><p style="color:#666">On the list so far: ${count ?? '?'}</p>`,
     })
 
-    // A burst of requests is more likely abuse than artists: hold the thank-you mails then.
+    // A burst of sign-ups is more likely abuse than artists: hold the confirmation mails then.
     const since = new Date(Date.now() - 3600e3).toISOString()
     const { count: lastHour } = await admin.from('invite_requests').select('id', { count: 'exact', head: true }).gte('created_at', since)
     const thanked = (lastHour ?? 0) <= 20 && await send(key, {
       from, to: email,
-      subject: 'Thanks for your interest in Working Artist',
-      text: `Thank you for asking for an invite to Working Artist.\n\nWe are testing it with a small group of artists and will write to you when there is a place.\n\nIn the meantime you can try the sample studios: https://www.workingartist.app/welcome#demos\n\nWorking Artist, a Studio Nozes project`,
-      html: `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.6;color:#111"><p>Thank you for asking for an invite to Working Artist.</p><p>We are testing it with a small group of artists and will write to you when there is a place.</p><p>In the meantime you can try the <a href="https://www.workingartist.app/welcome#demos" style="color:#111">sample studios</a>.</p><p style="color:#555">Working Artist, a Studio Nozes project</p></div>`,
+      subject: 'You’re on the Working Artist waiting list',
+      text: `Thank you for joining the Working Artist waiting list.\n\nWorking Artist is still being made, together with a small group of artists. We’ll let you know when it opens.\n\nIn the meantime you can try the sample studios: https://www.workingartist.app/welcome#demos\n\nWorking Artist, a Studio Nozes project`,
+      html: `<div style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.6;color:#111"><p>Thank you for joining the Working Artist waiting list.</p><p>Working Artist is still being made, together with a small group of artists. We’ll let you know when it opens.</p><p>In the meantime you can try the <a href="https://www.workingartist.app/welcome#demos" style="color:#111">sample studios</a>.</p><p style="color:#555">Working Artist, a Studio Nozes project</p></div>`,
     })
 
     return json({ status: 'saved', mailed: notified, thanked })

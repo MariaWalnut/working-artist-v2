@@ -27,7 +27,7 @@ function NewHere() {
       <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: 'var(--wa-ink)', margin: '0 0 12px' }}>New here?</p>
       <div style={{ display: 'flex', gap: 8 }}>
         <a href="/welcome#demos" style={{ ...a, background: 'var(--wa-black)', color: '#FFFFFF' }}>Try a demo</a>
-        <a href="/welcome#invite" style={{ ...a, background: 'var(--wa-surface)', color: 'var(--wa-ink)', border: '1px solid var(--wa-line)' }}>Request an invite</a>
+        <a href="/welcome#waitlist" style={{ ...a, background: 'var(--wa-surface)', color: 'var(--wa-ink)', border: '1px solid var(--wa-line)' }}>Join the waiting list</a>
       </div>
     </div>
   )
