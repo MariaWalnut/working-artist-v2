@@ -1,10 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { supabase, needsPassword } from '../../lib/supabase'
-import { DEMO_FIELDS } from '../../lib/mode'
-
-const DEMO_LABEL: Record<typeof DEMO_FIELDS[number], string> = {
-  musician: 'Musician', painter: 'Painter', illustrator: 'Illustrator', writer: 'Writer', fineart: 'Fine art', filmmaker: 'Filmmaker',
-}
 
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '11px 14px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', fontFamily: 'inherit' }
 const btn: React.CSSProperties = { width: '100%', background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '13px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#111111', cursor: 'pointer', fontFamily: 'inherit' }
@@ -24,14 +19,15 @@ function Frame({ children, below }: { children: ReactNode; below?: ReactNode }) 
   )
 }
 
-function DemoLinks() {
+// For people who aren't testers yet: the welcome page has the demos and the invite form.
+function NewHere() {
+  const a: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: '0 18px', borderRadius: 999, fontSize: 12, fontWeight: 600, textDecoration: 'none', flex: 1 }
   return (
     <div style={{ marginTop: 28, textAlign: 'center' }}>
-      <p style={{ fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 10px' }}>Try a demo studio</p>
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 16, rowGap: 6 }}>
-        {DEMO_FIELDS.map(f => (
-          <a key={f} href={`/demo/${f}`} style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: 'var(--wa-ink)', textDecoration: 'none', borderBottom: '2px solid var(--accent)' }}>{DEMO_LABEL[f]}</a>
-        ))}
+      <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: 'var(--wa-ink)', margin: '0 0 12px' }}>New here?</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <a href="/welcome#demos" style={{ ...a, background: 'var(--wa-black)', color: '#FFFFFF' }}>Try a demo</a>
+        <a href="/welcome#invite" style={{ ...a, background: 'var(--wa-surface)', color: 'var(--wa-ink)', border: '1px solid var(--wa-line)' }}>Request an invite</a>
       </div>
     </div>
   )
@@ -67,7 +63,7 @@ function LoginScreen() {
   }
 
   return (
-    <Frame below={<DemoLinks />}>
+    <Frame below={<NewHere />}>
       <form onSubmit={e => void signIn(e)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <label><span style={label}>Email</span>
           <input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} style={inp} /></label>
