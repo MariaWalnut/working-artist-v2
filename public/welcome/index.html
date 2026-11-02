@@ -296,7 +296,7 @@ h1, h2, h3, p { text-wrap: balance; }
         <label class="field"><span>What do you make?</span>
           <select name="discipline" required>
             <option value="" disabled selected>Choose one</option>
-            <option>Music</option><option>Painting</option><option>Fine art</option><option>Illustration</option><option>Writing</option><option>Other</option>
+            <option>Music</option><option>Painting</option><option>Fine art</option><option>Illustration</option><option>Writing</option><option>Film</option><option>Other</option>
           </select>
         </label>
         <button type="submit" style="margin-top: 8px; min-height: 56px; border: none; border-radius: 999px; background: #F5E642; font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; cursor: pointer">Request an invite</button>
@@ -348,7 +348,7 @@ document.querySelectorAll('.views').forEach(tabs => {
     shot.classList.remove('on')
   })
 })
-// Invite requests go to a private table in Supabase; the public key can add a row but never read one.
+// Invite requests go to the request-invite function, which saves them privately and sends the emails.
 const inviteForm = document.getElementById('invite-form')
 inviteForm?.addEventListener('submit', async e => {
   e.preventDefault()
@@ -361,13 +361,14 @@ inviteForm?.addEventListener('submit', async e => {
   btn.disabled = true; msg.textContent = 'Sending…'
   try {
     const key = 'sb_publishable_uIEfLevKCGUUi5eQKJAseA_jmgMl3GN'
-    const r = await fetch('https://ibururqeyzgvddbtrgad.supabase.co/rest/v1/invite_requests', {
+    const r = await fetch('https://ibururqeyzgvddbtrgad.supabase.co/functions/v1/request-invite', {
       method: 'POST',
-      headers: { apikey: key, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      headers: { apikey: key, 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, discipline }),
     })
-    if (r.ok || r.status === 409) { inviteForm.reset(); msg.textContent = r.ok ? 'Thank you. We’ll be in touch.' : 'You’re already on the list.' }
-    else msg.textContent = 'Something went wrong. Please try again.'
+    const res = await r.json().catch(() => ({}))
+    if (r.ok) { inviteForm.reset(); msg.textContent = res.status === 'already' ? 'You’re already on the list.' : 'Thank you. We’ll be in touch.' }
+    else msg.textContent = res.error || 'Something went wrong. Please try again.'
   } catch { msg.textContent = 'Something went wrong. Please try again.' }
   btn.disabled = false
 })
