@@ -6,6 +6,9 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { PROJECT_TYPES } from './Projects'
+import { PracticeSelect } from '../components/Practice'
+import { practiceOf, usePractice } from '../lib/practice'
+import type { Activity } from '../db/db'
 
 const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '9px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', width: '100%' }
 const lbl: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--wa-muted)' }
@@ -264,6 +267,8 @@ export function ProjectDetail() {
   const dept = useActiveDept()
 
   const project = useLiveQuery(() => db.projects.get(pid), [pid])
+  const { acts, multi } = usePractice()
+  const [practice, setPractice] = useState<Activity | undefined>()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
   const [type, setType] = useState('')
@@ -286,6 +291,7 @@ export function ProjectDetail() {
     setCustomType(knownType === 'Other' ? pt : '')
     setStatus(project!.status ?? 'Active')
     setNotes(project!.notes ?? '')
+    setPractice(project!.practice)
     setFields(projectFieldsFromRecord(project!))
     setEditing(true)
   }
@@ -295,7 +301,7 @@ export function ProjectDetail() {
     const f = fields
     await db.projects.update(pid, {
       title: title.trim() || project!.title,
-      projectType, status, notes,
+      projectType, status, notes, practice,
       location: f.location || undefined,
       institution: f.institution || undefined,
       curator: f.curator || undefined,
@@ -344,6 +350,11 @@ export function ProjectDetail() {
               {type === 'Other' && (
                 <Field label="Category name">
                   <input value={customType} onChange={e => setCustomType(e.target.value)} placeholder="e.g. Installation" style={inp} />
+                </Field>
+              )}
+              {multi && (
+                <Field label="Practice">
+                  <PracticeSelect value={practice ?? practiceOf(acts).project({ projectType: type })} onChange={setPractice} style={inp} />
                 </Field>
               )}
             </Row>

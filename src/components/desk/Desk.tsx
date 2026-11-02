@@ -5,6 +5,8 @@ import { db, type Board, type BoardItem, type EventEntry, type Opportunity, type
 import { isActive, projectDate, projectSubtitle } from '../../lib/projects'
 import { formatEventDate, isUpcoming } from '../../lib/eventDates'
 import { fileToDataUrl } from '../../lib/images'
+import { practiceOf, usePractice } from '../../lib/practice'
+import type { Activity } from '../../db/db'
 
 type DeskType = 'project' | 'tasks' | 'list' | 'submission' | 'comingup' | 'note' | 'quote' | 'image' | 'title'
 type Picker = 'project' | 'submission' | 'earlier' | null
@@ -185,7 +187,7 @@ function ProjectBlock({ p, todos, compact, onOpen }: { p: Project; todos: Todo[]
   )
 }
 
-function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos: Todo[]; projects: Project[]; deptId: number }) {
+function TasksBlock({ item, todos, projects, deptId, practice }: { item: BoardItem; todos: Todo[]; projects: Project[]; deptId: number; practice?: Activity }) {
   const [draft, setDraft] = useState('')
   const range = item.content === 'all' ? 'all' : 'week'
   const weekEnd = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return localISO(d) })()
@@ -197,7 +199,7 @@ function TasksBlock({ item, todos, projects, deptId }: { item: BoardItem; todos:
   async function add() {
     const title = draft.trim()
     if (!title) return
-    await db.todos.add({ departmentId: deptId, title, done: false, kanbanStatus: 'todo' })
+    await db.todos.add({ departmentId: deptId, title, done: false, kanbanStatus: 'todo', practice })
     setDraft('')
   }
 
@@ -401,10 +403,18 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     async () => boardId == null ? undefined : await db.boardItems.where('boardId').equals(boardId).toArray(),
     [boardId],
   )
-  const projects = useLiveQuery(() => db.projects.where('departmentId').equals(deptId).toArray(), [deptId])
-  const todos = useLiveQuery(() => db.todos.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const opps = useLiveQuery(() => db.opportunities.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const events = useLiveQuery(() => db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  // Every project keeps its box; in Separate mode the desk only shows the practice in view.
+  const { acts, current, keep } = usePractice()
+  const allProjects = useLiveQuery(() => db.projects.where('departmentId').equals(deptId).toArray(), [deptId])
+  const allWorks = useLiveQuery(() => db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const of = practiceOf(acts, allWorks)
+  const projects = allProjects?.filter(p => keep(of.project(p)))
+  const todos = (useLiveQuery(() => db.todos.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []).filter(t => {
+    const p = t.projectId != null ? allProjects?.find(x => x.id === t.projectId) : undefined
+    return p ? keep(of.project(p)) : !t.practice || keep(t.practice)
+  })
+  const opps = (useLiveQuery(() => db.opportunities.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []).filter(o => keep(of.opportunity(o)))
+  const events = (useLiveQuery(() => db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []).filter(e => keep(of.event(e)))
 
   function slotOf(i: BoardItem): Slot {
     const el = canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${i.id}"]`)
@@ -413,7 +423,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   // First visit: create the desk with Coming up, Tasks and every active project.
   useEffect(() => {
-    if (board !== null || projects === undefined) return
+    if (board !== null || allProjects === undefined) return
     void db.transaction('rw', db.boards, db.boardItems, async () => {
       const existing = await db.boards.where('departmentId').equals(deptId).filter(b => b.boardType === 'desk').first()
       if (existing) return
@@ -423,12 +433,12 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         { boardId: id, itemType: 'comingup', content: '', x: 3, y: 24, w: 1, h: 300, createdAt: now },
         { boardId: id, itemType: 'tasks', content: 'week', x: 2, y: 24, w: 1, h: 320, createdAt: now },
       ]
-      projects.filter(isActive).forEach((p, i) => {
+      allProjects.filter(isActive).forEach((p, i) => {
         seed.push({ boardId: id, itemType: 'project', content: String(p.id), x: i % 2, y: 24 + Math.floor(i / 2) * 216, w: 1, h: 176, createdAt: now })
       })
       await db.boardItems.bulkAdd(seed)
     })
-  }, [board, projects, deptId])
+  }, [board, allProjects, deptId])
 
   // Desks laid out before columns existed: move each block to its nearest column.
   useEffect(() => {
@@ -461,6 +471,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   // Keep the desk in step with projects: new active ones get a card, deleted ones lose theirs.
   useEffect(() => {
+    const projects = allProjects
     if (!board || board.id == null || !items || !projects) return
     const deskId = board.id
     const onDesk = new Set(items.filter(i => i.itemType === 'project').map(i => i.content))
@@ -480,7 +491,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         await db.boardItems.add({ boardId: deskId, itemType: 'project', content: String(p.id), x: pos.col, y: pos.y, w: 1, h: 176, createdAt: Date.now() })
       }
     })
-  }, [board, items, projects])
+  }, [board, items, allProjects])
 
   // The canvas grows to fit its lowest block.
   useLayoutEffect(() => {
@@ -505,9 +516,9 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       return !!p && isActive(p)
     }
     if (i.itemType === 'submission') return opps.some(o => String(o.id) === i.content)
-    return true
+    return !i.practice || keep(i.practice)
   })
-  const hiddenItems = (items ?? []).filter(i => i.hidden && (i.itemType !== 'project' || projects?.some(p => String(p.id) === i.content)))
+  const hiddenItems = (items ?? []).filter(i => i.hidden && (i.itemType === 'project' ? projects?.some(p => String(p.id) === i.content) : i.itemType === 'submission' ? opps.some(o => String(o.id) === i.content) : !i.practice || keep(i.practice)))
   function labelOf(i: BoardItem): string {
     switch (i.itemType) {
       case 'project': return projects?.find(p => String(p.id) === i.content)?.title ?? 'Project'
@@ -541,7 +552,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     if (board?.id == null || !items) return
     const { span, h } = SPAN[type]
     const pos = findFreeSlot(items.filter(i => !isLegacy(i)).map(slotOf), span, h)
-    const id = await db.boardItems.add({ boardId: board.id, itemType: type, content, x: pos.col, y: pos.y, w: span, h, createdAt: Date.now(), ...extra }) as number
+    const practice = type === 'project' || type === 'submission' ? undefined : current ?? undefined
+    const id = await db.boardItems.add({ boardId: board.id, itemType: type, content, x: pos.col, y: pos.y, w: span, h, createdAt: Date.now(), practice, ...extra }) as number
     if (TEXT_TYPES.includes(type)) setEditingId(id)
     requestAnimationFrame(() => {
       canvasRef.current?.querySelector(`[data-block-id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -681,7 +693,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         return p ? <ProjectBlock p={p} todos={todos} compact={narrow} onOpen={() => navigate(`/projects/${p.id}`)} /> : null
       }
       case 'tasks':
-        return <TasksBlock item={item} todos={todos} projects={projects ?? []} deptId={deptId} />
+        return <TasksBlock item={item} todos={todos} projects={projects ?? []} deptId={deptId} practice={current ?? undefined} />
       case 'list':
         return <ListBlock item={item} />
       case 'submission': {

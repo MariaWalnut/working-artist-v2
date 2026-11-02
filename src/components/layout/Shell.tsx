@@ -5,6 +5,8 @@ import { demoField } from '../../lib/mode'
 import { applyAccent } from '../../lib/accent'
 import { GuidedTour } from '../GuidedTour'
 import { WaitlistBar } from '../WaitlistBar'
+import { PracticeFilter, PracticeName } from '../Practice'
+import { usePractice } from '../../lib/practice'
 
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
@@ -23,6 +25,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const dept = useActiveDept()
   const wordmark = dept?.name?.trim() || 'Working Artist'
   const [menuOpen, setMenuOpen] = useState(false)
+  const practice = usePractice()
+  const filterPage = ['/studio', '/projects/events', '/career', '/career/map', '/career/recognition'].includes(location.pathname)
   useEffect(() => applyAccent(dept?.accent), [dept?.accent])
   const isActive = (to: string) => location.pathname === to || (to !== '/projects' && location.pathname.startsWith(to)) || (to === '/projects' && /^\/projects\/\d+/.test(location.pathname))
 
@@ -31,13 +35,16 @@ export function Shell({ children }: { children: ReactNode }) {
       <WaitlistBar />
       {/* Top bar */}
       <header className="mb-8 flex items-baseline justify-between">
-        <button
-          onClick={() => navigate('/today')}
-          style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 18, color: 'var(--wa-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          {wordmark}
+        <span style={{ display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => navigate('/today')}
+            style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 18, color: 'var(--wa-ink)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            {wordmark}
+          </button>
+          <PracticeName />
           {demoField && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginLeft: 10 }}>Demo</span>}
-        </button>
+        </span>
         <nav className="hidden items-baseline gap-7 lg:flex">
           {NAV.map((item) => {
             const active = isActive(item.to)
@@ -95,7 +102,9 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
       )}
 
-      <main className="flex-1">{children}
+      <main className="flex-1">
+      {practice.multi && practice.mode === 'together' && filterPage && <PracticeFilter />}
+      {children}
       <GuidedTour /></main>
     </div>
   )

@@ -3,6 +3,9 @@ import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { Desk } from '../components/desk/Desk'
+import { PracticeSelect } from '../components/Practice'
+import { practiceOf, usePractice } from '../lib/practice'
+import type { Activity } from '../db/db'
 
 export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Film', 'Award', 'Commission', 'Books', 'Publications', 'Other']
 
@@ -86,8 +89,10 @@ function TypeFields({ type, state, set }: {
 
 function NewProjectForm({ onDone }: { onDone: () => void }) {
   const dept = useActiveDept()
+  const { acts, multi, start } = usePractice()
+  const [practice, setPractice] = useState<Activity | undefined>(start)
   const [title, setTitle] = useState('')
-  const [type, setType] = useState('Exhibition')
+  const [type, setType] = useState(start === 'filmmaker' ? 'Film' : start === 'musician' ? 'Release' : start === 'writer' ? 'Books' : 'Exhibition')
   const [customType, setCustomType] = useState('')
   const [fields, setFields] = useState<Record<string, string>>({})
 
@@ -98,7 +103,7 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
     const projectType = type === 'Other' ? (customType.trim() || 'Other') : type
     const f = fields
     await db.projects.add({
-      departmentId: dept?.id, title: title.trim(), projectType, status: 'Active',
+      departmentId: dept?.id, title: title.trim(), projectType, status: 'Active', practice,
       location: f.location || undefined,
       institution: f.institution || undefined,
       curator: f.curator || undefined,
@@ -137,6 +142,11 @@ function NewProjectForm({ onDone }: { onDone: () => void }) {
           <Field label="Category name">
             <input value={customType} onChange={e => setCustomType(e.target.value)} placeholder="e.g. Installation"
               style={inp} onKeyDown={e => { if (e.key === 'Enter') void save() }} />
+          </Field>
+        )}
+        {multi && (
+          <Field label="Practice">
+            <PracticeSelect value={practice ?? practiceOf(acts).project({ projectType: type })} onChange={setPractice} style={inp} />
           </Field>
         )}
       </Row>

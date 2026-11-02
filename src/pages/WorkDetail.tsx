@@ -5,6 +5,9 @@ import { db, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
+import { PracticeSelect } from '../components/Practice'
+import { practiceOf, usePractice } from '../lib/practice'
+import type { Activity } from '../db/db'
 import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
@@ -56,6 +59,8 @@ export function WorkDetail() {
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
   const [kind, setKind] = useState<WorkKind>('Artwork')
+  const [practice, setPractice] = useState<Activity | undefined>()
+  const { acts } = usePractice()
   const [fields, setFields] = useState<FieldValues>(() => fieldsFromWork(null))
   const [pendingImage, setPendingImage] = useState<string | undefined>()
   const [addingPress, setAddingPress] = useState(false)
@@ -105,6 +110,7 @@ export function WorkDetail() {
     setTitle(w.title)
     setNotes(w.notes ?? '')
     setKind(wKind)
+    setPractice(w.practice)
     setFields(fieldsFromWork(w))
     setPendingImage(undefined)
     setEditing(true)
@@ -116,6 +122,7 @@ export function WorkDetail() {
       title: title.trim() || w.title,
       notes,
       kind,
+      practice,
       ...(pendingImage && !w.image ? { image: pendingImage } : {}),
     })
     setEditing(false)
@@ -221,6 +228,7 @@ export function WorkDetail() {
               {editing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <KindSelect value={kind} onChange={setKind} style={inp} />
+                  <PracticeSelect labelled value={practice ?? practiceOf(acts).work({ kind })} onChange={setPractice} style={inp} />
                   <WorkFields kind={kind} values={fields} onChange={setFields} inp={inp}
                     onIsbnFound={r => { if (r.image) setPendingImage(r.image) }} />
                 </div>

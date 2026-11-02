@@ -156,6 +156,28 @@ export function Account() {
             )}
           </div>
         </div>
+        {activities.length > 1 && d?.id != null && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '12px 0' }}>
+            <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Practices</span>
+            <div role="radiogroup" aria-label="Practices" style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: 'var(--wa-fill)' }}>
+              {([['together', 'Together'], ['separate', 'Separate']] as const).map(([value, label]) => {
+                const on = (d.practiceMode ?? 'together') === value
+                return (
+                  <button key={value} role="radio" aria-checked={on} onClick={() => void db.departments.update(d.id!, { practiceMode: value })}
+                    style={{ minHeight: 32, padding: '0 16px', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: on ? 600 : 400,
+                      background: on ? 'var(--wa-surface)' : 'transparent', color: on ? 'var(--wa-ink)' : 'var(--wa-text-2)', boxShadow: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none' }}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+            <p style={{ width: '100%', margin: 0, fontSize: 12, lineHeight: 1.5, color: 'var(--wa-text-2)' }}>
+              {(d.practiceMode ?? 'together') === 'separate'
+                ? 'One practice at a time. Switch from the name in the top left. Contacts and Manifest are shared.'
+                : 'Everything in one place. Works, Events and Career can show one practice at a time.'}
+            </p>
+          </div>
+        )}
       </Section>
 
       <Section title="Appearance" tour="appearance">

@@ -3,7 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
-import { getActivities } from '../lib/activities'
+import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
+import type { Activity } from '../db/db'
+import { PracticeSelect } from '../components/Practice'
 import { Shell } from '../components/layout/Shell'
 import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
 import { WORK_KINDS, kindOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
@@ -23,14 +25,16 @@ function useNarrow() {
 
 function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (id?: number) => void }) {
   const dept = useActiveDept()
+  const { acts, start } = usePractice({ filter: true })
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<WorkKind>(defaultKind)
+  const [practice, setPractice] = useState<Activity | undefined>(start)
   const [fields, setFields] = useState(() => fieldsFromWork(null))
   const [image, setImage] = useState<string | undefined>()
 
   async function save() {
     if (!title.trim()) return
-    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, image, ...fieldsToPatch(fields, kind) }) as number
+    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, practice, image, ...fieldsToPatch(fields, kind) }) as number
     onDone(id)
   }
 
@@ -45,6 +49,9 @@ function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (
           style={{ ...inp, marginBottom: 12, fontSize: 14 }} />
         <div style={{ marginBottom: 12 }}>
           <KindSelect value={kind} onChange={setKind} style={inp} />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <PracticeSelect labelled value={practice ?? practiceOf(acts).work({ kind })} onChange={setPractice} style={inp} />
         </div>
         <WorkFields kind={kind} values={fields} onChange={setFields} inp={inp} columns={2}
           onIsbnFound={r => { if (r.title && !title.trim()) setTitle(r.title); if (r.image) setImage(r.image) }} />
@@ -61,15 +68,14 @@ export function Studio() {
   const dept = useActiveDept()
   const navigate = useNavigate()
   const narrow = useNarrow()
-  const activities = getActivities(dept)
-  const defaultKind: WorkKind = activities.length === 1 && activities[0] === 'musician' ? 'Release'
-    : activities.length === 1 && activities[0] === 'writer' ? 'Book'
-    : activities.length === 1 && activities[0] === 'filmmaker' ? 'Film' : 'Artwork'
+  const { acts, start, keep } = usePractice({ filter: true })
+  const defaultKind: WorkKind = PRACTICE_KIND[start ?? acts[0]] ?? 'Artwork'
 
   const [adding, setAdding] = useState(false)
   const [kindFilter, setKindFilter] = useState<WorkKind | null>(null)
 
-  const works = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const works = allWorks.filter(w => keep(practiceOf(acts).work(w)))
   const usedKinds = WORK_KINDS.filter(k => works.some(w => kindOf(w) === k))
   const shown = works
     .filter(w => !kindFilter || kindOf(w) === kindFilter)

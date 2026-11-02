@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
+import { practiceOf, usePractice } from '../lib/practice'
 import { Shell } from '../components/layout/Shell'
 import { kindOf, parseLooseDate, workSubtitle } from '../lib/works'
 import { ClippingViewer } from '../components/ClippingViewer'
@@ -243,10 +244,16 @@ export function Career() {
   const dept = useActiveDept()
   const deptId = dept?.id
 
-  const projects = useLiveQuery(() => deptId == null ? [] : db.projects.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const events = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const press = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const { acts, keep } = usePractice({ filter: true })
+  const allProjects = useLiveQuery(() => deptId == null ? [] : db.projects.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const allWorks = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const allEvents = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const allPress = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const of = practiceOf(acts, allWorks)
+  const projects = allProjects.filter(p => keep(of.project(p)))
+  const works = allWorks.filter(w => keep(of.work(w)))
+  const events = allEvents.filter(e => keep(of.event(e)))
+  const press = allPress.filter(p => keep(of.press(p)))
 
   const narrow = useNarrow()
   const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true, award: true })

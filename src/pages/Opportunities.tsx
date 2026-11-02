@@ -5,6 +5,9 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { Hint } from '../components/Hint'
 import { useNarrow } from '../lib/useNarrow'
+import { PracticeSelect } from '../components/Practice'
+import { practiceOf, usePractice } from '../lib/practice'
+import type { Activity } from '../db/db'
 
 const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Press', 'Commission']
 const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Closed']
@@ -28,6 +31,8 @@ function badge(status: string) {
 
 function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void }) {
   const dept = useActiveDept()
+  const { acts, start } = usePractice()
+  const [practice, setPractice] = useState<Activity | undefined>(opp ? opp.practice : start)
   const [title, setTitle] = useState(opp?.title ?? '')
   const [type, setType] = useState(opp?.opportunityType ?? 'Open call')
   const [org, setOrg] = useState(opp?.organisation ?? '')
@@ -37,7 +42,7 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
 
   async function save() {
     if (!title.trim()) return
-    const data = { departmentId: dept?.id, title: title.trim(), opportunityType: type, organisation: org, status, deadline: deadline || undefined, notes }
+    const data = { departmentId: dept?.id, title: title.trim(), opportunityType: type, organisation: org, status, deadline: deadline || undefined, notes, practice }
     if (opp?.id != null) await db.opportunities.update(opp.id, data)
     else await db.opportunities.add(data)
     onDone()
@@ -55,6 +60,7 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
           <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, flex: 1 }}>{OPP_STATUSES.map(s => <option key={s}>{s}</option>)}</select>
         </div>
         <input value={org} onChange={e => setOrg(e.target.value)} placeholder="Organisation / City" style={{ ...inp, marginBottom: 10 }} />
+        <PracticeSelect value={practice ?? practiceOf(acts).opportunity({ opportunityType: type })} onChange={setPractice} style={{ ...inp, marginBottom: 10 }} />
         <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes" rows={3}
           style={{ ...inp, resize: 'none', marginBottom: 16 }} />
@@ -141,18 +147,19 @@ export function Opportunities() {
   const [editing, setEditing] = useState<Opportunity | 'new' | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const importRef = useRef<HTMLInputElement>(null)
+  const { acts, current, keep } = usePractice()
 
   // Adds entries; never replaces. Skips anything already here with the same title and deadline.
   async function importFile(file?: File) {
     if (!file || dept?.id == null) return
     try {
       const incoming = readSubmissions(await file.text()).filter(o => o.title.trim())
-      const seen = new Set(opps.map(o => `${o.title.trim().toLowerCase()}|${o.deadline ?? ''}`))
+      const seen = new Set(allOpps.map(o => `${o.title.trim().toLowerCase()}|${o.deadline ?? ''}`))
       const fresh = incoming.filter(o => !seen.has(`${o.title.trim().toLowerCase()}|${o.deadline ?? ''}`))
       const valid = (d?: string) => d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : undefined
       await db.opportunities.bulkAdd(fresh.map(o => ({
         departmentId: dept.id, title: o.title.trim(), opportunityType: o.opportunityType, organisation: o.organisation,
-        deadline: valid(o.deadline), status: OPP_STATUSES.includes(o.status) ? o.status : 'Active', notes: o.notes,
+        deadline: valid(o.deadline), status: OPP_STATUSES.includes(o.status) ? o.status : 'Active', notes: o.notes, practice: current ?? undefined,
       })))
       const skipped = incoming.length - fresh.length
       setImportMsg(`Added ${fresh.length}${skipped ? `, skipped ${skipped} already here` : ''}.`)
@@ -161,7 +168,8 @@ export function Opportunities() {
     }
   }
 
-  const opps = useLiveQuery(() => dept?.id == null ? [] : db.opportunities.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const allOpps = useLiveQuery(() => dept?.id == null ? [] : db.opportunities.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const opps = allOpps.filter(o => keep(practiceOf(acts).opportunity(o)))
 
   const filtered = opps.filter(o => {
     if (typeFilter && o.opportunityType !== typeFilter) return false

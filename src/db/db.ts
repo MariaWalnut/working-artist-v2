@@ -15,11 +15,13 @@ export interface Department {
   coverImage?: string
   accent?: string // hex, set in Account › Appearance
   contactCategories?: string[] // categories added on the Contacts page, beyond the presets
+  practiceMode?: 'together' | 'separate' // with several practices: all mixed, or one at a time
 }
 
 export interface Project {
   id?: number
   departmentId?: number
+  practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   projectType?: string
   status?: string
@@ -51,6 +53,7 @@ export interface Project {
 export interface Opportunity {
   id?: number
   departmentId?: number
+  practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   opportunityType?: string
   organisation?: string
@@ -62,6 +65,7 @@ export interface Opportunity {
 export interface Work {
   id?: number
   departmentId?: number
+  practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   kind?: string // Artwork (default) / Illustration / Book / Release / Film / Other
   medium?: string
@@ -127,6 +131,7 @@ export interface Release {
 export interface EventEntry {
   id?: number
   departmentId?: number
+  practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   type?: string // Reading, Exhibition, Book Fair, Talk, Performance, Screening, Award, Other
   location?: string
@@ -141,6 +146,7 @@ export interface EventEntry {
 export interface PressEntry {
   id?: number
   departmentId?: number
+  practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   type?: string // Interview / Feature / Selection / Review / Mention / Profile
   outlet?: string
@@ -210,6 +216,7 @@ export interface Todo {
   id?: number
   departmentId?: number
   projectId?: number
+  practice?: Activity // tasks without a project; missing = shown in every practice
   title: string
   done: boolean
   kanbanStatus?: 'todo' | 'in-progress' | 'done'
@@ -242,6 +249,7 @@ export interface BoardItem {
   crop?: { x: number; y: number; w: number; h: number } // that crop, as fractions of the original
   createdAt: number
   hidden?: boolean // desk only: taken off the desk, listed under Hidden boxes
+  practice?: Activity // desk only: notes and lists added in one practice; missing = shown in every practice
 }
 
 // Someone the artist works with. Linked works, events and projects show them as people there too.

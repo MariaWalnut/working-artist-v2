@@ -7,6 +7,9 @@ import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
+import { PracticeSelect } from '../components/Practice'
+import { practiceOf, usePractice } from '../lib/practice'
+import type { Activity, Work } from '../db/db'
 
 
 const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Festival', 'Award', 'Residency', 'Other']
@@ -40,12 +43,15 @@ function useNarrow() {
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
-function EventForm({ entry, works, onDone }: {
+function EventForm({ entry, works, allWorks, onDone }: {
   entry: EventEntry | null
   works: Array<{ id?: number; title: string; medium?: string }>
+  allWorks: Work[]
   onDone: () => void
 }) {
   const dept = useActiveDept()
+  const { acts, start } = usePractice({ filter: true })
+  const [practice, setPractice] = useState<Activity | undefined>(entry ? entry.practice : start)
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
   const [location, setLocation] = useState(entry?.location ?? '')
@@ -76,6 +82,7 @@ function EventForm({ entry, works, onDone }: {
       notes: notes.trim() || undefined,
       goals: goals.trim() || undefined,
       workIds: workIds.length > 0 ? workIds : undefined,
+      practice,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
     else await db.eventEntries.add(data)
@@ -103,6 +110,7 @@ function EventForm({ entry, works, onDone }: {
           </select>
           <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
         </div>
+        <PracticeSelect value={practice ?? practiceOf(acts, allWorks).event({ type, workIds })} onChange={setPractice} style={{ ...inp, marginBottom: 14 }} />
 
         <DateFields label={showEnd ? 'Starts' : 'Date'} value={date} onChange={setDate} inp={inp}
           action={!showEnd && (
@@ -198,8 +206,12 @@ export function AllEvents() {
   const [showAll, setShowAll] = useState(false)
   const [editing, setEditing] = useState<EventEntry | 'new' | null>(null)
 
-  const entries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const works = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const { acts, keep } = usePractice({ filter: true })
+  const allEntries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const of = practiceOf(acts, allWorks)
+  const entries = allEntries.filter(e => keep(of.event(e)))
+  const works = allWorks.filter(w => keep(of.work(w)))
 
   const sorted = useMemo(() => [...entries].sort((a, b) => sortAsc
     ? (a.date ?? '').localeCompare(b.date ?? '')
@@ -242,7 +254,7 @@ export function AllEvents() {
   return (
     <Shell>
       {editing !== null && (
-        <EventForm entry={editing === 'new' ? null : editing} works={works} onDone={() => setEditing(null)} />
+        <EventForm entry={editing === 'new' ? null : editing} works={works} allWorks={allWorks} onDone={() => setEditing(null)} />
       )}
 
       <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', gap: 10, alignItems: narrow ? 'stretch' : 'flex-start' }}>
@@ -323,7 +335,7 @@ export function AllEvents() {
                 {e.workIds && e.workIds.length > 0 && (
                   <div style={{ paddingLeft: 14, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {e.workIds.map(id => {
-                      const w = works.find(x => x.id === id)
+                      const w = allWorks.find(x => x.id === id)
                       if (!w) return null
                       return <span key={id} style={{ fontSize: 9, color: 'var(--wa-muted)', background: 'var(--wa-fill)', padding: '1px 6px', borderRadius: 999 }}>{w.title}</span>
                     })}

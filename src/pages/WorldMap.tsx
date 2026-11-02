@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
+import { practiceOf, usePractice } from '../lib/practice'
 import { Shell } from '../components/layout/Shell'
 import { CareerFrame } from '../components/CareerTabs'
 
@@ -106,8 +107,12 @@ function fitView(coords: Array<[number, number]>): View {
 
 export function WorldMapPanel() {
   const dept = useActiveDept()
-  const events = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const works = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const { acts, keep } = usePractice({ filter: true })
+  const allEvents = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const of = practiceOf(acts, allWorks)
+  const events = allEvents.filter(e => keep(of.event(e)))
+  const works = allWorks.filter(w => keep(of.work(w)))
 
   // Group by city
   const byCity: Record<string, CityItem[]> = {}

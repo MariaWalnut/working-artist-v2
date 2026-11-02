@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type PressEntry } from '../db/db'
+import { db, type Activity, type PressEntry, type Work } from '../db/db'
+import { PracticeSelect } from '../components/Practice'
+import { practiceOf, usePractice } from '../lib/practice'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { fileToDataUrl, readRaw } from '../lib/images'
@@ -107,8 +109,10 @@ function ClippingThumb({ data, thumb, label, onOpen, size = 36 }: { data: string
 
 // ─── Form ────────────────────────────────────────────────────────────────────
 
-function PressForm({ entry, section, initialClipping, works, onDone }: { entry: PressEntry | null; section: Section; initialClipping?: Clipping | null; works: Array<{ id?: number; title: string }>; onDone: () => void }) {
+function PressForm({ entry, section, initialClipping, works, allWorks, onDone }: { entry: PressEntry | null; section: Section; initialClipping?: Clipping | null; works: Array<{ id?: number; title: string }>; allWorks: Work[]; onDone: () => void }) {
   const dept = useActiveDept()
+  const { acts, start } = usePractice({ filter: true })
+  const [practice, setPractice] = useState<Activity | undefined>(entry ? entry.practice : start)
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
   const [outlet, setOutlet] = useState(entry?.outlet ?? '')
@@ -136,7 +140,7 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
 
   async function save() {
     if (!title.trim()) return
-    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date || (unreadableDate ?? undefined), url: url.trim() || undefined, notes: notes.trim() || undefined, workId, category, clipping: clipping?.data, clippingName: clipping?.name, clippingThumb: clipping?.thumb }
+    const data: PressEntry = { departmentId: dept?.id, title: title.trim(), type: type || undefined, outlet: outlet.trim() || undefined, date: date || (unreadableDate ?? undefined), url: url.trim() || undefined, notes: notes.trim() || undefined, workId, practice, category, clipping: clipping?.data, clippingName: clipping?.name, clippingThumb: clipping?.thumb }
     if (entry?.id != null) await db.pressEntries.update(entry.id, data)
     else await db.pressEntries.add(data)
     onDone()
@@ -186,6 +190,7 @@ function PressForm({ entry, section, initialClipping, works, onDone }: { entry: 
         </div>
 
         <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" style={{ ...inp, marginBottom: 10 }} />
+        <PracticeSelect value={practice ?? practiceOf(acts, allWorks).press({ workId })} onChange={setPractice} style={{ ...inp, marginBottom: 10 }} />
 
         <div
           onDragOver={e => { if (hasFiles(e)) { e.preventDefault(); setOver(true) } }}
@@ -227,8 +232,12 @@ export function Press() {
   const dept = useActiveDept()
   const deptId = dept?.id
 
-  const entries = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
-  const works = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const { acts, keep } = usePractice({ filter: true })
+  const allEntries = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const allWorks = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
+  const of = practiceOf(acts, allWorks)
+  const entries = allEntries.filter(e => keep(of.press(e)))
+  const works = allWorks.filter(w => keep(of.work(w)))
 
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [section, setSection] = useState<Section>('press')
@@ -319,6 +328,7 @@ export function Press() {
           section={section}
           initialClipping={editing === 'new' ? newClipping : null}
           works={works}
+          allWorks={allWorks}
           onDone={() => { setEditing(null); setNewClipping(null) }}
         />
       )}
@@ -373,7 +383,7 @@ export function Press() {
       ) : (
         <div>
           {filtered.map((p, i) => {
-            const work = p.workId ? works.find(w => w.id === p.workId) : null
+            const work = p.workId ? allWorks.find(w => w.id === p.workId) : null
             return (
               <div key={p.id} data-press-id={p.id} data-tour-title={p.title} onClick={() => setEditing(p)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', borderBottom: i < filtered.length - 1 ? '1px solid var(--wa-line)' : 'none', cursor: 'pointer', background: dropRow === p.id ? '#FFFBE0' : undefined, boxShadow: dropRow === p.id ? 'inset 0 0 0 1.5px #E8D600' : undefined }}>
