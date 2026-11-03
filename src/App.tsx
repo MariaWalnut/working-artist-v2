@@ -4,7 +4,6 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
 import { demoField, userId } from './lib/mode'
 import { needsPassword } from './lib/supabase'
-import { startCloud } from './lib/cloud'
 import { demoOutdated, seedDemo } from './lib/demoSeed'
 import { AuthScreens } from './components/auth/AuthScreens'
 import { Projects } from './pages/Projects'
@@ -54,13 +53,12 @@ function OpeningData({ blocked }: { blocked: boolean }) {
   )
 }
 
-// A demo starts with its sample studio; an account first catches up with its cloud copy.
+// A demo starts with its sample studio. An account's studio lives only in this browser.
 // Runs once per page load, even when React mounts twice.
 let preparing: Promise<void> | undefined
 function prepareStudio() {
   preparing ??= (async () => {
     if (demoField && ((await db.departments.count()) === 0 || demoOutdated(demoField))) await seedDemo(demoField)
-    if (userId) await startCloud()
   })()
   return preparing
 }

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Accounts live in the same Supabase project as v1 (separate storage, see lib/cloud.ts).
-// The publishable key is the public browser key; data is protected by storage policies.
+// Sign-in lives in the same Supabase project as v1. Studios are never sent here: they stay in the browser.
+// The publishable key is the public browser key.
 export const SUPABASE_REF = 'ibururqeyzgvddbtrgad'
 const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? `https://${SUPABASE_REF}.supabase.co`
 const key = (import.meta.env.VITE_SUPABASE_KEY as string | undefined) ?? 'sb_publishable_uIEfLevKCGUUi5eQKJAseA_jmgMl3GN'

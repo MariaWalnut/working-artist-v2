@@ -1,12 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { DEMO_NAME, demoField, exitDemo } from '../../lib/mode'
-import { flushCloud, retryCloud, useCloudStatus } from '../../lib/cloud'
 import { seedDemo } from '../../lib/demoSeed'
-
-const STATUS_LABEL = {
-  idle: '', loading: 'Loading', saving: 'Saving', saved: 'Saved online', offline: 'Offline, saves when back online', error: 'Not saved yet',
-} as const
 
 const quiet: React.CSSProperties = { background: 'var(--wa-fill)', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }
 const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--wa-line)' }
@@ -36,7 +31,6 @@ function DemoCard() {
 }
 
 function SignedInCard() {
-  const status = useCloudStatus()
   const [email, setEmail] = useState('')
   const [leaving, setLeaving] = useState(false)
   const [changing, setChanging] = useState(false)
@@ -54,7 +48,6 @@ function SignedInCard() {
 
   async function signOut() {
     setLeaving(true)
-    await flushCloud()
     await supabase.auth.signOut()
     location.replace('/')
   }
@@ -67,10 +60,7 @@ function SignedInCard() {
       </div>
       <div style={row}>
         <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Studio</span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: status === 'error' || status === 'offline' ? 'var(--wa-amber)' : 'var(--wa-text-2)' }}>{STATUS_LABEL[status]}</span>
-          {status === 'error' && <button onClick={retryCloud} style={quiet}>Try again</button>}
-        </span>
+        <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>On this computer</span>
       </div>
       <div style={row}>
         <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Password</span>
