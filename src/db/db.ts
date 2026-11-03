@@ -76,7 +76,8 @@ export interface Work {
   location?: string
   collection?: string
   notes?: string
-  image?: string // data URL
+  image?: string // data URL, the cover
+  pictures?: string[] // data URLs: more pictures after the cover
   press?: PressItem[]
   rights?: RightItem[]
   // books and illustrations

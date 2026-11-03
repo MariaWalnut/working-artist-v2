@@ -8,12 +8,12 @@ type Kind = 'work' | 'event' | 'project'
 const FIELD = { work: 'workIds', event: 'eventIds', project: 'projectIds' } as const
 
 // The people linked to a work, event or project, with their lists on a project. Links are kept on the contact.
-export function PeopleCard({ kind, id, deptId, style }: { kind: Kind; id: number; deptId?: number; style?: React.CSSProperties }) {
+export function PeopleCard({ kind, id, deptId, style, startAdding = false }: { kind: Kind; id: number; deptId?: number; style?: React.CSSProperties; startAdding?: boolean }) {
   const navigate = useNavigate()
   const field = FIELD[kind]
   const contacts = useLiveQuery(() => deptId == null ? [] : db.contacts.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const lists = useLiveQuery(() => kind !== 'project' || deptId == null ? [] : db.contactLists.where('departmentId').equals(deptId).filter(l => l.projectId === id).toArray(), [kind, id, deptId]) ?? []
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(startAdding)
   const linked = contacts.filter(c => (c[field] ?? []).includes(id)).sort(byName)
   const others = contacts.filter(c => !linked.includes(c)).sort(byName)
 
