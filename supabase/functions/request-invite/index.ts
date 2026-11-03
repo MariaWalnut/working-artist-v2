@@ -21,7 +21,7 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 
-const DISCIPLINES = ['Music', 'Painting', 'Fine art', 'Illustration', 'Writing', 'Film', 'Other']
+const DISCIPLINES = ['Music', 'Painting', 'Fine art', 'Illustration', 'Writing', 'Film', 'Photography', 'Other']
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
 
 async function send(key: string, mail: { from: string; to: string; subject: string; text: string; html: string; reply_to?: string }) {

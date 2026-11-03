@@ -16,7 +16,9 @@ const C = (name: string, category: string, organisation: string, role: string, e
   return { name, category, organisation: organisation || undefined, role: role || undefined, email: `${handle}@${domain}.example`, ...extra }
 }
 
-export const DEMO_CONTACTS: Record<DemoField, { contacts: DemoContact[]; lists: DemoList[] }> = {
+interface Bundle { contacts: DemoContact[]; lists: DemoList[] }
+
+const SINGLE = {
   musician: {
     contacts: [
       C('Jonas Weber', 'Client', 'Northbound Records', 'Label manager', { phone: '+49 30 5550 1820', website: 'northboundrecords.example', address: 'Northbound Records\nLinienstraße 41\n10119 Berlin\nGermany', tags: ['label'], note: 'Prefers calls before noon.', works: ['Low Tide', 'Glass Hour'], projects: ['Second album'] }),
@@ -107,4 +109,45 @@ export const DEMO_CONTACTS: Record<DemoField, { contacts: DemoContact[]; lists: 
       { name: 'Tidewater crew', project: 'Tidewater', members: [['Anouk Visser'], ['Rita Gomes']] },
     ],
   },
+  photographer: {
+    contacts: [
+      C('Karin Albers', 'Gallery', 'Galerie Kontakt', 'Director', { phone: '+49 30 5550 4417', website: 'galeriekontakt.example', address: 'Galerie Kontakt\nPotsdamer Straße 81\n10785 Berlin\nGermany', tags: ['Berlin'], note: 'Prefers prints to PDFs.', projects: ['Solo show: Glasshouse'], events: ['Glasshouse opening'], works: ['Glasshouse'] }),
+      C('Joost de Wit', 'Curator', 'Harbour Photo Museum', 'Curator of photography', { address: 'Harbour Photo Museum\nHavenstraat 12\n3024 TH Rotterdam\nNetherlands', tags: ['museum'], works: ['Low Water'], events: ['Low Water at the Photo Museum'] }),
+      C('Henrik Dahl', 'Publisher', 'Harbour Editions', 'Publisher', { phone: '+45 33 55 50 21', address: 'Harbour Editions\nStrandgade 30\n1401 Copenhagen\nDenmark', tags: ['photobooks'], works: ['Borrowed Light'], projects: ['Second photobook'] }),
+      C('Lotte Brandt', 'Artist', '', 'Writer', { email: 'lotte.brandt@mail.example', address: 'Kollwitzstraße 50\n10405 Berlin\nGermany', note: 'Wrote the essay for Borrowed Light.', works: ['Borrowed Light'], projects: ['Second photobook'] }),
+      C('Amira Haddad', 'Client', 'Weekend Magazine', 'Photo editor', { phone: '+44 20 5550 8812', address: 'Weekend Magazine\n31 Hoxton Square\nLondon N1 6NN\nUnited Kingdom', tags: ['editorial'], projects: ['Editorial commission: coastal towns'] }),
+      C('Marek Nowak', 'Artist', 'Studio Fine Print', 'Printer', { address: 'Studio Fine Print\nWiener Straße 18\n10999 Berlin\nGermany', tags: ['print'], note: 'Prints every edition. Book a week ahead.', projects: ['Solo show: Glasshouse', 'Archive and editions'] }),
+      C('Sigrún Jónsdóttir', 'Institution', 'North Light Residency', 'Director', { address: 'Laugavegur 70\n101 Reykjavík\nIceland', tags: ['residency'], projects: ['Residency: Reykjavík'] }),
+      C('Paul Lambert', 'Collector', '', '', { email: 'paul.lambert@mail.example', address: '18 Rue de Bretagne\n75003 Paris\nFrance', tags: ['collector', 'Paris'], note: 'Bought Saltpans, Aveiro, number 2 of 7.', works: ['Saltpans, Aveiro'] }),
+    ],
+    lists: [
+      { name: 'Christmas Card 2026', members: [['Karin Albers', true], ['Henrik Dahl', true], ['Joost de Wit'], ['Lotte Brandt'], ['Amira Haddad'], ['Marek Nowak'], ['Paul Lambert']] },
+      { name: 'Glasshouse opening guests', project: 'Solo show: Glasshouse', members: [['Paul Lambert'], ['Joost de Wit'], ['Lotte Brandt'], ['Amira Haddad']] },
+    ],
+  },
+} satisfies Record<string, Bundle>
+
+// A studio with two practices knows everyone from both. Someone in both is one contact,
+// and lists with the same name become one list.
+function both(a: Bundle, b: Bundle): Bundle {
+  const contacts = a.contacts.map(c => ({ ...c }))
+  for (const c of b.contacts) {
+    const same = contacts.find(x => x.name === c.name)
+    if (!same) { contacts.push({ ...c }); continue }
+    const join = (x?: string[], y?: string[]) => (x || y ? [...new Set([...(x ?? []), ...(y ?? [])])] : undefined)
+    Object.assign(same, { works: join(same.works, c.works), events: join(same.events, c.events), projects: join(same.projects, c.projects), tags: join(same.tags, c.tags) })
+  }
+  const lists = a.lists.map(l => ({ ...l, members: [...l.members] }))
+  for (const l of b.lists) {
+    const same = lists.find(x => x.name === l.name)
+    if (!same) lists.push(l)
+    else same.members.push(...l.members.filter(([n]) => !same.members.some(([m]) => m === n)))
+  }
+  return { contacts, lists }
+}
+
+export const DEMO_CONTACTS: Record<DemoField, Bundle> = {
+  ...SINGLE,
+  'illustrator-painter': both(SINGLE.illustrator, SINGLE.painter),
+  'filmmaker-musician': both(SINGLE.filmmaker, SINGLE.musician),
 }

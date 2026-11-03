@@ -6,8 +6,9 @@ import { demoField, type DemoField } from '../lib/mode'
 
 const ENDPOINT = 'https://ibururqeyzgvddbtrgad.supabase.co/functions/v1/request-invite'
 const KEY = 'sb_publishable_uIEfLevKCGUUi5eQKJAseA_jmgMl3GN'
-const DISCIPLINES = ['Music', 'Painting', 'Fine art', 'Illustration', 'Writing', 'Film', 'Other']
-const FROM_DEMO: Record<DemoField, string> = { musician: 'Music', painter: 'Painting', illustrator: 'Illustration', writer: 'Writing', fineart: 'Fine art', filmmaker: 'Film' }
+const DISCIPLINES = ['Music', 'Painting', 'Fine art', 'Illustration', 'Writing', 'Film', 'Photography', 'Other']
+const FROM_DEMO: Record<DemoField, string> = { musician: 'Music', painter: 'Painting', illustrator: 'Illustration', writer: 'Writing', fineart: 'Fine art', filmmaker: 'Film',
+  photographer: 'Photography', 'illustrator-painter': 'Illustration', 'filmmaker-musician': 'Film' }
 const STATE = 'wa-waitlist'
 
 const read = () => { try { return localStorage.getItem(STATE) } catch { return null } }

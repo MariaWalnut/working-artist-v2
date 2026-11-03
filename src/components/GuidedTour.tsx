@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry, type PressEntry, type Work } from '../db/db'
 import { demoField, type DemoField } from '../lib/mode'
+import { setPicked } from '../lib/practice'
 import { useNarrow } from '../lib/useNarrow'
 
 // The demo tour (started from the ? button) follows one work through the app, to show how entering something once
@@ -26,6 +27,9 @@ const THREAD: Record<DemoField, string> = {
   writer: 'The Summer House',
   fineart: 'Tidal Archive',
   filmmaker: 'Salt Road',
+  photographer: 'Low Water',
+  'illustrator-painter': 'The Fox Who Kept the Moon',
+  'filmmaker-musician': 'Salt Road',
 }
 
 const byTitle = (t: string) => `[data-tour-title="${t.replace(/"/g, '\\"')}"]`
@@ -91,6 +95,9 @@ export function GuidedTour() {
     return { w, e: events[0], p: press }
   }, [])
   const steps = data ? buildSteps(data.w, data.e, data.p, deskFixed) : []
+  // In a studio with several practices, the tour shows the practice its work belongs to.
+  const practice = data?.w.practice
+  useEffect(() => { if (step != null && practice) setPicked(practice) }, [step, practice])
   const s = step == null ? null : steps[step]
 
   function next() {

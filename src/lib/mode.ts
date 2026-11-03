@@ -4,14 +4,20 @@ import { SUPABASE_REF } from './supabase'
 // an open demo (/demo/<field>), the signed-in person's own studio, or nothing (signed out).
 // Signing in or out reloads the page, so this never changes while the app runs.
 
-export const DEMO_FIELDS = ['musician', 'painter', 'illustrator', 'writer', 'fineart', 'filmmaker'] as const
+export const DEMO_FIELDS = ['musician', 'painter', 'illustrator', 'writer', 'fineart', 'filmmaker', 'photographer', 'illustrator-painter', 'filmmaker-musician'] as const
 export type DemoField = typeof DEMO_FIELDS[number]
+
+// How each demo is named in a sentence: "A sample fine art studio".
+export const DEMO_NAME: Record<DemoField, string> = {
+  musician: 'musician', painter: 'painter', illustrator: 'illustrator', writer: 'writer', fineart: 'fine art', filmmaker: 'filmmaker',
+  photographer: 'photographer', 'illustrator-painter': 'illustrator and painter', 'filmmaker-musician': 'filmmaker and musician',
+}
 const DEMO_KEY = 'wa-demo'
 
 const isField = (v: unknown): v is DemoField => DEMO_FIELDS.includes(v as DemoField)
 
 function readDemo(): DemoField | null {
-  const m = location.pathname.match(/^\/demo\/([a-z]+)\/?$/)
+  const m = location.pathname.match(/^\/demo\/([a-z-]+)\/?$/)
   const fromPath = m && isField(m[1]) ? m[1] : null
   try {
     if (fromPath) sessionStorage.setItem(DEMO_KEY, fromPath)

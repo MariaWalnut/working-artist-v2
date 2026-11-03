@@ -39,6 +39,8 @@ h1, h2, h3, p { text-wrap: balance; }
 .shot.on img { transform: scale(1.8); }
 .band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
 @media (max-width: 640px) { .band { height: 340px; } }
+/* Nine demos: in two columns the last one takes the whole row */
+@media (min-width: 744px) and (max-width: 1099px) { #demos a:last-child { grid-column: span 2; } }
 </style>
 </head>
 <body>
@@ -70,7 +72,7 @@ h1, h2, h3, p { text-wrap: balance; }
   <section id="demos" style="background: #F5F5F5">
     <div style="max-width: 1240px; margin: 0 auto; padding: 260px 24px 168px">
       <h2 style="margin: 0; text-align: center; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: 1.05">Try a <span style="background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); padding: 0 6px">sample studio</span></h2>
-      <p style="margin: 22px auto 0; max-width: 520px; text-align: center; font-size: 17px; line-height: 1.6; color: #555555">Six sample studios, no account needed. Change anything; it stays in your browser.</p>
+      <p style="margin: 22px auto 0; max-width: 520px; text-align: center; font-size: 17px; line-height: 1.6; color: #555555">Nine sample studios, no account needed. Change anything; it stays in your browser.</p>
       <div style="margin-top: 64px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px">
 
         <a target="_blank" rel="noopener" href="/demo/musician" style="display: flex; flex-direction: column; background: #F5E642; padding: 14px; text-decoration: none; color: #111111">
@@ -133,6 +135,39 @@ h1, h2, h3, p { text-wrap: balance; }
             <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-bottom: 18px"><rect x="6" y="17" width="26" height="18" rx="2"/><path d="M32 23l10-6v18l-10-6"/><circle cx="13" cy="11" r="5"/><circle cx="25" cy="11" r="5"/></svg>
             <span style="font-family: Recoleta, serif; font-size: 30px">Filmmaker</span>
             <span style="margin-bottom: 24px; font-size: 14px; line-height: 1.5; color: #555555">Shorts, festivals and the feature in development.</span>
+            <span style="margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 13px; font-weight: 500">Open demo
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#111111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </a>
+
+        <a target="_blank" rel="noopener" href="/demo/photographer" style="display: flex; flex-direction: column; background: #F5E642; padding: 14px; text-decoration: none; color: #111111">
+          <div style="flex: 1; padding: 20px 10px 10px; display: flex; flex-direction: column; gap: 6px">
+            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-bottom: 18px"><rect x="6" y="15" width="36" height="24" rx="3"/><path d="M17 15l3-5h8l3 5"/><circle cx="24" cy="27" r="7"/></svg>
+            <span style="font-family: Recoleta, serif; font-size: 30px">Photographer</span>
+            <span style="margin-bottom: 24px; font-size: 14px; line-height: 1.5; color: #333333">Editions, photobooks and portfolio reviews.</span>
+            <span style="margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #111111; color: #FFFFFF; font-size: 13px; font-weight: 500">Open demo
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </a>
+
+        <a target="_blank" rel="noopener" href="/demo/illustrator-painter" style="display: flex; flex-direction: column; background: #111111; padding: 14px; text-decoration: none; color: #FFFFFF">
+          <div style="flex: 1; padding: 20px 10px 10px; display: flex; flex-direction: column; gap: 6px">
+            <span style="display: flex; gap: 4px; margin-bottom: 18px"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="rotate(40 24 24)"><path d="M21 4h6v30h-6zM21 9h6"/><path d="M21 34l3 9 3-9"/><path d="M23.1 40.3L24 43l.9-2.7z" fill="currentColor"/></g></svg><svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="rotate(40 24 24)"><rect x="22.2" y="2" width="3.6" height="22" rx="1.8"/><path d="M21 24h6v7h-6z"/><path d="M21 31c0 6 2.2 11 3 15 .8-4 3-9 3-15"/></g></svg></span>
+            <span style="font-family: Recoleta, serif; font-size: 30px; color: #FFFFFF">Illustrator &amp; painter</span>
+            <span style="margin-bottom: 24px; font-size: 14px; line-height: 1.5; color: #CFCFCF">Picture books and paintings, one practice at a time.</span>
+            <span style="margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 13px; font-weight: 500">Open demo
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#111111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </a>
+
+        <a target="_blank" rel="noopener" href="/demo/filmmaker-musician" style="display: flex; flex-direction: column; background: #FFFFFF; padding: 14px; text-decoration: none; color: #111111">
+          <div style="flex: 1; padding: 20px 10px 10px; display: flex; flex-direction: column; gap: 6px">
+            <span style="display: flex; gap: 4px; margin-bottom: 18px"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="17" width="26" height="18" rx="2"/><path d="M32 23l10-6v18l-10-6"/><circle cx="13" cy="11" r="5"/><circle cx="25" cy="11" r="5"/></svg><svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 35V8c3 4 11 5 11 13"/><ellipse cx="17.5" cy="36" rx="5.8" ry="4.2" transform="rotate(-22 17.5 36)"/></svg></span>
+            <span style="font-family: Recoleta, serif; font-size: 30px">Filmmaker &amp; musician</span>
+            <span style="margin-bottom: 24px; font-size: 14px; line-height: 1.5; color: #555555">Films and records, one practice at a time.</span>
             <span style="margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 13px; font-weight: 500">Open demo
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#111111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
@@ -256,6 +291,40 @@ h1, h2, h3, p { text-wrap: balance; }
     </div>
   </section>
 
+
+  <!-- 7 Practices: black -->
+  <section id="practices" style="background: #111111; color: #FFFFFF">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 64px">
+      <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+        <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">7</span>Practices</p>
+        <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12; color: #FFFFFF">Several practices, one studio.</h3>
+        <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #CFCFCF">Keep each practice on its own and switch from your name, or see them all together. Contacts and Manifest are shared.</p>
+        <p style="margin: 16px 0 0; font-size: 17px; line-height: 1.65; color: #CFCFCF">Choose your practices, colours, light or dark, and what sits on your desk. New practices are added as Working Artist grows, at no extra cost.</p>
+        <div style="margin-top: 32px; display: flex; flex-wrap: wrap; gap: 10px">
+          <a target="_blank" rel="noopener" href="/demo/illustrator-painter" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 13px; font-weight: 500; text-decoration: none">Illustrator &amp; painter
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#111111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a target="_blank" rel="noopener" href="/demo/filmmaker-musician" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 13px; font-weight: 500; text-decoration: none">Filmmaker &amp; musician
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#111111" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+      </div>
+      <div role="img" aria-label="The top left of Working Artist in the illustrator and painter demo: Working Artist Illustrator, with a menu to switch to Painter, and the setting to keep practices together or separate" style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: clamp(28px, 5vw, 64px); background: #F5F5F5; color: #111111">
+        <div style="font-family: Recoleta, serif; font-size: clamp(28px, 4vw, 44px); line-height: 1.2">Working Artist <span style="position: relative; font-style: italic; border-bottom: 1px solid #111111">Illustrator<span style="position: absolute; top: calc(100% + 14px); left: -14px; z-index: 1; min-width: 230px; display: flex; flex-direction: column; padding: 6px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2E2E2; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); font-size: 21px; line-height: 1">
+          <span style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 8px; background: #F0F0F0">Illustrator<span style="width: 8px; height: 8px; border-radius: 50%; background: #111111"></span></span>
+          <span style="display: flex; align-items: center; min-height: 48px; padding: 0 12px; color: #555555">Painter</span>
+        </span></span></div>
+        <div style="margin-top: 168px; padding-top: 20px; border-top: 1px solid #E2E2E2; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #555555">Practices</span>
+          <span style="display: inline-flex; padding: 3px; border-radius: 999px; background: #E6E6E6; font-size: 13px">
+            <span style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; color: #555555">Together</span>
+            <span style="display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; background: #FFFFFF; font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12)">Separate</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Photos: black and white, edge to edge -->
   <div class="band" style="grid-template-columns: 1fr 1fr">
     <img src="/welcome/photo-9.jpg" alt="A writer working on a laptop with a marked-up manuscript" loading="lazy" style="object-position: 50% 30%">
@@ -316,7 +385,7 @@ h1, h2, h3, p { text-wrap: balance; }
         <label class="field"><span>What do you make?</span>
           <select name="discipline" required>
             <option value="" disabled selected>Choose one</option>
-            <option>Music</option><option>Painting</option><option>Fine art</option><option>Illustration</option><option>Writing</option><option>Film</option><option>Other</option>
+            <option>Music</option><option>Painting</option><option>Fine art</option><option>Illustration</option><option>Writing</option><option>Film</option><option>Photography</option><option>Other</option>
           </select>
         </label>
         <button type="submit" style="margin-top: 8px; min-height: 56px; border: none; border-radius: 999px; background: #F5E642; font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; cursor: pointer">Join the waiting list</button>

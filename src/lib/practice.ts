@@ -118,6 +118,8 @@ export function usePractice({ filter = false }: { filter?: boolean } = {}) {
     multi,
     mode,
     current,
+    // How a practice reads in this studio: its own name if it has one, e.g. Painter.
+    name: (a: Activity) => dept?.practiceNames?.[a] ?? PRACTICE_NAME[a],
     // The practice new things start in: the one shown, or the only one there is.
     start: current ?? (acts.length === 1 ? acts[0] : undefined),
     keep: (p: Activity) => current == null || p === current,

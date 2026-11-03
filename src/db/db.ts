@@ -16,6 +16,7 @@ export interface Department {
   accent?: string // hex, set in Account › Appearance
   contactCategories?: string[] // categories added on the Contacts page, beyond the presets
   practiceMode?: 'together' | 'separate' // with several practices: all mixed, or one at a time
+  practiceNames?: Partial<Record<Activity, string>> // how a practice reads after the name, e.g. Painter for visual_artist
 }
 
 export interface Project {

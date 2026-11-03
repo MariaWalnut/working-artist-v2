@@ -6,7 +6,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-02a'
+export const DEMO_VERSION = '2026-11-03a'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -17,6 +17,8 @@ type Item = Pick<BoardItem, 'itemType' | 'content' | 'x' | 'y' | 'w' | 'h' | 'co
 interface Seed {
   name: string
   activities: Activity[]
+  practiceMode?: 'separate'
+  practiceNames?: Partial<Record<Activity, string>>
   works: Array<Omit<Work, 'departmentId'>>
   projects: Array<{ project: Omit<Project, 'departmentId'>; todos: Todo[] }>
   // workIds here are indexes into `works`
@@ -24,8 +26,18 @@ interface Seed {
   opportunities: Array<Omit<Opportunity, 'departmentId'>>
   // workId here is an index into `works`
   press: Array<Omit<PressEntry, 'departmentId'>>
-  desk: { list: { title: string; items: Array<[string, boolean?]> }; quote: string; note: string; submission: number }
+  desk: Desk | Desk[]
   board: Vision
+}
+
+// The free boxes on the desk. A studio with several practices has a set for each.
+interface Desk {
+  practice?: Activity
+  list: { title: string; items: Array<[string, boolean?]> }
+  quote: string
+  note: string
+  // an index into `opportunities`
+  submission: number
 }
 
 // A Manifest board: empty picture slots in the middle, aspirational quotes above,
@@ -49,6 +61,27 @@ const op = (title: string, opportunityType: string, organisation: string, due: n
 
 const pr = (title: string, type: string | undefined, outlet: string, date: string, workId?: number, category: 'press' | 'award' = 'press') =>
   ({ title, type, outlet, date, workId, category })
+
+// A studio with several practices, each keeping the sample career of its own demo, shown one at a time.
+// `leaveOut` drops projects that the practices would otherwise both have.
+function combine(parts: Array<[Activity, Seed]>, board: Vision, leaveOut: string[] = []): Seed {
+  const seed: Seed = {
+    name: 'Working Artist', activities: parts.map(([a]) => a), practiceMode: 'separate',
+    practiceNames: Object.assign({}, ...parts.map(([, s]) => s.practiceNames)),
+    works: [], projects: [], events: [], opportunities: [], press: [], desk: [], board,
+  }
+  const desks: Desk[] = []
+  for (const [practice, s] of parts) {
+    const w = seed.works.length, o = seed.opportunities.length
+    seed.works.push(...s.works.map(x => ({ ...x, practice })))
+    seed.projects.push(...s.projects.filter(p => !leaveOut.includes(p.project.title)).map(p => ({ ...p, project: { ...p.project, practice } })))
+    seed.events.push(...s.events.map(e => ({ ...e, practice, workIds: e.workIds?.map(i => i + w) })))
+    seed.opportunities.push(...s.opportunities.map(x => ({ ...x, practice })))
+    seed.press.push(...s.press.map(x => ({ ...x, practice, workId: x.workId == null ? undefined : x.workId + w })))
+    desks.push(...[s.desk].flat().map(d => ({ ...d, practice, submission: d.submission + o })))
+  }
+  return { ...seed, desk: desks }
+}
 
 type Keyed = Item & { key: string }
 
@@ -157,6 +190,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
   painter: () => ({
     name: 'Working Artist',
     activities: ['visual_artist'],
+    practiceNames: { visual_artist: 'Painter' },
     works: [
       { title: 'Salt Flats I', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection' },
       { title: 'Salt Flats II', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 7, location: 'Lisbon' },
@@ -396,6 +430,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
   fineart: () => ({
     name: 'Working Artist',
     activities: ['visual_artist'],
+    practiceNames: { visual_artist: 'Artist' },
     works: [
       { title: 'Tidal Archive', kind: 'Artwork', medium: 'Installation: salt, glass and sound', dimensions: 'Room, 6 × 9 m', year: 2024, month: 4, location: 'Rotterdam' },
       { title: 'Weight of Water', kind: 'Artwork', medium: 'Cast bronze', dimensions: '42 × 30 × 28 cm', year: 2023, month: 9, location: 'Vienna', collection: 'Private collection' },
@@ -533,6 +568,99 @@ const SEEDS: Record<DemoField, () => Seed> = {
       refs: ['Agnès Varda, essay films', 'Chantal Akerman, long takes', 'Kelly Reichardt, landscapes'],
       tags: ['coast', 'light', 'time'] },
   }),
+
+  photographer: () => ({
+    name: 'Working Artist',
+    activities: ['photographer'],
+    works: [
+      { title: 'Low Water', kind: 'Artwork', medium: 'Archival pigment print, edition of 5', dimensions: '100 × 125 cm', year: 2024, month: 3, location: 'Rotterdam', collection: 'Harbour Photo Museum' },
+      { title: 'Saltpans, Aveiro', kind: 'Artwork', medium: 'C-type print, edition of 7', dimensions: '80 × 100 cm', year: 2023, month: 8, location: 'Lisbon', collection: 'Private collection' },
+      { title: 'Night Ferries', kind: 'Artwork', medium: 'Archival pigment print, edition of 5', dimensions: '60 × 75 cm', year: 2025, month: 1, location: 'Copenhagen', collection: 'Available' },
+      { title: 'Borrowed Light', kind: 'Book', subtitle: 'Photographs 2019 to 2024', publisher: 'Harbour Editions', publishedDate: '2025-05', year: 2025, month: 5, language: 'English',
+        credits: 'Photographs by the artist, essay by Lotte Brandt', pages: 120, dimensions: '24 × 30 cm', technique: 'Offset, Swiss binding', location: 'Copenhagen' },
+      { title: 'Harbour Workers', kind: 'Artwork', medium: 'Silver gelatin print, edition of 10', dimensions: '40 × 50 cm', year: 2022, month: 10, location: 'Hamburg' },
+      { title: 'Tidal Studies', kind: 'Artwork', medium: 'Archival pigment print, edition of 3', dimensions: '50 × 60 cm', year: 2026, month: 6, location: 'Lisbon', collection: 'Available' },
+      { title: 'Glasshouse', kind: 'Artwork', medium: 'Archival pigment print, edition of 5', dimensions: '120 × 150 cm', year: 2026, month: 9, location: 'Berlin', collection: 'Available' },
+    ],
+    projects: [
+      P('Solo show: Glasshouse', 'Exhibition', { location: 'Berlin', institution: 'Galerie Kontakt', dateStart: inDays(38), dateEnd: inDays(75) },
+        [['Final print proofs', 2], ['Order frames and mounts', 6], ['Write the wall text', 12], ['Choose the twelve images', null, true]]),
+      P('Second photobook', 'Publications', { publisher: 'Harbour Editions' },
+        [['Sequence the dummy', 5], ['Ask for paper samples', 9], ['Send the dummy to the publisher', 30]]),
+      P('Editorial commission: coastal towns', 'Commission', { client: 'Weekend Magazine' },
+        [['Shot list to the photo editor', 1], ['Book the car', 4], ['Invoice the first story', null, true]]),
+      P('Portfolio review', 'Other', {},
+        [['Print 20 work prints', 10], ['Book reviewer slots', 14]]),
+      P('Residency: Reykjavík', 'Residency', { location: 'Reykjavík', institution: 'North Light Residency', dateStart: inDays(140), dateEnd: inDays(200) },
+        [['Visa and insurance', 30], ['Plan the film stock', 60]]),
+      P('Archive and editions', 'Other', {},
+        [['Scan the 2022 negatives', 7], ['Update the edition register', 18], ['Back up the archive', null, true]]),
+    ],
+    events: [
+      ev('Harbour Workers, group show', 'Exhibition', 'Hamburg', '2022-11-04', { endDate: '2023-01-15', workIds: [4] }),
+      ev('Saltpans, solo show', 'Exhibition', 'Lisbon', '2023-09-08', { endDate: '2023-10-28', workIds: [1] }),
+      ev('Low Water at the Photo Museum', 'Exhibition', 'Rotterdam', '2024-03-15', { endDate: '2024-06-09', workIds: [0] }),
+      ev('Summer photo festival', 'Festival', 'Arles', '2024-07-01', { endDate: '2024-07-07', workIds: [0] }),
+      ev('Night Ferries', 'Exhibition', 'Copenhagen', '2025-02-07', { endDate: '2025-03-30', workIds: [2] }),
+      ev('Borrowed Light launch', 'Other', 'Copenhagen', '2025-05-16', { workIds: [3] }),
+      ev('Photobook fair', 'Book Fair', 'Paris', '2025-11-13', { endDate: '2025-11-16', workIds: [3] }),
+      ev('Artist talk', 'Talk', 'Vienna', '2026-03-19'),
+      ev('Tidal Studies, group show', 'Exhibition', 'Lisbon', '2026-06-12', { endDate: '2026-08-02', workIds: [5] }),
+      ev('Portfolio review', 'Festival', 'Amsterdam', inDays(22)),
+      ev('Glasshouse opening', 'Exhibition', 'Berlin', inDays(38), { endDate: inDays(75), workIds: [6], goals: 'Sell three editions\nMeet two museum curators' }),
+      ev('Print sale', 'Market', 'Berlin', inDays(52)),
+      ev('Photobook fair', 'Book Fair', 'London', inDays(110), { endDate: inDays(112), workIds: [3] }),
+    ],
+    opportunities: [
+      op('Photography prize 2027', 'Open call', 'European Photo Foundation', 14, 'Active'),
+      op('Photobook dummy award', 'Open call', 'Photobook Days', 27, 'Active'),
+      op('Production grant', 'Grant', 'Arts Council Fund', 36, 'Draft'),
+      op('Museum acquisitions', 'Open call', 'Harbour Photo Museum', 8, 'Draft'),
+      op('Travel grant', 'Grant', 'Culture Exchange Fund', -10, 'Applied'),
+      op('New talent award', 'Open call', 'Summer Photo Festival', -15, 'Shortlisted'),
+      op('Editorial commission', 'Commission', 'Weekend Magazine', -25, 'Won'),
+      op('Residency in Reykjavík', 'Residency', 'North Light Residency', -50, 'Won'),
+      op('Group show: Water', 'Open call', 'Kunstraum Hafen', -130, 'Closed'),
+    ],
+    press: [
+      pr('Saltpans, a portfolio', 'Feature', 'Image Quarterly', '2023-10', 1),
+      pr('Low Water reviewed', 'Review', 'Photo Monthly', '2024-04', 0),
+      pr('Night Ferries review', 'Review', 'Nordic Art Letter', '2025-02', 2),
+      pr('Interview: waiting for the tide', 'Interview', 'Lens Radio', '2025-06', 3),
+      pr('Photobooks of the year', 'Selection', 'The Photobook Review', '2025-12', 3),
+      pr('Ten photographers to watch', 'Selection', 'City Magazine', '2026-01'),
+      pr('New Talent Award, winner', undefined, 'European Photo Foundation', '2024-09', 0, 'award'),
+      pr('Photobook Award, shortlist', undefined, 'Photobook Days', '2025-11', 3, 'award'),
+    ],
+    desk: {
+      list: { title: 'Shoot kit', items: [['Film, 20 rolls'], ['Tripod plate'], ['Light meter batteries'], ['Lens cloth', true]] },
+      quote: 'Wait for the light, then wait a little longer.',
+      note: 'Printer call Tuesday, 9 am',
+      submission: 0,
+    },
+    board: { name: 'Next five years',
+      quotes: ['Wait for the light, then wait a little longer.', 'Fewer pictures, better sequenced.'],
+      goals: ['A museum solo show', 'Second photobook', 'Shoot on large format'],
+      refs: ['Rinko Kawauchi, everyday light', 'Saul Leiter, colour in the street', 'Joel Sternfeld, the long view'],
+      tags: ['water', 'light', 'waiting'] },
+  }),
+
+  'illustrator-painter': () => combine([['picture_book', SEEDS.illustrator()], ['visual_artist', SEEDS.painter()]], {
+    name: 'Next five years',
+    quotes: ['Leave room for the reader.', 'Paint what the light does, not what the thing is.'],
+    goals: ['Finish Snow Days', 'Larger canvases', 'Show the originals in Paris'],
+    refs: ['Tove Jansson, Moomin winters', 'Pierre Bonnard, interiors', 'Etel Adnan, small mountains'],
+    tags: ['quiet', 'light', 'play'],
+  }),
+
+  // She directs her own music video, so the musician's Glass Hour video project is left out.
+  'filmmaker-musician': () => combine([['filmmaker', SEEDS.filmmaker()], ['musician', SEEDS.musician()]], {
+    name: '2027',
+    quotes: ['Cut what you love if it isn’t the film.', 'Play the room you are in.'],
+    goals: ['Shoot the first feature', 'Finish album two', 'Score my own film'],
+    refs: ['Agnès Varda, essay films', 'Nils Frahm, the room as instrument', 'Kelly Reichardt, landscapes'],
+    tags: ['coast', 'live', 'time'],
+  }, ['Glass Hour video']),
 }
 
 // Replaces whatever is in the demo database with the sample studio for this field.
@@ -541,7 +669,10 @@ export async function seedDemo(field: DemoField) {
   const now = Date.now()
   await db.transaction('rw', db.tables, async () => {
     for (const t of db.tables) await t.clear()
-    const departmentId = await db.departments.add({ name: s.name, discipline: field === 'musician' ? 'music' : field === 'illustrator' ? 'picture_books' : 'painter', activities: s.activities, createdAt: now }) as number
+    const departmentId = await db.departments.add({
+      name: s.name, discipline: field === 'musician' ? 'music' : field === 'illustrator' ? 'picture_books' : 'painter',
+      activities: s.activities, practiceMode: s.practiceMode, practiceNames: s.practiceNames, createdAt: now,
+    }) as number
 
     const workIds: number[] = []
     for (const w of s.works) workIds.push(await db.works.add({ ...w, departmentId }) as number)
@@ -583,16 +714,19 @@ export async function seedDemo(field: DemoField) {
     }
 
     // The desk, laid out in its four columns: projects on the left, tasks and a list beside them,
-    // coming up, a quote, a submission and a note on the right.
+    // coming up, a quote, a submission and a note on the right. Each practice has its own list, quote,
+    // submission and note in the same places; the desk only shows the practice in view.
     const deskId = await db.boards.add({ departmentId, name: 'Desk', boardType: 'desk', createdAt: now }) as number
     const desk: Array<Omit<BoardItem, 'boardId' | 'createdAt'>> = [
       { itemType: 'comingup', content: '', x: 3, y: 24, w: 1, h: 300 },
       ...projectIds.map((id, i) => ({ itemType: 'project' as const, content: String(id), x: i % 2, y: 24 + Math.floor(i / 2) * 216, w: 1, h: 176 })),
       { itemType: 'tasks', content: 'week', x: 2, y: 24, w: 1, h: 320 },
-      { itemType: 'list', content: JSON.stringify({ title: s.desk.list.title, items: s.desk.list.items.map(([text, isDone], i) => ({ id: `l${i}`, text, done: !!isDone })) }), x: 2, y: 456, w: 1, h: 200 },
-      { itemType: 'quote', content: s.desk.quote, x: 3, y: 408, w: 1, h: 112 },
-      { itemType: 'submission', content: String(oppIds[s.desk.submission]), x: 3, y: 576, w: 1, h: 112 },
-      { itemType: 'note', content: s.desk.note, x: 3, y: 744, w: 1, h: 96 },
+      ...[s.desk].flat().flatMap(({ practice, ...d }) => [
+        { itemType: 'list' as const, content: JSON.stringify({ title: d.list.title, items: d.list.items.map(([text, isDone], i) => ({ id: `l${i}`, text, done: !!isDone })) }), x: 2, y: 456, w: 1, h: 200, practice },
+        { itemType: 'quote' as const, content: d.quote, x: 3, y: 408, w: 1, h: 112, practice },
+        { itemType: 'submission' as const, content: String(oppIds[d.submission]), x: 3, y: 576, w: 1, h: 112 },
+        { itemType: 'note' as const, content: d.note, x: 3, y: 744, w: 1, h: 96, practice },
+      ]),
     ]
     for (const item of desk) await db.boardItems.add({ ...item, boardId: deskId, createdAt: now })
 

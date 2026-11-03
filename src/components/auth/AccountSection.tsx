@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
-import { demoField, exitDemo } from '../../lib/mode'
+import { DEMO_NAME, demoField, exitDemo } from '../../lib/mode'
 import { flushCloud, retryCloud, useCloudStatus } from '../../lib/cloud'
 import { seedDemo } from '../../lib/demoSeed'
 
@@ -25,7 +25,7 @@ function DemoCard() {
   return (
     <Card title="Demo">
       <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, margin: '0 0 14px' }}>
-        A sample {demoField} studio. Change anything you like; it stays in this browser only.
+        A sample {DEMO_NAME[demoField!]} studio. Change anything you like; it stays in this browser only.
       </p>
       <div style={{ display: 'flex', gap: 8 }}>
         <button disabled={busy} onClick={() => { setBusy(true); void seedDemo(demoField!).then(() => setBusy(false)) }} style={quiet}>{busy ? 'Resetting' : 'Start over'}</button>

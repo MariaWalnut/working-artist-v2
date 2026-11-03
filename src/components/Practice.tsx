@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Activity } from '../db/db'
-import { PRACTICE_NAME, setLens, setPicked, usePractice } from '../lib/practice'
+import { setLens, setPicked, usePractice } from '../lib/practice'
 
 // The practice in the top left, after the studio name. In Separate mode it opens the other practices.
 export function PracticeName() {
-  const { acts, multi, mode, current } = usePractice()
+  const { acts, multi, mode, current, name } = usePractice()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
 
@@ -20,13 +20,13 @@ export function PracticeName() {
   const shown = multi ? (mode === 'separate' ? current : null) : acts[0] !== 'other' ? acts[0] : null
   if (!shown) return null
   const italic: React.CSSProperties = { fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontWeight: 400, fontSize: 18, color: 'var(--wa-ink)' }
-  if (mode !== 'separate') return <span style={{ ...italic, marginLeft: '0.3em' }}>{PRACTICE_NAME[shown]}</span>
+  if (mode !== 'separate') return <span style={{ ...italic, marginLeft: '0.3em' }}>{name(shown)}</span>
 
   return (
     <span ref={ref} style={{ position: 'relative', marginLeft: '0.3em' }}>
-      <button onClick={() => setOpen(v => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={`${PRACTICE_NAME[shown]}, switch practice`}
+      <button onClick={() => setOpen(v => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={`${name(shown)}, switch practice`}
         style={{ ...italic, background: 'none', border: 'none', padding: 0, cursor: 'pointer', borderBottom: '1px solid var(--wa-line-strong)' }}>
-        {PRACTICE_NAME[shown]}
+        {name(shown)}
       </button>
       {open && (
         <span role="menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: -12, zIndex: 70, minWidth: 180, display: 'flex', flexDirection: 'column', padding: 6, borderRadius: 14, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', boxShadow: '0 10px 30px rgba(0,0,0,.12)' }}>
@@ -34,7 +34,7 @@ export function PracticeName() {
             <button key={a} role="menuitemradio" aria-checked={a === shown} onClick={() => { setPicked(a); setOpen(false) }}
               style={{ ...italic, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 40, padding: '0 10px', borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
                 background: a === shown ? 'var(--wa-fill)' : 'none', color: a === shown ? 'var(--wa-ink)' : 'var(--wa-text-2)' }}>
-              {PRACTICE_NAME[a]}
+              {name(a)}
               {a === shown && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />}
             </button>
           ))}
@@ -46,7 +46,7 @@ export function PracticeName() {
 
 // Together mode: look at one practice at a time on Works, Events and Career.
 export function PracticeFilter() {
-  const { acts, current } = usePractice({ filter: true })
+  const { acts, current, name } = usePractice({ filter: true })
   const chip = (label: string, on: boolean, value: Activity | null) => (
     <button key={label} role="radio" aria-checked={on} onClick={() => setLens(value)}
       style={{ minHeight: 32, padding: '0 14px', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, whiteSpace: 'nowrap', fontWeight: on ? 600 : 400,
@@ -58,7 +58,7 @@ export function PracticeFilter() {
     <div role="radiogroup" aria-label="Practice" style={{ display: 'flex', maxWidth: '100%', overflowX: 'auto', marginBottom: 16 }}>
       <div style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: 'var(--wa-fill)' }}>
         {chip('All', current == null, null)}
-        {acts.map(a => chip(PRACTICE_NAME[a], current === a, a))}
+        {acts.map(a => chip(name(a), current === a, a))}
       </div>
     </div>
   )
@@ -66,11 +66,11 @@ export function PracticeFilter() {
 
 // The practice a work, project, event, submission or press item belongs to. Only with several practices.
 export function PracticeSelect({ value, onChange, style, labelled }: { value: Activity; onChange: (a: Activity) => void; style?: React.CSSProperties; labelled?: boolean }) {
-  const { acts, multi } = usePractice()
+  const { acts, multi, name } = usePractice()
   if (!multi) return null
   const select = (
     <select aria-label="Practice" value={value} onChange={e => onChange(e.target.value as Activity)} style={style}>
-      {acts.map(a => <option key={a} value={a}>{PRACTICE_NAME[a]}</option>)}
+      {acts.map(a => <option key={a} value={a}>{name(a)}</option>)}
     </select>
   )
   if (!labelled) return select
