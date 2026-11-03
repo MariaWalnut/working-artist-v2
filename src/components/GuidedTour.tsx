@@ -84,7 +84,6 @@ export function GuidedTour() {
   const [tipH, setTipH] = useState(200)
   const tipRef = useRef<HTMLDivElement>(null)
   const deskFixed = useNarrow('(max-width: 900px)')
-  const phone = useNarrow()
 
   const data = useLiveQuery(async () => {
     if (!demoField) return null
@@ -145,15 +144,8 @@ export function GuidedTour() {
   useLayoutEffect(() => { if (tipRef.current) setTipH(tipRef.current.offsetHeight) })
 
   if (!demoField) return null
-  if (!s) {
-    return (
-      <button onClick={startTour} aria-label="Start the tour"
-        style={{ ...btn, position: 'fixed', right: 16, bottom: phone ? 80 : 88, zIndex: 70, background: 'var(--wa-black)', color: '#FFFFFF', boxShadow: '0 4px 16px rgba(0,0,0,.18)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, ...(phone ? { width: 44, height: 44, padding: 0 } : {}) }}>
-        <span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 999, background: 'var(--accent)', color: '#111111', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>?</span>
-        {!phone && 'Tour'}
-      </button>
-    )
-  }
+  // No floating Tour button for now; the tour starts from Account › Demo.
+  if (!s) return null
 
   // Place the tip beside the highlighted part: below, above, right, left, or else in the corner.
   const vw = window.innerWidth, vh = window.innerHeight
