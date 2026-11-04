@@ -42,12 +42,13 @@ export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Film', 'Awa
 
 const WORK_KIND: Record<string, string> = { Books: 'Book', Publications: 'Book', Release: 'Release', Film: 'Film', Commission: 'Artwork' }
 
-// The work a finished project becomes, with everything the project already knows filled in.
+// The work a project becomes, with everything the project already knows filled in. In progress until the project is completed.
 export function workFromProject(p: Project): Omit<Work, 'id'> {
   const date = p.publishedDate ?? p.releaseDate ?? p.dateEnd ?? p.dateStart
   const [year, month] = (date ?? '').split('-').map(Number)
   return {
     departmentId: p.departmentId, practice: p.practice, projectId: p.id, title: p.title,
+    inProgress: p.status === 'Completed' ? undefined : true,
     kind: WORK_KIND[p.projectType ?? ''] ?? 'Other',
     year: year || new Date().getFullYear(), month: month || undefined, location: p.location,
     publisher: p.publisher, publishedDate: p.publishedDate, isbn: p.isbn,

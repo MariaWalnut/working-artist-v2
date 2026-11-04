@@ -335,12 +335,19 @@ export function ProjectDetail() {
       client: f.client || undefined,
     })
     setEditing(false)
-    if (status === 'Completed' && project!.status !== 'Completed' && !work) setAskWorks(true)
+    if (project!.status !== status) completed(status)
+  }
+
+  // A project just completed: its work is finished too, or it is asked whether it becomes one.
+  function completed(next: string) {
+    if (next !== 'Completed') return
+    if (work) void db.works.update(work.id!, { inProgress: undefined })
+    else setAskWorks(true)
   }
 
   async function changeStatus(next: string) {
     await db.projects.update(pid, { status: next })
-    if (next === 'Completed' && !work) setAskWorks(true)
+    completed(next)
   }
 
   async function addToWorks() {
@@ -460,7 +467,7 @@ export function ProjectDetail() {
                   </div>
                   {work
                     ? <button onClick={() => navigate(`/studio/${work.id}`)} style={{ ...plainAdd, marginTop: 10 }}>In Works →</button>
-                    : project.status === 'Completed' && <button onClick={() => void addToWorks()} style={{ ...plainAdd, marginTop: 10 }}>+ Add to Works</button>}
+                    : <button onClick={() => void addToWorks()} style={{ ...plainAdd, marginTop: 10 }}>+ Add to Works</button>}
                 </div>
                 {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
                 {project.id != null && <ProjectMeetings projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}

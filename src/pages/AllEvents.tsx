@@ -98,7 +98,7 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
       title: title.trim(),
       type: type || undefined,
       location: location.trim() || undefined,
-      ...orderedDates(date, endDate),
+      ...orderedDates(date, meeting ? '' : endDate),
       url: url.trim() || undefined,
       notes: notes.trim() || undefined,
       goals: goals.trim() || undefined,
@@ -147,6 +147,18 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
         )}
         <PracticePicker value={practices ?? [practiceOf(acts, allWorks).event({ type, workIds })]} onChange={setPractices} style={{ marginBottom: 14 }} />
 
+        {meeting ? (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <label style={{ flex: 2, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 6px' }}>Date</span>
+              <input type="date" value={date.length === 10 ? date : ''} onChange={e => setDate(e.target.value)} style={inp} />
+            </label>
+            <label style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 6px' }}>Time</span>
+              <input type="time" value={time} onChange={e => setTime(e.target.value)} style={inp} />
+            </label>
+          </div>
+        ) : <>
         <DateFields label={showEnd ? 'Starts' : 'Date'} value={date} onChange={setDate} inp={inp}
           action={!showEnd && (
             <button type="button" onClick={() => setShowEnd(true)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ End date</button>
@@ -157,12 +169,9 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
               <button type="button" onClick={() => { setShowEnd(false); setEndDate('') }} style={{ background: 'none', border: 'none', padding: 0, fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>Remove</button>
             } />
         )}
+        </>}
 
         {meeting && <>
-          <label style={{ display: 'block', marginBottom: 10 }}>
-            <span style={{ display: 'block', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 6px' }}>Time</span>
-            <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ ...inp, width: 130 }} />
-          </label>
           {allProjects.length > 0 && <ChipField label="Projects" items={allProjects.map(p => ({ id: p.id!, label: p.title }))} on={projectIds} onChange={setProjectIds} />}
         </>}
         {(meeting || maybe) && entry?.id == null && contacts.length > 0 && <ChipField label="People" items={contacts.map(c => ({ id: c.id!, label: c.name }))} on={personIds} onChange={setPersonIds} />}
