@@ -207,15 +207,15 @@ export function WorkDetail() {
     ...linkedPress.map(p => ({ key: `lp${p.id}`, title: p.title, outlet: p.outlet ?? '', date: p.date, url: p.url, type: p.type, remove: () => void unlinkPress(p.id!) })),
   ]
 
-  // Sections with nothing in them fold into a row of small buttons under the details.
+  // Sections with nothing in them fold into a row of small buttons under the details. People always starts folded.
   const showShown = shownAt.length > 0 || linkingEvent
-  const showPeople = peopleCount > 0 || addingPeople
+  const showPeople = addingPeople
   const showPress = pressRows.length > 0 || addingPress
   const showRights = rights.length > 0 || addingRight
   const showNotes = !!w.notes && !editing
   const folded: Array<[string, () => void]> = [
     ...(!showShown && linkable.length > 0 ? [['Shown at', () => setLinkingEvent(true)] as [string, () => void]] : []),
-    ...(!showPeople ? [['People', () => setAddingPeople(true)] as [string, () => void]] : []),
+    ...(!showPeople ? [[peopleCount > 0 ? `People (${peopleCount})` : 'People', () => setAddingPeople(true)] as [string, () => void]] : []),
     ...(!showPress ? [['Press', () => setAddingPress(true)] as [string, () => void]] : []),
     ...(!showRights ? [['Rights', () => setAddingRight(true)] as [string, () => void]] : []),
     ...(!w.notes && !editing ? [['Notes', () => { startEdit(); setTimeout(() => notesRef.current?.focus(), 0) }] as [string, () => void]] : []),
