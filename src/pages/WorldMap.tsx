@@ -107,7 +107,7 @@ function fitView(coords: Array<[number, number]>): View {
 
 export function WorldMapPanel() {
   const dept = useActiveDept()
-  const { acts, keep } = usePractice({ filter: true })
+  const { acts, keep } = usePractice()
   const allEvents = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const of = practiceOf(acts, allWorks)

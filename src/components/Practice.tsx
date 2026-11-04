@@ -44,21 +44,26 @@ export function PracticeName() {
   )
 }
 
-// Together mode: look at one practice at a time on Works, Events and Career.
-export function PracticeFilter() {
-  const { acts, current, name } = usePractice({ filter: true })
-  const chip = (label: string, on: boolean, value: Activity | null) => (
-    <button key={label} role="radio" aria-checked={on} onClick={() => setLens(value)}
-      style={{ minHeight: 32, padding: '0 14px', borderRadius: 999, border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, whiteSpace: 'nowrap', fontWeight: on ? 600 : 400,
-        background: on ? 'var(--wa-surface)' : 'transparent', color: on ? 'var(--wa-ink)' : 'var(--wa-text-2)', boxShadow: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none' }}>
-      {label}
-    </button>
-  )
+// Together mode: a filter in the left column of a page that has one. Pages without a left column show everything.
+// `plain` leaves out the card, for a column that is already one panel.
+export function PracticeFilter({ narrow, plain = false }: { narrow: boolean; plain?: boolean }) {
+  const { acts, multi, mode, current, name } = usePractice({ filter: true })
+  if (!multi || mode !== 'together') return null
+  const item = (label: string, value: Activity | null) => {
+    const on = current === value
+    return (
+      <button key={label} role="radio" aria-checked={on} onClick={() => setLens(value)}
+        style={{ display: 'block', flexShrink: 0, width: narrow ? 'auto' : '100%', padding: plain && !narrow ? '4px 8px' : '8px 10px', borderRadius: 8, border: 'none', background: on ? 'var(--wa-fill)' : 'none', color: on ? 'var(--wa-ink)' : 'var(--wa-text)', fontSize: plain ? 11 : 12, fontWeight: on ? 600 : 400, textAlign: 'left', whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit' }}>
+        {label}
+      </button>
+    )
+  }
   return (
-    <div role="radiogroup" aria-label="Practice" style={{ display: 'flex', maxWidth: '100%', overflowX: 'auto', marginBottom: 16 }}>
-      <div style={{ display: 'inline-flex', padding: 3, borderRadius: 999, background: 'var(--wa-fill)' }}>
-        {chip('All', current == null, null)}
-        {acts.map(a => chip(name(a), current === a, a))}
+    <div role="radiogroup" aria-label="Practice" style={plain ? undefined : { background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? 10 : '18px 16px' }}>
+      {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: plain ? '0.14em' : '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: plain ? '0 0 6px' : 0, padding: plain ? 0 : '0 8px 8px' }}>Practice</p>}
+      <div style={narrow ? { display: 'flex', gap: 2, overflowX: 'auto' } : { display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {item('All', null)}
+        {acts.map(a => item(name(a), a))}
       </div>
     </div>
   )

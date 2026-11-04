@@ -5,8 +5,7 @@ import { demoField } from '../../lib/mode'
 import { applyAccent } from '../../lib/accent'
 import { GuidedTour } from '../GuidedTour'
 import { WaitlistBar } from '../WaitlistBar'
-import { PracticeFilter, PracticeName } from '../Practice'
-import { usePractice } from '../../lib/practice'
+import { PracticeName } from '../Practice'
 
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
@@ -25,8 +24,6 @@ export function Shell({ children }: { children: ReactNode }) {
   const dept = useActiveDept()
   const wordmark = dept?.name?.trim() || 'Working Artist'
   const [menuOpen, setMenuOpen] = useState(false)
-  const practice = usePractice()
-  const filterPage = ['/projects', '/opportunities', '/studio', '/projects/events', '/career', '/career/map', '/career/recognition'].includes(location.pathname)
   useEffect(() => applyAccent(dept?.accent), [dept?.accent])
   const isActive = (to: string) => location.pathname === to || (to !== '/projects' && location.pathname.startsWith(to)) || (to === '/projects' && /^\/projects\/\d+/.test(location.pathname))
 
@@ -103,7 +100,6 @@ export function Shell({ children }: { children: ReactNode }) {
       )}
 
       <main className="flex-1">
-      {practice.multi && practice.mode === 'together' && filterPage && <PracticeFilter />}
       {children}
       <GuidedTour /></main>
     </div>

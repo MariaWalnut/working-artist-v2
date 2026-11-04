@@ -6,7 +6,7 @@ import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { Hint } from '../components/Hint'
 import { useNarrow } from '../lib/useNarrow'
-import { PracticeSelect } from '../components/Practice'
+import { PracticeFilter, PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
 
@@ -235,6 +235,8 @@ export function Opportunities() {
               </div>
             ))}
           </div>
+
+          <PracticeFilter narrow={narrow} />
 
           {narrow ? <>
             {/* Filters as rows of chips that scroll sideways */}

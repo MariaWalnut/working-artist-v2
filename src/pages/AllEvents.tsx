@@ -7,7 +7,7 @@ import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
-import { PracticePicker } from '../components/Practice'
+import { PracticeFilter, PracticePicker } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
 
@@ -266,6 +266,7 @@ export function AllEvents() {
 
         {/* ── Left: filters ─────────────────────────────────────── */}
         <div style={{ width: narrow ? 'auto' : 144, flexShrink: 0, background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '14px' : '20px 14px', display: 'flex', flexDirection: 'column', gap: narrow ? 10 : 20 }}>
+          <PracticeFilter narrow={narrow} plain />
           <div>
             <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>Year</p>
             <div style={narrow ? { display: 'flex', gap: 4, overflowX: 'auto' } : undefined}>

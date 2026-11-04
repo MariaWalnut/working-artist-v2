@@ -161,10 +161,20 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
   )
 }
 
+// Ticking keeps a task in view with a line through it until it is cleared.
+function toggleTask(t: Todo) {
+  if (t.done) { void db.todos.update(t.id!, { done: false, kanbanStatus: 'todo', ticked: undefined }); return }
+  void db.todos.update(t.id!, { done: true, kanbanStatus: 'done', ticked: true })
+  window.dispatchEvent(new Event('wa:task-done'))
+}
+
+const PROJECT_TASKS = 6
+
 function ProjectBlock({ p, todos, compact, onOpen, practice }: { p: Project; todos: Todo[]; compact: boolean; onOpen: () => void; practice?: string }) {
   const mine = todos.filter(t => t.projectId === p.id)
   const done = mine.filter(t => t.done).length
-  const next = mine.filter(t => !t.done).sort(byDue)[0]
+  const list = mine.filter(t => !t.done || t.ticked).sort(byDue)
+  const ticked = list.filter(t => t.done)
   const sub = projectSubtitle(p)
   const date = projectDate(p)
   return (
@@ -179,7 +189,21 @@ function ProjectBlock({ p, todos, compact, onOpen, practice }: { p: Project; tod
       <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: 'var(--wa-ink)' }}>{p.title}</button>
       {sub && <div style={{ fontSize: 11, color: 'var(--wa-muted)', marginTop: 3 }}>{sub}</div>}
       <div style={{ marginTop: 'auto', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {next && <div style={{ fontSize: 11, color: 'var(--wa-text)' }}><span style={{ color: 'var(--wa-muted)' }}>Next </span>{next.title}</div>}
+        {list.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {list.slice(0, PROJECT_TASKS).map(t => (
+              <label key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, lineHeight: 1.35, color: t.done ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: t.done ? 'line-through' : undefined, cursor: 'pointer' }}>
+                <input type="checkbox" checked={t.done} onChange={() => toggleTask(t)} style={{ accentColor: 'var(--wa-ink)', width: 13, height: 13, margin: '1px 0 0', flexShrink: 0, cursor: 'pointer' }} />
+                {t.title}
+              </label>
+            ))}
+            {list.length > PROJECT_TASKS && <button onClick={onOpen} style={{ ...plainBtn, fontSize: 11, color: 'var(--wa-muted)' }}>{list.length - PROJECT_TASKS} more</button>}
+            {ticked.length > 0 && (
+              <button onClick={() => void db.todos.where('id').anyOf(ticked.map(t => t.id!)).modify({ ticked: undefined })}
+                style={{ ...plainBtn, fontSize: 11, color: 'var(--wa-text-2)' }}>Clear completed</button>
+            )}
+          </div>
+        )}
         {mine.length > 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--wa-fill-2)', overflow: 'hidden' }}>
@@ -276,11 +300,7 @@ function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: 
         return (
           <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)' }}>
             <input id={`task-${item.id}-${t.id}`} type="checkbox" checked={t.done}
-              onChange={() => {
-                if (t.done) { void db.todos.update(t.id!, { done: false, kanbanStatus: 'todo', ticked: undefined }); return }
-                void db.todos.update(t.id!, { done: true, kanbanStatus: 'done', ticked: true })
-                window.dispatchEvent(new Event('wa:task-done'))
-              }}
+              onChange={() => toggleTask(t)}
               style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0, cursor: 'pointer' }} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               <label htmlFor={`task-${item.id}-${t.id}`} style={{ fontSize: 12, color: t.done ? 'rgba(0,0,0,.62)' : 'var(--wa-ink)', textDecoration: t.done ? 'line-through' : undefined, cursor: 'pointer' }}>{t.title}</label>
@@ -471,7 +491,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     [boardId],
   )
   // Every project keeps its box; in Separate mode the desk only shows the practice in view.
-  const { acts, multi, mode, current, keep, name } = usePractice({ filter: true })
+  const { acts, multi, mode, current, keep, name } = usePractice()
   // In Separate mode new boxes and tasks belong to the practice in view; in Together they're shared.
   const stamp = mode === 'separate' ? current ?? undefined : undefined
   const allProjects = useLiveQuery(() => db.projects.where('departmentId').equals(deptId).toArray(), [deptId])

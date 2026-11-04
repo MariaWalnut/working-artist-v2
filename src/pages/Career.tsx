@@ -244,7 +244,7 @@ export function Career() {
   const dept = useActiveDept()
   const deptId = dept?.id
 
-  const { acts, keep } = usePractice({ filter: true })
+  const { acts, keep } = usePractice()
   const allProjects = useLiveQuery(() => deptId == null ? [] : db.projects.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const allWorks = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const allEvents = useLiveQuery(() => deptId == null ? [] : db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []

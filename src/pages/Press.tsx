@@ -111,7 +111,7 @@ function ClippingThumb({ data, thumb, label, onOpen, size = 36 }: { data: string
 
 function PressForm({ entry, section, initialClipping, works, allWorks, onDone }: { entry: PressEntry | null; section: Section; initialClipping?: Clipping | null; works: Array<{ id?: number; title: string }>; allWorks: Work[]; onDone: () => void }) {
   const dept = useActiveDept()
-  const { acts, start } = usePractice({ filter: true })
+  const { acts, start } = usePractice()
   const [practice, setPractice] = useState<Activity | undefined>(entry ? entry.practice : start)
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
@@ -232,7 +232,7 @@ export function Press() {
   const dept = useActiveDept()
   const deptId = dept?.id
 
-  const { acts, keep } = usePractice({ filter: true })
+  const { acts, keep } = usePractice()
   const allEntries = useLiveQuery(() => deptId == null ? [] : db.pressEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const allWorks = useLiveQuery(() => deptId == null ? [] : db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const of = practiceOf(acts, allWorks)

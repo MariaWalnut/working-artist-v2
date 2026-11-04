@@ -5,7 +5,7 @@ import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
-import { PracticeSelect } from '../components/Practice'
+import { PracticeFilter, PracticeSelect } from '../components/Practice'
 import { Shell } from '../components/layout/Shell'
 import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
 import { WORK_KINDS, shelfOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
@@ -106,6 +106,7 @@ export function Studio() {
       <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '220px minmax(0, 1fr)', gap: 10 }}>
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <PracticeFilter narrow={narrow} />
           {shelves.length > 1 && (
             <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? 10 : '18px 16px', display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 2, overflowX: narrow ? 'auto' : undefined }}>
               {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px', margin: 0 }}>Category</p>}
