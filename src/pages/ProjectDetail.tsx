@@ -51,6 +51,7 @@ function EditTypeFields({ type, state, set }: {
       <Row>{field('author', 'Author')}{field('illustrator', 'Illustrator')}</Row>
       <Row>{field('publisher', 'Publisher')}{field('designer', 'Designer')}</Row>
       <Row>{monthField('publishedDate', 'Published')}{field('isbn', 'ISBN')}</Row>
+      <Row>{field('location', 'City')}</Row>
     </>
   )
 
@@ -64,7 +65,7 @@ function EditTypeFields({ type, state, set }: {
   if (type === 'Release') return (
     <>
       <Row>{field('label', 'Label')}{field('releaseFormat', 'Format', 'Format (LP / EP / Single)')}</Row>
-      <Row>{monthField('releaseDate', 'Release date')}</Row>
+      <Row>{monthField('releaseDate', 'Release date')}{field('location', 'City')}</Row>
     </>
   )
 
@@ -79,6 +80,7 @@ function EditTypeFields({ type, state, set }: {
   if (type === 'Award') return (
     <>
       <Row>{field('organisation', 'Organisation / Prize')}{field('awardYear', 'Year')}</Row>
+      <Row>{field('location', 'City')}</Row>
     </>
   )
 
@@ -113,13 +115,13 @@ function projectFacts(p: Project): Array<[string, string]> {
   const items: [string, string | number | null | undefined][] = []
 
   if (t === 'Books' || t === 'Publications') {
-    items.push(['Author', p.author], ['Illustrator', p.illustrator], ['Designer', p.designer], ['Publisher', p.publisher], ['Published', p.publishedDate ? fmt(p.publishedDate) : null], ['ISBN', p.isbn])
+    items.push(['Author', p.author], ['Illustrator', p.illustrator], ['Designer', p.designer], ['Publisher', p.publisher], ['Published', p.publishedDate ? fmt(p.publishedDate) : null], ['ISBN', p.isbn], ['City', p.location])
   } else if (t === 'Release') {
-    items.push(['Label', p.label], ['Format', p.releaseFormat], ['Released', p.releaseDate ? fmt(p.releaseDate) : null])
+    items.push(['Label', p.label], ['Format', p.releaseFormat], ['Released', p.releaseDate ? fmt(p.releaseDate) : null], ['City', p.location])
   } else if (t === 'Film') {
     items.push(['Production', p.client], ['Location', p.location], ['Shoot', dateRange], ['Premiere', p.releaseDate ? fmt(p.releaseDate) : null])
   } else if (t === 'Award') {
-    items.push(['Organisation', p.organisation], ['Year', p.awardYear])
+    items.push(['Organisation', p.organisation], ['Year', p.awardYear], ['City', p.location])
   } else if (t === 'Commission') {
     items.push(['Client', p.client], ['Location', p.location], ['Dates', dateRange])
   } else {
