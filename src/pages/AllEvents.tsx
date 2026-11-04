@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
@@ -214,6 +215,14 @@ export function AllEvents() {
   const { acts, keep } = usePractice({ filter: true })
   const allEntries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  // A link from the map opens that event (?e=).
+  const [params, setParams] = useSearchParams()
+  const eParam = params.get('e')
+  useEffect(() => {
+    if (!eParam) return
+    const e = allEntries.find(x => x.id === Number(eParam))
+    if (e) { setEditing(e); setParams({}, { replace: true }) }
+  }, [eParam, allEntries.length])
   const of = practiceOf(acts, allWorks)
   const entries = allEntries.filter(e => of.eventAll(e).some(keep))
   const works = allWorks.filter(w => keep(of.work(w)))

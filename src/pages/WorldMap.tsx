@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { geoEqualEarth } from 'd3-geo'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps'
@@ -7,81 +8,13 @@ import { useActiveDept } from '../lib/useDept'
 import { practiceOf, usePractice } from '../lib/practice'
 import { Shell } from '../components/layout/Shell'
 import { CareerFrame } from '../components/CareerTabs'
+import { PickPopover } from '../components/PickPopover'
+import { formatAnyDate } from '../lib/eventDates'
+import { findPlace, indexCities, loadCities, placeKey, type City } from '../lib/places'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-// [longitude, latitude]
-const CITY_COORDS: Record<string, [number, number]> = {
-  'Berlin':      [13.4,   52.5],
-  'Paris':       [2.3,    48.9],
-  'London':      [-0.1,   51.5],
-  'Vienna':      [16.4,   48.2],
-  'Bologna':     [11.3,   44.5],
-  'Rotterdam':   [4.5,    51.9],
-  'Basel':       [7.6,    47.6],
-  'Venice':      [12.3,   45.4],
-  'Kyoto':       [135.8,  35.0],
-  'Amsterdam':   [4.9,    52.4],
-  'New York':    [-74.0,  40.7],
-  'Los Angeles': [-118.2, 34.1],
-  'Tokyo':       [139.7,  35.7],
-  'Sydney':      [151.2, -33.9],
-  'São Paulo':   [-46.6, -23.5],
-  'Mexico City': [-99.1,  19.4],
-  'Mumbai':      [72.9,   19.1],
-  'Shanghai':    [121.5,  31.2],
-  'Toronto':     [-79.4,  43.7],
-  'Madrid':      [-3.7,   40.4],
-  'Rome':        [12.5,   41.9],
-  'Stockholm':   [18.1,   59.3],
-  'Warsaw':      [21.0,   52.2],
-  'Brussels':    [4.4,    50.8],
-  'Zurich':      [8.5,    47.4],
-  'Barcelona':   [2.2,    41.4],
-  'Copenhagen':  [12.6,   55.7],
-  'Prague':      [14.4,   50.1],
-  'Budapest':    [19.0,   47.5],
-  'Athens':      [23.7,   37.9],
-  'Lisbon':      [-9.1,   38.7],
-  'Oslo':        [10.7,   59.9],
-  'Helsinki':    [24.9,   60.2],
-  'Dublin':      [-6.3,   53.3],
-  'Geneva':      [6.1,    46.2],
-  'Milan':       [9.2,    45.5],
-  'Naples':      [14.3,   40.8],
-  'Seoul':       [126.9,  37.6],
-  'Beijing':     [116.4,  39.9],
-  'Hong Kong':   [114.2,  22.3],
-  'Singapore':   [103.8,   1.4],
-  'Dubai':       [55.3,   25.2],
-  'Cairo':       [31.2,   30.1],
-  'Cape Town':   [18.4,  -33.9],
-  'Nairobi':     [36.8,   -1.3],
-  'Buenos Aires':[-58.4, -34.6],
-  'Rio de Janeiro':[-43.2,-22.9],
-  'Santiago':    [-70.7, -33.5],
-  'Bogotá':      [-74.1,   4.7],
-  'Chicago':     [-87.6,  41.9],
-  'San Francisco':[-122.4, 37.8],
-  'Washington':  [-77.0,  38.9],
-  'Boston':      [-71.1,  42.4],
-  'Montreal':    [-73.6,  45.5],
-  'Vancouver':   [-123.1, 49.3],
-  'Melbourne':   [144.9, -37.8],
-  'Auckland':    [174.8, -36.9],
-}
-
-function getCityCoords(city: string): [number, number] | null {
-  const c = city.trim()
-  for (const [known, coords] of Object.entries(CITY_COORDS)) {
-    if (c.toLowerCase().includes(known.toLowerCase()) || known.toLowerCase().includes(c.toLowerCase())) {
-      return coords
-    }
-  }
-  return null
-}
-
-type CityItem = { title: string; kind: 'event' | 'work'; date?: string }
+interface CityItem { key: string; title: string; kind: 'Event' | 'Work'; date?: string; year?: number; to: string; picture?: string }
 type View = { center: [number, number]; zoom: number }
 
 const MAP_W = 800
@@ -105,8 +38,34 @@ function fitView(coords: Array<[number, number]>): View {
   return { center: [center[0], center[1]], zoom: Math.min(10, Math.max(1, zoom)) }
 }
 
+const yearOf = (d?: string | number) => Number(String(d ?? '').slice(0, 4)) || undefined
+
+function Pin({ city, count, picture, selected, scale, onClick }: { city: string; count: number; picture?: string; selected: boolean; scale: number; onClick: () => void }) {
+  const r = Math.min(24, 15 + count * 1.5)
+  const clip = `pin-${placeKey(city).replace(/[^a-z0-9]/g, '-')}`
+  const c = r * 0.72
+  return (
+    <g transform={`scale(${scale})`} onClick={onClick} role="button" aria-label={`${city}, ${count}`} style={{ cursor: 'pointer' }}>
+      <circle r={r + 2.5} style={{ fill: selected ? 'var(--accent)' : 'var(--wa-surface)', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.28))' }} />
+      {picture ? <>
+        <clipPath id={clip}><circle r={r} /></clipPath>
+        <image href={picture} x={-r} y={-r} width={r * 2} height={r * 2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip})`} />
+      </> : <>
+        <circle r={r} style={{ fill: 'var(--wa-ink)' }} />
+        <text y={r * 0.34} textAnchor="middle" style={{ fontFamily: 'Recoleta, serif', fontSize: r, fill: 'var(--wa-surface)', pointerEvents: 'none' }}>{city.charAt(0)}</text>
+      </>}
+      {count > 1 && <>
+        <circle cx={c} cy={-c} r={8} style={{ fill: 'var(--accent)', stroke: 'var(--wa-surface)', strokeWidth: 1.5 }} />
+        <text x={c} y={-c + 3.2} textAnchor="middle" style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, fill: '#111111', pointerEvents: 'none' }}>{count}</text>
+      </>}
+      <text y={r + 15} textAnchor="middle" style={{ fontFamily: 'Recoleta, serif', fontSize: 12, fill: 'var(--wa-ink)', stroke: 'var(--wa-surface)', strokeWidth: 3, paintOrder: 'stroke', pointerEvents: 'none' }}>{city}</text>
+    </g>
+  )
+}
+
 export function WorldMapPanel() {
   const dept = useActiveDept()
+  const navigate = useNavigate()
   const { acts, keep } = usePractice()
   const allEvents = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
@@ -114,25 +73,41 @@ export function WorldMapPanel() {
   const events = allEvents.filter(e => of.eventAll(e).some(keep))
   const works = allWorks.filter(w => keep(of.work(w)))
 
-  // Group by city
-  const byCity: Record<string, CityItem[]> = {}
-  for (const e of events) {
-    const city = e.location?.trim()
-    if (!city) continue
-    byCity[city] = [...(byCity[city] ?? []), { title: e.title, kind: 'event', date: e.date }]
-  }
-  for (const w of works) {
-    const city = w.location?.trim()
-    if (!city) continue
-    byCity[city] = [...(byCity[city] ?? []), { title: w.title, kind: 'work' }]
-  }
+  const [cityList, setCityList] = useState<City[]>([])
+  useEffect(() => { void loadCities().then(setCityList) }, [])
+  const index = useMemo(() => indexCities(cityList), [cityList])
+  const [year, setYear] = useState<number | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [placing, setPlacing] = useState<string | null>(null)
 
-  const cities = Object.entries(byCity).sort((a, b) => b[1].length - a[1].length)
-  const total = Object.values(byCity).flat().length
-  const located = cities.flatMap(([city, items]) => {
-    const coords = getCityCoords(city)
-    return coords ? [{ city, items, coords }] : []
-  })
+  const everything: Array<CityItem & { place: string }> = [
+    ...events.filter(e => e.location?.trim()).map(e => {
+      const work = e.workIds?.map(id => allWorks.find(w => w.id === id)).find(w => w?.image)
+      return { key: `e${e.id}`, place: e.location!.trim(), title: e.title, kind: 'Event' as const, date: e.date, year: yearOf(e.date), to: `/projects/events?e=${e.id}`, picture: work?.image }
+    }),
+    ...works.filter(w => w.location?.trim()).map(w => {
+      const date = w.publishedDate ?? (w.year != null ? String(w.year) : undefined)
+      return { key: `w${w.id}`, place: w.location!.trim(), title: w.title, kind: 'Work' as const, date, year: yearOf(date), to: `/studio/${w.id}`, picture: w.image }
+    }),
+  ]
+  const years = [...new Set(everything.map(i => i.year).filter((y): y is number => y != null))].sort((a, b) => b - a)
+  const shown = year == null ? everything : everything.filter(i => i.year === year)
+
+  // Places by the name the map knows them by, so Lisbon and Lisboa are one pin.
+  const resolve = (text: string) => dept?.places?.[text] ?? findPlace(text, index)
+  const byCity = new Map<string, { coords: [number, number]; items: CityItem[] }>()
+  const lost = new Map<string, number>()
+  for (const item of shown) {
+    const place = resolve(item.place)
+    if (!place) { lost.set(item.place, (lost.get(item.place) ?? 0) + 1); continue }
+    const city = byCity.get(place.name) ?? { coords: place.coords, items: [] }
+    city.items.push(item)
+    byCity.set(place.name, city)
+  }
+  const located = [...byCity].map(([city, v]) => ({ city, ...v })).sort((a, b) => b.items.length - a.items.length)
+  const total = located.reduce((n, c) => n + c.items.length, 0)
+  const open = selected ? located.find(c => c.city === selected) : undefined
+
   const fit = fitView(located.map(l => l.coords))
   const fitKey = located.map(l => l.city).sort().join('|')
 
@@ -142,10 +117,34 @@ export function WorldMapPanel() {
   const view: View = saved.key === fitKey ? saved : fit
   const setView = (v: View) => setSaved({ ...v, key: fitKey })
   const markerScale = 1 / (movingZoom ?? view.zoom)
-  const zoomBtn: React.CSSProperties = { width: 32, height: 32, background: 'var(--wa-surface)', border: 'none', borderRadius: 8, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontSize: 15, color: 'var(--wa-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }
+  const zoomBtn: React.CSSProperties = { width: 32, height: 32, background: 'var(--wa-surface)', border: 'none', borderRadius: 8, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontSize: 16, color: 'var(--wa-ink)' }
+
+  function choose(city: string, coords: [number, number]) {
+    setSelected(city)
+    setView({ center: coords, zoom: Math.max(view.zoom, 5) })
+  }
+  const pickItems = useMemo(() => {
+    if (placing == null) return []
+    const names = new Intl.DisplayNames(['en'], { type: 'region' })
+    return cityList.map((c, i) => { let sub = c[1]; try { sub = names.of(c[1]) ?? c[1] } catch { /* unknown code */ } return { id: i, label: c[0], sub } })
+  }, [placing == null, cityList])
+  async function place(text: string, i: number) {
+    const c = cityList[i]
+    if (dept?.id != null && c) await db.departments.update(dept.id, { places: { ...dept.places, [text]: { name: c[0], coords: [c[2], c[3]] } } })
+    setPlacing(null)
+  }
+
+  const label: React.CSSProperties = { fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px' }
+  const plainBtn: React.CSSProperties = { display: 'block', width: '100%', padding: 0, border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }
+  const yearChip = (text: string, value: number | null) => (
+    <button key={text} onClick={() => { setYear(value); setSelected(null) }} aria-pressed={year === value}
+      style={{ flexShrink: 0, minHeight: 28, padding: '0 11px', border: 'none', borderRadius: 999, background: year === value ? 'var(--wa-ink)' : 'var(--wa-surface)', color: year === value ? 'var(--wa-surface)' : 'var(--wa-text)', fontSize: 11, fontWeight: year === value ? 600 : 400, boxShadow: '0 1px 6px rgba(0,0,0,.10)', cursor: 'pointer', fontFamily: 'inherit' }}>
+      {text}
+    </button>
+  )
 
   return (
-    <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 380 }}>
+    <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 540 }}>
       {/* Map; the city list drops below it on narrow screens */}
       <div style={{ flex: '999 1 420px', minWidth: 0, position: 'relative' }}>
         <ComposableMap
@@ -153,7 +152,7 @@ export function WorldMapPanel() {
           height={MAP_H}
           projectionConfig={{ scale: 140 }}
           preserveAspectRatio="xMidYMid slice"
-          style={{ width: '100%', height: '100%', minHeight: 380, display: 'block', cursor: 'grab' }}
+          style={{ width: '100%', height: '100%', minHeight: 540, display: 'block', cursor: 'grab' }}
         >
           <ZoomableGroup
             center={view.center}
@@ -181,110 +180,74 @@ export function WorldMapPanel() {
             }
           </Geographies>
 
-          {located.map(({ city, items, coords }) => {
-            const total = items.length
-            const isHub = total >= 3
-            const hasWork = items.some(i => i.kind === 'work')
-            const hasEvent = items.some(i => i.kind === 'event')
-            return (
-              <Marker key={city} coordinates={coords}>
-                <g transform={`scale(${markerScale})`}>
-                <circle
-                  r={isHub ? 9 : 5}
-                  style={{ fill: isHub ? 'var(--accent)' : hasWork && !hasEvent ? 'var(--accent)' : 'var(--wa-ink)' }}
-                  stroke={isHub || (hasWork && !hasEvent) ? '#111111' : 'none'}
-                  strokeWidth={isHub || (hasWork && !hasEvent) ? 1.5 : 0}
-                />
-                {isHub && (
-                  <text
-                    y={4}
-                    textAnchor="middle"
-                    style={{ fontFamily: 'sans-serif', fontSize: 7, fontWeight: 700, fill: '#111111', pointerEvents: 'none' }}
-                  >
-                    {total}
-                  </text>
-                )}
-                <text
-                  y={isHub ? 22 : 16}
-                  textAnchor="middle"
-                  style={{ fontFamily: 'sans-serif', fontSize: 7, fontWeight: 600, fill: 'var(--wa-muted)', letterSpacing: '0.04em', pointerEvents: 'none' }}
-                >
-                  {city.slice(0, 12).toUpperCase()}
-                </text>
-                </g>
-              </Marker>
-            )
-          })}
+          {/* The chosen city is drawn last so it sits on top */}
+          {[...located].sort((a, b) => Number(a.city === selected) - Number(b.city === selected)).map(({ city, items, coords }) => (
+            <Marker key={city} coordinates={coords}>
+              <Pin city={city} count={items.length} picture={items.find(i => i.picture)?.picture} selected={city === selected} scale={markerScale} onClick={() => choose(city, coords)} />
+            </Marker>
+          ))}
           </ZoomableGroup>
         </ComposableMap>
+
+        {years.length > 0 && (
+          <div style={{ position: 'absolute', top: 12, left: 12, right: 60, display: 'flex', gap: 6, overflowX: 'auto', padding: 2 }}>
+            {yearChip('All', null)}
+            {years.map(y => yearChip(String(y), y))}
+          </div>
+        )}
 
         {/* Zoom controls */}
         <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <button aria-label="Zoom in" onClick={() => setView({ ...view, zoom: Math.min(MAX_ZOOM, view.zoom * 1.6) })} style={zoomBtn}>+</button>
           <button aria-label="Zoom out" onClick={() => setView({ ...view, zoom: Math.max(1, view.zoom / 1.6) })} style={zoomBtn}>−</button>
-          <button onClick={() => setView(fit)} style={{ ...zoomBtn, width: 'auto', padding: '0 10px', fontSize: 10, fontWeight: 600 }}>Fit</button>
+          <button onClick={() => { setView(fit); setSelected(null) }} style={{ ...zoomBtn, width: 'auto', padding: '0 10px', fontSize: 10, fontWeight: 600 }}>Fit</button>
         </div>
 
-        {/* Legend */}
-        <div style={{ position: 'absolute', bottom: 12, left: 12, maxWidth: 'calc(100% - 24px)', background: 'color-mix(in srgb, var(--wa-surface) 92%, transparent)', borderRadius: 10, padding: '8px 12px', display: 'flex', flexWrap: 'wrap', gap: '6px 14px', backdropFilter: 'blur(4px)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--wa-ink)' }} />
-            <span style={{ fontSize: 9, color: 'var(--wa-text-2)' }}>Event</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--wa-ink)' }} />
-            <span style={{ fontSize: 9, color: 'var(--wa-text-2)' }}>Work</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', border: '1.5px solid var(--wa-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 5, fontWeight: 700 }}>3</span>
-            </div>
-            <span style={{ fontSize: 9, color: 'var(--wa-text-2)' }}>Hub (3+)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 9, color: 'var(--wa-muted)' }}>{cities.length} cities · {total} items</span>
-          </div>
+        <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', gap: 10, fontSize: 9, color: 'var(--wa-text-2)' }}>
+          <span>{located.length} {located.length === 1 ? 'city' : 'cities'} · {total} {total === 1 ? 'item' : 'items'}</span>
+          <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Cities: GeoNames</a>
         </div>
       </div>
 
       {/* Right panel */}
-      <div style={{ flex: '1 1 220px', borderLeft: '1px solid var(--wa-line)', borderTop: '1px solid var(--wa-line)', padding: '20px 18px', overflowY: 'auto' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 14px' }}>By city</p>
-        {cities.length === 0 ? (
-          <p style={{ fontSize: 12, color: 'var(--wa-muted)', fontStyle: 'italic', margin: 0 }}>Add locations to events or works to see them here.</p>
-        ) : cities.map(([city, items], i) => {
-          const eventItems = items.filter(x => x.kind === 'event')
-          const workItems = items.filter(x => x.kind === 'work')
-          return (
-            <div key={city} data-tour-title={city}>
-              {i > 0 && <div style={{ height: 1, background: 'var(--wa-fill)', margin: '14px 0' }} />}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontFamily: 'Recoleta, serif', fontSize: 13, color: 'var(--wa-ink)' }}>{city}</span>
-                <span style={{ fontSize: 9, color: 'var(--wa-muted)', background: 'var(--wa-fill)', padding: '2px 7px', borderRadius: 999 }}>{items.length}</span>
+      <div style={{ flex: '1 1 240px', borderLeft: '1px solid var(--wa-line)', borderTop: '1px solid var(--wa-line)', padding: '20px 18px', overflowY: 'auto', maxHeight: 620, boxSizing: 'border-box' }}>
+        {open ? <>
+          <button onClick={() => setSelected(null)} style={{ ...plainBtn, fontSize: 11, color: 'var(--wa-text-2)', marginBottom: 12 }}>← All cities</button>
+          <h2 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: 'var(--wa-ink)', margin: '0 0 12px' }}>{open.city}</h2>
+          {[...open.items].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).map(i => (
+            <button key={i.key} onClick={() => navigate(i.to)} style={{ ...plainBtn, display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderTop: '1px solid var(--wa-line)' }}>
+              {i.picture && <img src={i.picture} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />}
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wa-ink)' }}>{i.title}</span>
+                <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-muted)', marginTop: 2 }}>{[i.kind, formatAnyDate(i.date)].filter(Boolean).join(' · ')}</span>
+              </span>
+            </button>
+          ))}
+        </> : <>
+          <p style={label}>By city</p>
+          {located.length === 0 && lost.size === 0 && <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: 0 }}>{year == null ? 'Add locations to events or works to see them here.' : `Nothing with a place in ${year}.`}</p>}
+          {located.map(({ city, items, coords }, i) => (
+            <button key={city} data-tour-title={city} onClick={() => choose(city, coords)} style={{ ...plainBtn, padding: '10px 0', borderTop: i ? '1px solid var(--wa-line)' : 'none' }}>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)' }}>{city}</span>
+                <span style={{ fontSize: 10, color: 'var(--wa-text-2)', background: 'var(--wa-fill)', padding: '2px 7px', borderRadius: 999 }}>{items.length}</span>
+              </span>
+              <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{items.map(x => x.title).join(', ')}</span>
+            </button>
+          ))}
+          {lost.size > 0 && cityList.length > 0 && <>
+            <p style={{ ...label, margin: '22px 0 6px' }}>Not on the map</p>
+            {[...lost].map(([text, n]) => (
+              <div key={text} style={{ padding: '7px 0', borderTop: '1px solid var(--wa-line)' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ minWidth: 0, fontSize: 12, color: 'var(--wa-ink)' }}>{text} <span style={{ color: 'var(--wa-muted)' }}>({n})</span></span>
+                  <button onClick={() => setPlacing(placing === text ? null : text)} style={{ flexShrink: 0, padding: 0, border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit', borderBottom: '1px solid var(--accent)' }}>Find</button>
+                </div>
+                {placing === text && <div style={{ marginTop: 8 }}><PickPopover inline limit={30} items={pickItems} placeholder="Search cities" onPick={i => void place(text, i)} onClose={() => setPlacing(null)} /></div>}
               </div>
-              {eventItems.length > 0 && (
-                <div style={{ marginBottom: 4 }}>
-                  {eventItems.slice(0, 3).map((e, j) => (
-                    <div key={j} style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 2 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--wa-ink)', flexShrink: 0, marginTop: 4 }} />
-                      <span style={{ fontSize: 10, color: 'var(--wa-text-2)', lineHeight: 1.4 }}>{e.title}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {workItems.length > 0 && (
-                <div>
-                  {workItems.slice(0, 2).map((w, j) => (
-                    <div key={j} style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginBottom: 2 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', border: '1px solid #999', flexShrink: 0, marginTop: 4 }} />
-                      <span style={{ fontSize: 10, color: 'var(--wa-text-2)', lineHeight: 1.4 }}>{w.title}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
+            ))}
+          </>}
+        </>}
       </div>
     </div>
   )
