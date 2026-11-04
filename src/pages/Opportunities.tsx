@@ -205,8 +205,11 @@ export function Opportunities() {
     if (o) { setEditing(o); setParams({}, { replace: true }) }
   }, [oParam, allOpps.length])
 
+  // Only the types in use; a filter left on a type that has gone would hide everything.
+  const usedTypes = [...new Set(opps.map(o => o.opportunityType).filter((t): t is string => !!t))].sort()
+  const activeType = typeFilter && usedTypes.includes(typeFilter) ? typeFilter : null
   const filtered = opps.filter(o => {
-    if (typeFilter && o.opportunityType !== typeFilter) return false
+    if (activeType && o.opportunityType !== activeType) return false
     if (statusFilter === 'Open') return !FINISHED.includes(o.status)
     if (statusFilter !== 'All') return o.status === statusFilter
     return true
@@ -227,6 +230,17 @@ export function Opportunities() {
 
         {/* Left */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 10 }}>
+          <button onClick={() => setEditing('new')} style={{ flex: 1, background: 'var(--accent)', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            + Add
+          </button>
+          <input ref={importRef} type="file" accept=".csv,.json,text/csv,application/json" hidden onChange={e => { void importFile(e.target.files?.[0]); e.target.value = '' }} />
+          <button data-tour="subs-import" onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ flex: 1, background: 'var(--wa-surface)', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid var(--wa-line)', color: 'var(--wa-text-2)', cursor: 'pointer' }}>
+            Import
+          </button>
+          </div>
+          {importMsg && <p role="status" style={{ fontSize: 11, color: 'var(--wa-text-2)', margin: '2px 8px 0', textAlign: 'center' }}>{importMsg}</p>}
+
           {/* Stats */}
           <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'grid', gridTemplateColumns: narrow ? 'repeat(4, 1fr)' : '1fr 1fr' }}>
             {[{ label: 'Open', v: activeCount, muted: false }, { label: 'Won', v: wonCount, muted: false }, { label: 'Shortlisted', v: shortCount, muted: false }, { label: 'Closed', v: closedCount, muted: true }].map((s, i) => (
@@ -245,15 +259,15 @@ export function Opportunities() {
               {['All', 'Open', 'Draft', 'Applied', 'Shortlisted', 'Rejected'].map(s => <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
             </div>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              <FilterChip label="All types" active={typeFilter === null} onClick={() => setTypeFilter(null)} />
-              {OPP_TYPES.map(t => <FilterChip key={t} label={t} active={typeFilter === t} onClick={() => setTypeFilter(t)} />)}
+              <FilterChip label="All types" active={activeType === null} onClick={() => setTypeFilter(null)} />
+              {usedTypes.map(t => <FilterChip key={t} label={t} active={typeFilter === t} onClick={() => setTypeFilter(t)} />)}
             </div>
           </> : <>
           {/* Type */}
           <div style={sidePanel}>
             <p style={sectionLabel}>Type</p>
-            <FilterItem label="All types" active={typeFilter === null} onClick={() => setTypeFilter(null)} />
-            {OPP_TYPES.map(t => <FilterItem key={t} label={t} active={typeFilter === t} onClick={() => setTypeFilter(t)} />)}
+            <FilterItem label="All types" active={activeType === null} onClick={() => setTypeFilter(null)} />
+            {usedTypes.map(t => <FilterItem key={t} label={t} count={opps.filter(o => o.opportunityType === t).length} active={typeFilter === t} onClick={() => setTypeFilter(t)} />)}
           </div>
 
           {/* Status */}
@@ -263,16 +277,6 @@ export function Opportunities() {
           </div>
           </>}
 
-          <div style={{ display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 10 }}>
-          <button onClick={() => setEditing('new')} style={{ flex: 1, background: 'var(--accent)', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-            + Add
-          </button>
-          <input ref={importRef} type="file" accept=".csv,.json,text/csv,application/json" hidden onChange={e => { void importFile(e.target.files?.[0]); e.target.value = '' }} />
-          <button data-tour="subs-import" onClick={() => { setImportMsg(null); importRef.current?.click() }} style={{ flex: 1, background: 'var(--wa-surface)', borderRadius: 999, padding: 10, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid var(--wa-line)', color: 'var(--wa-text-2)', cursor: 'pointer' }}>
-            Import
-          </button>
-          </div>
-          {importMsg && <p role="status" style={{ fontSize: 11, color: 'var(--wa-text-2)', margin: '2px 8px 0', textAlign: 'center' }}>{importMsg}</p>}
         </div>
 
         {/* Right */}
