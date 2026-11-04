@@ -56,6 +56,7 @@ export function careerTips({ works, projects, opportunities, events, contacts, t
   }
 
   for (const p of projects) {
+    if (p.status === 'One day' || p.status === 'Cancelled') continue
     const open = todos.filter(t => t.projectId === p.id && !t.done)
     const contract = open.find(t => /contract/i.test(t.title))
     if (contract) {

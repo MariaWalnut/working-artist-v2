@@ -1,6 +1,12 @@
 import type { Project, Work } from '../db/db'
 
+export const PROJECT_STATUSES = ['Active', 'On hold', 'One day', 'Completed', 'Cancelled']
+
+// One day: no pressure. Off the desk, out of the tasks and tips, until it is brought back.
+export const isOneDay = (p: Project) => p.status === 'One day'
+
 export function isActive(p: Project) {
+  if (isOneDay(p) || p.status === 'Completed' || p.status === 'Cancelled') return false
   // A film stays active until its premiere, even after the shoot ends.
   const end = p.projectType === 'Film' ? (p.releaseDate ?? p.dateEnd) : (p.dateEnd ?? p.publishedDate ?? p.releaseDate)
   if (!end) return true

@@ -7,7 +7,7 @@ import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { ProjectSubmissions } from '../components/ProjectSubmissions'
 import { useNarrow } from '../lib/useNarrow'
-import { PROJECT_TYPES, workFromProject } from '../lib/projects'
+import { PROJECT_STATUSES, PROJECT_TYPES, workFromProject } from '../lib/projects'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
@@ -354,6 +354,11 @@ export function ProjectDetail() {
     if (status === 'Completed' && project!.status !== 'Completed' && !work) setAskWorks(true)
   }
 
+  async function changeStatus(next: string) {
+    await db.projects.update(pid, { status: next })
+    if (next === 'Completed' && !work) setAskWorks(true)
+  }
+
   async function addToWorks() {
     const id = await db.works.add(workFromProject(project!)) as number
     await db.projects.update(pid, { workId: id })
@@ -412,7 +417,7 @@ export function ProjectDetail() {
             <div style={{ marginBottom: 10 }}>
               <Field label="Status">
                 <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, maxWidth: 200 }}>
-                  {['Active', 'Completed', 'On hold', 'Cancelled'].map(s => <option key={s}>{s}</option>)}
+                  {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </Field>
             </div>
@@ -440,7 +445,10 @@ export function ProjectDetail() {
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   {project.projectType && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{project.projectType}</span>}
                   {multi && mode === 'together' && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--wa-text-2)' }}>{name(practiceOf(acts).project(project))}</span>}
-                  {project.status && <span style={{ fontSize: 11, background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 10px', color: 'var(--wa-text-2)' }}>{project.status}</span>}
+                  <select value={project.status ?? 'Active'} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
+                    style={{ fontSize: 11, background: 'var(--wa-fill)', border: 'none', borderRadius: 999, padding: '3px 8px', color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
+                  </select>
                   {work
                     ? <button onClick={() => navigate(`/studio/${work.id}`)} style={plainAdd}>In Works →</button>
                     : project.status === 'Completed' && <button onClick={() => void addToWorks()} style={plainAdd}>+ Add to Works</button>}
