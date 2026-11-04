@@ -186,7 +186,9 @@ function ProjectBlock({ p, todos, compact, onOpen, practice }: { p: Project; tod
           <span style={smallLabel}>{p.projectType ?? 'Project'}</span>
           {practice && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 13, color: 'var(--wa-text-2)' }}>{practice}</span>}
         </span>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+        {p.status === 'On hold'
+          ? <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: 'var(--wa-ink)', background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 8px' }}>On hold</span>
+          : <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />}
       </div>
       <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: 'var(--wa-ink)' }}>{p.title}</button>
       {sub && <div style={{ fontSize: 11, color: 'var(--wa-muted)', marginTop: 3 }}>{sub}</div>}

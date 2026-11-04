@@ -7,14 +7,13 @@ import { PeopleCard } from '../components/PeopleCard'
 import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
-import type { Activity, Work } from '../db/db'
+import type { Activity } from '../db/db'
 import { KIND_FIELDS, fieldDisplay, kindOf, shelfOf, type WorkKind } from '../lib/works'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
 import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer } from '../components/ClippingViewer'
-import { linkWorksInProgress } from '../lib/workProjects'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
 const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile']
@@ -199,12 +198,6 @@ export function WorkDetail() {
     setRightFile({ data: raw.replace(/^data:[^;,]*/, 'data:application/pdf'), name: file.name })
   }
 
-  async function changeStage(inProgress: boolean) {
-    await db.works.update(wid, { inProgress: inProgress || undefined } as Partial<Work>)
-    if (inProgress && w!.departmentId != null) await linkWorksInProgress(w!.departmentId)
-    if (!inProgress && fromProject?.id != null) await db.projects.update(fromProject.id, { status: 'Completed' })
-  }
-
   function closeRight() {
     setRightLang(''); setRightPub(''); setRightYear(''); setRightMonth(''); setRightCity(''); setRightFile(null); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice('')
     setEditingRight(null); setAddingRight(false)
@@ -273,11 +266,7 @@ export function WorkDetail() {
         )}
         {!editing && (
           <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--wa-text-2)' }}>
-            {[w.subtitle, shelfOf(w), w.year].filter(Boolean).join(' · ')}{' · '}
-            <select value={w.inProgress ? 'In progress' : 'Completed'} aria-label="Stage" onChange={e => void changeStage(e.target.value === 'In progress')}
-              style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer' }}>
-              <option>In progress</option><option>Completed</option>
-            </select>
+            {[w.subtitle, shelfOf(w), w.year].filter(Boolean).join(' · ')}
             {fromProject && <> · <button onClick={() => navigate(`/projects/${fromProject.id}`, { state: { from: 'works' } })} style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', borderBottom: '1px solid var(--accent)' }}>Project</button></>}
           </p>
         )}

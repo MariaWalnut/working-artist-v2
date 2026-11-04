@@ -467,9 +467,8 @@ export function ProjectDetail() {
                       </Fragment>
                     ))}
                   </div>
-                  {work
-                    ? <button onClick={() => navigate(`/studio/${work.id}`)} style={{ ...plainAdd, marginTop: 10 }}>In Works →</button>
-                    : <button onClick={() => void addToWorks()} style={{ ...plainAdd, marginTop: 10 }}>+ Add to Works</button>}
+                  {work && !work.inProgress && <button onClick={() => navigate(`/studio/${work.id}`)} style={{ ...plainAdd, marginTop: 10 }}>In Works →</button>}
+                  {!work && project.status === 'Completed' && <button onClick={() => void addToWorks()} style={{ ...plainAdd, marginTop: 10 }}>+ Add to Works</button>}
                 </div>
                 {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
                 {project.id != null && <ProjectMeetings projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}

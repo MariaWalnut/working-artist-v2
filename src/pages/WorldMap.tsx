@@ -63,7 +63,7 @@ export function WorldMapPanel() {
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const of = practiceOf(acts, allWorks)
   const events = allEvents.filter(e => of.eventAll(e).some(keep) && onTimeline(e))
-  const works = allWorks.filter(w => keep(of.work(w)))
+  const works = allWorks.filter(w => !w.inProgress && keep(of.work(w)))
 
   const [cityList, setCityList] = useState<City[]>([])
   useEffect(() => { void loadCities().then(setCityList) }, [])
