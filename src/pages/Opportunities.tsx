@@ -31,7 +31,7 @@ function badge(status: string) {
 
 function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void }) {
   const dept = useActiveDept()
-  const { acts, start } = usePractice()
+  const { acts, start } = usePractice({ filter: true })
   const [practice, setPractice] = useState<Activity | undefined>(opp ? opp.practice : start)
   const [title, setTitle] = useState(opp?.title ?? '')
   const [type, setType] = useState(opp?.opportunityType ?? 'Open call')
@@ -147,7 +147,7 @@ export function Opportunities() {
   const [editing, setEditing] = useState<Opportunity | 'new' | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const importRef = useRef<HTMLInputElement>(null)
-  const { acts, current, keep } = usePractice()
+  const { acts, current, keep } = usePractice({ filter: true })
 
   // Adds entries; never replaces. Skips anything already here with the same title and deadline.
   async function importFile(file?: File) {

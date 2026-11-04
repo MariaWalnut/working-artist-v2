@@ -4,13 +4,13 @@ import { SUPABASE_REF } from './supabase'
 // an open demo (/demo/<field>), the signed-in person's own studio, or nothing (signed out).
 // Signing in or out reloads the page, so this never changes while the app runs.
 
-export const DEMO_FIELDS = ['musician', 'painter', 'illustrator', 'writer', 'fineart', 'filmmaker', 'photographer', 'illustrator-painter', 'filmmaker-musician'] as const
+export const DEMO_FIELDS = ['musician', 'painter', 'illustrator', 'writer', 'fineart', 'filmmaker', 'photographer', 'illustrator-painter', 'photographer-musician'] as const
 export type DemoField = typeof DEMO_FIELDS[number]
 
 // How each demo is named in a sentence: "A sample fine art studio".
 export const DEMO_NAME: Record<DemoField, string> = {
   musician: 'musician', painter: 'painter', illustrator: 'illustrator', writer: 'writer', fineart: 'fine art', filmmaker: 'filmmaker',
-  photographer: 'photographer', 'illustrator-painter': 'illustrator and painter', 'filmmaker-musician': 'filmmaker and musician',
+  photographer: 'photographer', 'illustrator-painter': 'illustrator and painter', 'photographer-musician': 'photographer and musician',
 }
 const DEMO_KEY = 'wa-demo'
 

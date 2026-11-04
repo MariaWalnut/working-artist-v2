@@ -174,7 +174,7 @@ export function Account() {
             <p style={{ width: '100%', margin: 0, fontSize: 12, lineHeight: 1.5, color: 'var(--wa-text-2)' }}>
               {(d.practiceMode ?? 'together') === 'separate'
                 ? 'One practice at a time. Switch from the name in the top left. Contacts and Manifest are shared.'
-                : 'Everything in one place. Works, Events and Career can show one practice at a time.'}
+                : 'Everything in one place: one desk, one timeline. Each page can show one practice at a time.'}
             </p>
           </div>
         )}

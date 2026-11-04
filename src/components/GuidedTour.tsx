@@ -29,7 +29,7 @@ const THREAD: Record<DemoField, string> = {
   filmmaker: 'Salt Road',
   photographer: 'Low Water',
   'illustrator-painter': 'The Fox Who Kept the Moon',
-  'filmmaker-musician': 'Salt Road',
+  'photographer-musician': 'Low Water',
 }
 
 const byTitle = (t: string) => `[data-tour-title="${t.replace(/"/g, '\\"')}"]`

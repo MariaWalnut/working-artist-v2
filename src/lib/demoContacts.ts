@@ -149,5 +149,5 @@ function both(a: Bundle, b: Bundle): Bundle {
 export const DEMO_CONTACTS: Record<DemoField, Bundle> = {
   ...SINGLE,
   'illustrator-painter': both(SINGLE.illustrator, SINGLE.painter),
-  'filmmaker-musician': both(SINGLE.filmmaker, SINGLE.musician),
+  'photographer-musician': both(SINGLE.photographer, SINGLE.musician),
 }

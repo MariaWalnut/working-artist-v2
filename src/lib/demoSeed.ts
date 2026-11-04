@@ -6,7 +6,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-03a'
+export const DEMO_VERSION = '2026-11-03b'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -17,7 +17,7 @@ type Item = Pick<BoardItem, 'itemType' | 'content' | 'x' | 'y' | 'w' | 'h' | 'co
 interface Seed {
   name: string
   activities: Activity[]
-  practiceMode?: 'separate'
+  practiceMode?: 'together' | 'separate'
   practiceNames?: Partial<Record<Activity, string>>
   works: Array<Omit<Work, 'departmentId'>>
   projects: Array<{ project: Omit<Project, 'departmentId'>; todos: Todo[] }>
@@ -62,25 +62,33 @@ const op = (title: string, opportunityType: string, organisation: string, due: n
 const pr = (title: string, type: string | undefined, outlet: string, date: string, workId?: number, category: 'press' | 'award' = 'press') =>
   ({ title, type, outlet, date, workId, category })
 
-// A studio with several practices, each keeping the sample career of its own demo, shown one at a time.
+// A studio with several practices, each keeping the sample career of its own demo.
+// Separate: shown one practice at a time, each with its own desk boxes.
+// Together: one desk and one timeline, the practices' projects side by side and the desk boxes shared.
 // `leaveOut` drops projects that the practices would otherwise both have.
-function combine(parts: Array<[Activity, Seed]>, board: Vision, leaveOut: string[] = []): Seed {
+function combine(mode: 'together' | 'separate', parts: Array<[Activity, Seed]>, board: Vision, leaveOut: string[] = []): Seed {
   const seed: Seed = {
-    name: 'Working Artist', activities: parts.map(([a]) => a), practiceMode: 'separate',
+    name: 'Working Artist', activities: parts.map(([a]) => a), practiceMode: mode,
     practiceNames: Object.assign({}, ...parts.map(([, s]) => s.practiceNames)),
     works: [], projects: [], events: [], opportunities: [], press: [], desk: [], board,
   }
   const desks: Desk[] = []
+  const projects: Array<Seed['projects']> = []
   for (const [practice, s] of parts) {
     const w = seed.works.length, o = seed.opportunities.length
     seed.works.push(...s.works.map(x => ({ ...x, practice })))
-    seed.projects.push(...s.projects.filter(p => !leaveOut.includes(p.project.title)).map(p => ({ ...p, project: { ...p.project, practice } })))
+    projects.push(s.projects.filter(p => !leaveOut.includes(p.project.title)).map(p => ({ ...p, project: { ...p.project, practice } })))
     seed.events.push(...s.events.map(e => ({ ...e, practice, workIds: e.workIds?.map(i => i + w) })))
     seed.opportunities.push(...s.opportunities.map(x => ({ ...x, practice })))
     seed.press.push(...s.press.map(x => ({ ...x, practice, workId: x.workId == null ? undefined : x.workId + w })))
     desks.push(...[s.desk].flat().map(d => ({ ...d, practice, submission: d.submission + o })))
   }
-  return { ...seed, desk: desks }
+  if (mode === 'separate') return { ...seed, projects: projects.flat(), desk: desks }
+  // Together: projects take turns, and one set of desk boxes mixes the practices.
+  const turns = Math.max(...projects.map(p => p.length))
+  const mixed = Array.from({ length: turns }, (_, i) => projects.map(p => p[i]).filter(Boolean)).flat()
+  const [first, second = desks[0]] = desks
+  return { ...seed, projects: mixed, desk: { list: first.list, quote: second.quote, note: first.note, submission: first.submission } }
 }
 
 type Keyed = Item & { key: string }
@@ -645,7 +653,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
       tags: ['water', 'light', 'waiting'] },
   }),
 
-  'illustrator-painter': () => combine([['picture_book', SEEDS.illustrator()], ['visual_artist', SEEDS.painter()]], {
+  'illustrator-painter': () => combine('together', [['picture_book', SEEDS.illustrator()], ['visual_artist', SEEDS.painter()]], {
     name: 'Next five years',
     quotes: ['Leave room for the reader.', 'Paint what the light does, not what the thing is.'],
     goals: ['Finish Snow Days', 'Larger canvases', 'Show the originals in Paris'],
@@ -653,14 +661,13 @@ const SEEDS: Record<DemoField, () => Seed> = {
     tags: ['quiet', 'light', 'play'],
   }),
 
-  // She directs her own music video, so the musician's Glass Hour video project is left out.
-  'filmmaker-musician': () => combine([['filmmaker', SEEDS.filmmaker()], ['musician', SEEDS.musician()]], {
-    name: '2027',
-    quotes: ['Cut what you love if it isn’t the film.', 'Play the room you are in.'],
-    goals: ['Shoot the first feature', 'Finish album two', 'Score my own film'],
-    refs: ['Agnès Varda, essay films', 'Nils Frahm, the room as instrument', 'Kelly Reichardt, landscapes'],
-    tags: ['coast', 'live', 'time'],
-  }, ['Glass Hour video']),
+  'photographer-musician': () => combine('separate', [['photographer', SEEDS.photographer()], ['musician', SEEDS.musician()]], {
+    name: 'Next five years',
+    quotes: ['Wait for the light, then wait a little longer.', 'Play the room you are in.'],
+    goals: ['A museum solo show', 'Finish album two', 'Photograph the tour'],
+    refs: ['Rinko Kawauchi, everyday light', 'Nils Frahm, the room as instrument', 'Saul Leiter, colour in the street'],
+    tags: ['water', 'live', 'light'],
+  }),
 }
 
 // Replaces whatever is in the demo database with the sample studio for this field.

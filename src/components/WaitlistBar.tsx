@@ -8,7 +8,7 @@ const ENDPOINT = 'https://ibururqeyzgvddbtrgad.supabase.co/functions/v1/request-
 const KEY = 'sb_publishable_uIEfLevKCGUUi5eQKJAseA_jmgMl3GN'
 const DISCIPLINES = ['Music', 'Painting', 'Fine art', 'Illustration', 'Writing', 'Film', 'Photography', 'Other']
 const FROM_DEMO: Record<DemoField, string> = { musician: 'Music', painter: 'Painting', illustrator: 'Illustration', writer: 'Writing', fineart: 'Fine art', filmmaker: 'Film',
-  photographer: 'Photography', 'illustrator-painter': 'Illustration', 'filmmaker-musician': 'Film' }
+  photographer: 'Photography', 'illustrator-painter': 'Illustration', 'photographer-musician': 'Photography' }
 const STATE = 'wa-waitlist'
 
 const read = () => { try { return localStorage.getItem(STATE) } catch { return null } }

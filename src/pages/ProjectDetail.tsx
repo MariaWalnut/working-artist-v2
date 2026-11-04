@@ -267,7 +267,7 @@ export function ProjectDetail() {
   const dept = useActiveDept()
 
   const project = useLiveQuery(() => db.projects.get(pid), [pid])
-  const { acts, multi } = usePractice()
+  const { acts, multi, mode, name } = usePractice()
   const [practice, setPractice] = useState<Activity | undefined>()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState('')
@@ -382,6 +382,7 @@ export function ProjectDetail() {
                 <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 28, fontWeight: 400, margin: '0 0 4px', color: 'var(--wa-ink)' }}>{project.title}</h1>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   {project.projectType && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{project.projectType}</span>}
+                  {multi && mode === 'together' && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--wa-text-2)' }}>{name(practiceOf(acts).project(project))}</span>}
                   {project.status && <span style={{ fontSize: 11, background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 10px', color: 'var(--wa-text-2)' }}>{project.status}</span>}
                 </div>
               </div>

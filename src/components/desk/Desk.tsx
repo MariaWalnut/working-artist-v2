@@ -158,7 +158,7 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
   )
 }
 
-function ProjectBlock({ p, todos, compact, onOpen }: { p: Project; todos: Todo[]; compact: boolean; onOpen: () => void }) {
+function ProjectBlock({ p, todos, compact, onOpen, practice }: { p: Project; todos: Todo[]; compact: boolean; onOpen: () => void; practice?: string }) {
   const mine = todos.filter(t => t.projectId === p.id)
   const done = mine.filter(t => t.done).length
   const next = mine.filter(t => !t.done).sort(byDue)[0]
@@ -167,8 +167,11 @@ function ProjectBlock({ p, todos, compact, onOpen }: { p: Project; todos: Todo[]
   return (
     <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', minHeight: compact ? undefined : 168 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={smallLabel}>{p.projectType ?? 'Project'}</span>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+          <span style={smallLabel}>{p.projectType ?? 'Project'}</span>
+          {practice && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 13, color: 'var(--wa-text-2)' }}>{practice}</span>}
+        </span>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
       </div>
       <button onClick={onOpen} style={{ ...plainBtn, fontFamily: 'Recoleta, serif', fontSize: 17, lineHeight: 1.3, color: 'var(--wa-ink)' }}>{p.title}</button>
       {sub && <div style={{ fontSize: 11, color: 'var(--wa-muted)', marginTop: 3 }}>{sub}</div>}
@@ -404,7 +407,9 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     [boardId],
   )
   // Every project keeps its box; in Separate mode the desk only shows the practice in view.
-  const { acts, current, keep } = usePractice()
+  const { acts, multi, mode, current, keep, name } = usePractice({ filter: true })
+  // In Separate mode new boxes and tasks belong to the practice in view; in Together they're shared.
+  const stamp = mode === 'separate' ? current ?? undefined : undefined
   const allProjects = useLiveQuery(() => db.projects.where('departmentId').equals(deptId).toArray(), [deptId])
   const allWorks = useLiveQuery(() => db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const of = practiceOf(acts, allWorks)
@@ -552,7 +557,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     if (board?.id == null || !items) return
     const { span, h } = SPAN[type]
     const pos = findFreeSlot(items.filter(i => !isLegacy(i)).map(slotOf), span, h)
-    const practice = type === 'project' || type === 'submission' ? undefined : current ?? undefined
+    const practice = type === 'project' || type === 'submission' ? undefined : stamp
     const id = await db.boardItems.add({ boardId: board.id, itemType: type, content, x: pos.col, y: pos.y, w: span, h, createdAt: Date.now(), practice, ...extra }) as number
     if (TEXT_TYPES.includes(type)) setEditingId(id)
     requestAnimationFrame(() => {
@@ -690,10 +695,10 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     switch (t) {
       case 'project': {
         const p = projects?.find(x => String(x.id) === item.content)
-        return p ? <ProjectBlock p={p} todos={todos} compact={narrow} onOpen={() => navigate(`/projects/${p.id}`)} /> : null
+        return p ? <ProjectBlock p={p} todos={todos} compact={narrow} onOpen={() => navigate(`/projects/${p.id}`)} practice={multi && mode === 'together' ? name(of.project(p)) : undefined} /> : null
       }
       case 'tasks':
-        return <TasksBlock item={item} todos={todos} projects={projects ?? []} deptId={deptId} practice={current ?? undefined} />
+        return <TasksBlock item={item} todos={todos} projects={projects ?? []} deptId={deptId} practice={stamp} />
       case 'list':
         return <ListBlock item={item} />
       case 'submission': {

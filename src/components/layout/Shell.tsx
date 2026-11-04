@@ -26,7 +26,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const wordmark = dept?.name?.trim() || 'Working Artist'
   const [menuOpen, setMenuOpen] = useState(false)
   const practice = usePractice()
-  const filterPage = ['/studio', '/projects/events', '/career', '/career/map', '/career/recognition'].includes(location.pathname)
+  const filterPage = ['/projects', '/opportunities', '/studio', '/projects/events', '/career', '/career/map', '/career/recognition'].includes(location.pathname)
   useEffect(() => applyAccent(dept?.accent), [dept?.accent])
   const isActive = (to: string) => location.pathname === to || (to !== '/projects' && location.pathname.startsWith(to)) || (to === '/projects' && /^\/projects\/\d+/.test(location.pathname))
 
