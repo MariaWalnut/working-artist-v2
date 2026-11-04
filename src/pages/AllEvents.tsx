@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
+import { fileToDataUrl } from '../lib/images'
 import { currentMonth, formatEventDate, isOngoing, isUpcoming } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
@@ -67,6 +68,8 @@ function EventForm({ entry, works, allWorks, onDone }: {
   const [workIds, setWorkIds] = useState<number[]>(entry?.workIds ?? [])
   const [endDate, setEndDate] = useState(entry?.endDate ?? '')
   const [showEnd, setShowEnd] = useState(!!entry?.endDate)
+  const [image, setImage] = useState(entry?.image)
+  const imageRef = useRef<HTMLInputElement>(null)
   const upcoming = !date || isUpcoming({ title, date, endDate: endDate || undefined })
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill-2)', padding: '8px 10px', fontSize: 12, color: 'var(--wa-ink)', outline: 'none', width: '100%' }
@@ -89,6 +92,7 @@ function EventForm({ entry, works, allWorks, onDone }: {
       workIds: workIds.length > 0 ? workIds : undefined,
       practice: practices?.[0],
       practices,
+      image,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
     else await db.eventEntries.add(data)
@@ -105,16 +109,25 @@ function EventForm({ entry, works, allWorks, onDone }: {
       <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 28, width: 460, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 16px' }}>{entry ? 'Edit event' : 'Add event'}</p>
 
-        <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title"
-          style={{ ...inp, marginBottom: 10, fontSize: 14 }}
-          onKeyDown={e => { if (e.key === 'Enter') void save() }} />
-
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <select aria-label="Type" value={type} onChange={e => setType(e.target.value)} style={{ ...inp, flex: 1, color: type ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
-            <option value="">Type…</option>
-            {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+          <div style={{ flexShrink: 0, width: 84 }}>
+            <button type="button" onClick={() => imageRef.current?.click()} aria-label={image ? 'Replace poster' : 'Add poster'}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 84, height: 112, padding: 0, borderRadius: 8, border: image ? 'none' : '1px dashed var(--wa-line-strong)', background: 'var(--wa-fill-2)', overflow: 'hidden', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
+              {image ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : '+ Poster'}
+            </button>
+            {image && <button type="button" onClick={() => setImage(undefined)} style={{ display: 'block', margin: '5px auto 0', padding: 0, border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>}
+            <input ref={imageRef} type="file" accept="image/*" hidden aria-label="Poster" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setImage(await fileToDataUrl(f)) }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title"
+              style={{ ...inp, fontSize: 14 }}
+              onKeyDown={e => { if (e.key === 'Enter') void save() }} />
+            <select aria-label="Type" value={type} onChange={e => setType(e.target.value)} style={{ ...inp, color: type ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
+              <option value="">Type…</option>
+              {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={inp} />
+          </div>
         </div>
         <PracticePicker value={practices ?? [practiceOf(acts, allWorks).event({ type, workIds })]} onChange={setPractices} style={{ marginBottom: 14 }} />
 
@@ -338,6 +351,8 @@ export function AllEvents() {
             <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
               style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid var(--wa-line)' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{formatEventDate(e.date, e.endDate)}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              {e.image && <img src={e.image} alt="" style={{ width: 30, height: 40, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line)' }} />
@@ -356,6 +371,7 @@ export function AllEvents() {
                     })}
                   </div>
                 )}
+              </div>
               </div>
               {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.location ?? ''}</span>}
               {!narrow && <span style={{ fontSize: 9, fontWeight: 600, background: 'var(--wa-fill)', color: 'var(--wa-text-2)', padding: '3px 8px', borderRadius: 4, width: 'fit-content' }}>{e.type ?? ''}</span>}

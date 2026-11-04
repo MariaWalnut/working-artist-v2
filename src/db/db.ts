@@ -152,6 +152,7 @@ export interface EventEntry {
   url?: string
   workIds?: number[]
   goals?: string // one per line
+  image?: string // data URL: a poster, flyer or photo
 }
 
 export interface PressEntry {

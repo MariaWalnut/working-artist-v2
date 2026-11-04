@@ -83,7 +83,7 @@ export function WorldMapPanel() {
   const everything: Array<CityItem & { place: string }> = [
     ...events.filter(e => e.location?.trim()).map(e => {
       const work = e.workIds?.map(id => allWorks.find(w => w.id === id)).find(w => w?.image)
-      return { key: `e${e.id}`, place: e.location!.trim(), title: e.title, kind: 'Event' as const, date: e.date, year: yearOf(e.date), to: `/projects/events?e=${e.id}`, picture: work?.image }
+      return { key: `e${e.id}`, place: e.location!.trim(), title: e.title, kind: 'Event' as const, date: e.date, year: yearOf(e.date), to: `/projects/events?e=${e.id}`, picture: e.image ?? work?.image }
     }),
     ...works.filter(w => w.location?.trim()).map(w => {
       const date = w.publishedDate ?? (w.year != null ? String(w.year) : undefined)
