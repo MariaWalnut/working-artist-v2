@@ -122,7 +122,7 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
   const today = localISO()
   type Row = { key: string; date: string; title: string; sub: string; urgent?: boolean; go: () => void }
   const rows: Row[] = [
-    ...events.filter(e => isUpcoming(e, month)).map(e => ({
+    ...events.filter(e => !e.maybe && isUpcoming(e, month)).map(e => ({
       key: `e${e.id}`, date: e.date ?? '', title: e.title,
       sub: [e.time, e.type, e.location].filter(Boolean).join(' · ') + (e.endDate ? `, until ${formatEventDate(e.endDate, undefined, { year: false })}` : ''),
       go: () => navigate(`/projects/events?e=${e.id}`),

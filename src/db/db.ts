@@ -156,6 +156,7 @@ export interface EventEntry {
   time?: string // HH:mm, for meetings
   projectIds?: number[] // the projects a meeting is about
   onTimeline?: boolean // shown on the career timeline; older events have no value and count as shown
+  maybe?: boolean // discussed but not confirmed: kept apart from everything else until it is
 }
 
 export interface PressEntry {

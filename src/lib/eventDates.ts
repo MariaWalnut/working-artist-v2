@@ -11,8 +11,8 @@ export const currentMonth = () => {
 
 export const isMeeting = (e: Pick<EventEntry, 'type'>) => e.type === 'Meeting'
 
-// Whether an event belongs on the career timeline. Meetings are private and never do.
-export const onTimeline = (e: Pick<EventEntry, 'type' | 'onTimeline'>) => !isMeeting(e) && e.onTimeline !== false
+// Whether an event belongs on the career timeline. Meetings are private and maybes aren't real yet.
+export const onTimeline = (e: Pick<EventEntry, 'type' | 'onTimeline' | 'maybe'>) => !isMeeting(e) && !e.maybe && e.onTimeline !== false
 
 export function isUpcoming(e: EventEntry, month = currentMonth()) {
   const last = e.endDate ?? e.date

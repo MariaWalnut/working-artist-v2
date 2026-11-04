@@ -47,7 +47,7 @@ function useNarrow() {
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
-type Draft = Partial<Pick<EventEntry, 'date' | 'type' | 'projectIds'>>
+type Draft = Partial<Pick<EventEntry, 'date' | 'type' | 'projectIds' | 'maybe'>>
 
 function EventForm({ entry, draft, works, allWorks, onDone }: {
   entry: EventEntry | null
@@ -75,6 +75,7 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
   const allProjects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const contacts = useLiveQuery(() => dept?.id == null ? [] : db.contacts.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const meeting = type === 'Meeting'
+  const [maybe, setMaybe] = useState(entry?.maybe ?? draft?.maybe ?? false)
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [goals, setGoals] = useState(entry?.goals ?? '')
@@ -108,7 +109,8 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
       image,
       time: meeting && time ? time : undefined,
       projectIds: meeting && projectIds.length ? projectIds : undefined,
-      onTimeline: meeting ? false : timeline,
+      onTimeline: meeting || maybe ? false : timeline,
+      maybe: maybe || undefined,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
     else {
@@ -148,6 +150,12 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
             <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={inp} />
           </div>
         </div>
+        {!meeting && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={maybe} onChange={e => setMaybe(e.target.checked)} style={{ width: 14, height: 14, margin: 0, accentColor: 'var(--wa-ink)' }} />
+            Maybe, not confirmed yet
+          </label>
+        )}
         <PracticePicker value={practices ?? [practiceOf(acts, allWorks).event({ type, workIds })]} onChange={setPractices} style={{ marginBottom: 14 }} />
 
         <DateFields label={showEnd ? 'Starts' : 'Date'} value={date} onChange={setDate} inp={inp}
@@ -167,10 +175,10 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
             <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ ...inp, width: 130 }} />
           </label>
           {allProjects.length > 0 && <ChipField label="Projects" items={allProjects.map(p => ({ id: p.id!, label: p.title }))} on={projectIds} onChange={setProjectIds} />}
-          {entry?.id == null && contacts.length > 0 && <ChipField label="People" items={contacts.map(c => ({ id: c.id!, label: c.name }))} on={personIds} onChange={setPersonIds} />}
         </>}
+        {(meeting || maybe) && entry?.id == null && contacts.length > 0 && <ChipField label="People" items={contacts.map(c => ({ id: c.id!, label: c.name }))} on={personIds} onChange={setPersonIds} />}
 
-        {!meeting && (
+        {!meeting && !maybe && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer' }}>
             <input type="checkbox" checked={timeline} onChange={e => setTimeline(e.target.checked)} style={{ width: 14, height: 14, margin: 0, accentColor: 'var(--wa-ink)' }} />
             Show on my career timeline
@@ -275,7 +283,7 @@ export function AllEvents() {
   const [showAll, setShowAll] = useState(false)
   const [editing, setEditing] = useState<EventEntry | 'new' | null>(null)
   const [draft, setDraft] = useState<Draft | undefined>()
-  const [view, setView] = useState<'list' | 'calendar'>('list')
+  const [view, setView] = useState<'list' | 'calendar' | 'maybe'>('list')
   const addEvent = (d?: Draft) => { setDraft(d); setEditing('new') }
 
   const { acts, keep } = usePractice({ filter: true })
@@ -297,7 +305,9 @@ export function AllEvents() {
     setParams({}, { replace: true })
   }, [params])
   const of = practiceOf(acts, allWorks)
-  const entries = allEntries.filter(e => of.eventAll(e).some(keep))
+  const inPractice = allEntries.filter(e => of.eventAll(e).some(keep))
+  const entries = inPractice.filter(e => !e.maybe)
+  const maybes = inPractice.filter(e => e.maybe).sort((a, b) => a.title.localeCompare(b.title))
   const works = allWorks.filter(w => keep(of.work(w)))
 
   const sorted = useMemo(() => [...entries].sort((a, b) => sortAsc
@@ -387,10 +397,10 @@ export function AllEvents() {
             <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 500 }}>{filtered.length}</span>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
               <div role="radiogroup" aria-label="View" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)' }}>
-                {(['list', 'calendar'] as const).map(v => (
+                {(['list', 'calendar', 'maybe'] as const).map(v => (
                   <button key={v} role="radio" aria-checked={view === v} onClick={() => setView(v)}
                     style={{ padding: '4px 10px', border: 'none', borderRadius: 6, background: view === v ? 'var(--wa-surface)' : 'none', fontSize: 10, fontWeight: view === v ? 600 : 400, color: view === v ? 'var(--wa-ink)' : 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {v === 'list' ? 'List' : 'Calendar'}
+                    {v === 'list' ? 'List' : v === 'calendar' ? 'Calendar' : `Maybe${maybes.length ? ` (${maybes.length})` : ''}`}
                   </button>
                 ))}
               </div>
@@ -398,7 +408,7 @@ export function AllEvents() {
                 style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '5px 10px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>
                 Date {sortAsc ? '↑' : '↓'}
               </button>}
-              <button onClick={() => addEvent()}
+              <button onClick={() => addEvent(view === 'maybe' ? { maybe: true } : undefined)}
                 style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
                 + Add
               </button>
@@ -413,7 +423,16 @@ export function AllEvents() {
             </div>
           )}
 
-          {view === 'calendar' ? null : filtered.length === 0 ? (
+          {view === 'maybe' && (maybes.length === 0
+            ? <p style={{ textAlign: 'center', padding: '48px 24px', margin: 0, fontSize: 12, color: 'var(--wa-muted)' }}>Things you have talked about that might happen. No dates needed.</p>
+            : maybes.map((e, i) => (
+              <button key={e.id} onClick={() => setEditing(e)} style={{ display: 'block', width: '100%', padding: narrow ? '13px 16px' : '13px 20px', border: 'none', borderBottom: i < maybes.length - 1 ? '1px solid var(--wa-line)' : 'none', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wa-ink)' }}>{e.title}</span>
+                {(e.location || e.date || e.notes) && <span style={{ display: 'block', marginTop: 2, fontSize: 11, color: 'var(--wa-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[e.location, formatEventDate(e.date, e.endDate), e.notes].filter(Boolean).join(' · ')}</span>}
+              </button>
+            )))}
+
+          {view !== 'list' ? null : filtered.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {entries.length === 0 ? 'No events yet' : 'Nothing matches'}
             </p>
@@ -448,7 +467,7 @@ export function AllEvents() {
             </div>
           ))}
 
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', padding: '12px 20px', borderTop: '1px solid var(--wa-line)', gap: 8 }}>
+          <div style={{ display: view === 'maybe' ? 'none' : 'flex', alignItems: 'center', flexWrap: 'wrap', padding: '12px 20px', borderTop: '1px solid var(--wa-line)', gap: 8 }}>
             <span style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{filtered.length} events{!showAll && filtered.length > PAGE_SIZE ? ` · showing ${PAGE_SIZE}` : ''}</span>
             {!showAll && filtered.length > PAGE_SIZE && (
               <button onClick={() => setShowAll(true)} style={{ background: 'none', border: 'none', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer', textDecoration: 'underline' }}>Load all</button>

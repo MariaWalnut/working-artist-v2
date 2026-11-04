@@ -115,7 +115,7 @@ export function Report() {
   const thisMonth = today.slice(0, 7)
   const ahead = [
     ...opportunities.filter(o => o.deadline && o.deadline >= today && !FINISHED.includes(o.status)).map(o => ({ key: `o${o.id}`, date: o.deadline!, title: o.title, kind: 'Deadline', to: `/opportunities?o=${o.id}` })),
-    ...events.filter(e => e.date && e.date >= (e.date.length <= 7 ? thisMonth : today)).map(e => ({ key: `e${e.id}`, date: e.date!, title: e.title, kind: e.type ?? 'Event', to: '/projects/events' })),
+    ...events.filter(e => !e.maybe && e.date && e.date >= (e.date.length <= 7 ? thisMonth : today)).map(e => ({ key: `e${e.id}`, date: e.date!, title: e.title, kind: e.type ?? 'Event', to: '/projects/events' })),
   ].sort((a, b) => a.date.localeCompare(b.date)).slice(0, COMING_UP)
 
   const tips = careerTips(data)

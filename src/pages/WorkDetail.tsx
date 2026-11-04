@@ -96,7 +96,7 @@ export function WorkDetail() {
     .filter(e => e.departmentId === w.departmentId)
     .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
   const shownAt = deptEvents.filter(e => (e.workIds ?? []).includes(wid))
-  const linkable = deptEvents.filter(e => !(e.workIds ?? []).includes(wid) && e.type !== 'Meeting')
+  const linkable = deptEvents.filter(e => !(e.workIds ?? []).includes(wid) && e.type !== 'Meeting' && !e.maybe)
 
   async function linkEvent(eventId: number) {
     const ev = deptEvents.find(e => e.id === eventId)
