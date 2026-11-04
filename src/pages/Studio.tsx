@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
-import type { Activity } from '../db/db'
+import type { Activity, Work } from '../db/db'
 import { PracticeFilter, PracticeSelect } from '../components/Practice'
 import { FrameHeader } from '../components/FrameHeader'
-import { AddButton, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
+import { AddButton, BoxHeading, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { Shell } from '../components/layout/Shell'
 import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
 import { WORK_KINDS, shelfOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
@@ -34,10 +34,11 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
   const [practice, setPractice] = useState<Activity | undefined>(start)
   const [fields, setFields] = useState(() => fieldsFromWork(null))
   const [image, setImage] = useState<string | undefined>()
+  const [inProgress, setInProgress] = useState(false)
 
   async function save() {
     if (!title.trim()) return
-    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, category: category.trim() || undefined, practice, image, ...fieldsToPatch(fields, kind) }) as number
+    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, category: category.trim() || undefined, practice, image, inProgress: inProgress || undefined, ...fieldsToPatch(fields, kind) }) as number
     onDone(id)
   }
 
@@ -53,6 +54,10 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
         <div style={{ marginBottom: 12 }}>
           <KindSelect value={kind} onChange={setKind} style={inp} />
         </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer' }}>
+          <input type="checkbox" checked={inProgress} onChange={e => setInProgress(e.target.checked)} style={{ width: 14, height: 14, margin: 0, accentColor: 'var(--wa-ink)' }} />
+          In progress
+        </label>
         <div style={{ marginBottom: 12 }}>
           <PracticeSelect labelled value={practice ?? practiceOf(acts).work({ kind })} onChange={setPractice} style={inp} />
         </div>
@@ -91,8 +96,30 @@ export function Studio() {
     .filter(w => !shelf || shelfOf(w) === shelf)
     .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
-  const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{t}</span>
+  const making = shown.filter(w => w.inProgress)
+  const finished = shown.filter(w => !w.inProgress)
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
+
+  const workRow = (w: Work, i: number, all: Work[]) => {
+    const sub = workSubtitle(w)
+    return (
+                  <button key={w.id} data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)}
+                    style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
+                    <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, var(--wa-line) 0%, var(--wa-line) 100%)', overflow: 'hidden' }}>
+                      {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
+                      <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {narrow ? [shelfOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
+                      </p>
+                    </div>
+                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{shelfOf(w)}</span>}
+                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
+                    <span style={{ fontSize: 10, color: 'var(--wa-muted)', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
+                  </button>
+    )
+  }
 
   return (
     <Shell>
@@ -111,40 +138,20 @@ export function Studio() {
         </div>
 
         {/* List */}
-        <div data-tour="works-list" style={pageFrame}>
-          <FrameHeader right={<AddButton onClick={() => setAdding(true)} />}>
-            <FrameTitle count={shown.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
-          </FrameHeader>
-          {shown.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>
-          ) : (
-            <>
-              {!narrow && (
-                <div style={{ display: 'grid', gridTemplateColumns: columns, padding: '10px 24px', borderBottom: '1px solid var(--wa-line)' }}>
-                  {['', 'Title', 'Category', 'Location', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
-                </div>
-              )}
-              {shown.map(w => {
-                const sub = workSubtitle(w)
-                return (
-                  <button key={w.id} data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)}
-                    style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: '1px solid var(--wa-line)', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
-                    <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, var(--wa-line) 0%, var(--wa-line) 100%)', overflow: 'hidden' }}>
-                      {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
-                      <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {narrow ? [shelfOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
-                      </p>
-                    </div>
-                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{shelfOf(w)}</span>}
-                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
-                    <span style={{ fontSize: 10, color: 'var(--wa-muted)', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
-                  </button>
-                )
-              })}
-            </>
+        <div data-tour="works-list" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={pageFrame}>
+            <FrameHeader right={<AddButton onClick={() => setAdding(true)} />}>
+              <FrameTitle count={shown.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
+            </FrameHeader>
+            {shown.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
+            {making.length > 0 && <><BoxHeading label="In progress" count={making.length} />{making.map(workRow)}</>}
+            {making.length === 0 && finished.length > 0 && <><BoxHeading label="Finished" count={finished.length} />{finished.map(workRow)}</>}
+          </div>
+          {making.length > 0 && finished.length > 0 && (
+            <div style={pageFrame}>
+              <BoxHeading label="Finished" count={finished.length} />
+              {finished.map(workRow)}
+            </div>
           )}
         </div>
       </div>

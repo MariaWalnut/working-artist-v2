@@ -11,7 +11,7 @@ import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
 import { FrameHeader } from '../components/FrameHeader'
-import { AddButton, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
+import { AddButton, BoxHeading, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { PracticeFilter, PracticePicker } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
@@ -329,13 +329,6 @@ export function AllEvents() {
   const pastShown = showAll ? past : past.slice(0, PAGE_SIZE)
   const someDay = yearFilter ? [] : inPractice.filter(e => (e.maybe || !e.date) && (!typeFilter || e.type === typeFilter) && (!cityFilter || e.location === cityFilter)).sort((a, b) => a.title.localeCompare(b.title))
 
-  const sectionHead = (label: string, count: number, onAdd?: () => void) => (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '14px 20px 10px', borderBottom: count ? '1px solid var(--wa-line)' : 'none' }}>
-      <h2 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 16, color: 'var(--wa-ink)' }}>{label}</h2>
-      <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{count}</span>
-      {onAdd && <button onClick={onAdd} style={{ marginLeft: 'auto', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>}
-    </div>
-  )
   const eventRow = (e: EventEntry, i: number, all: EventEntry[]) => (
             <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
               style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none', alignItems: 'center', cursor: 'pointer' }}>
@@ -413,12 +406,12 @@ export function AllEvents() {
 
           {view === 'calendar' && <EventCalendar events={filtered} narrow={narrow} dot={e => TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line-strong)'} onOpen={setEditing} onDay={date => addEvent({ date })} />}
 
-          {view === 'list' && upcoming.length > 0 && <>{sectionHead('Upcoming', upcoming.length)}{upcoming.map(eventRow)}</>}
+          {view === 'list' && upcoming.length > 0 && <><BoxHeading label="Upcoming" count={upcoming.length} />{upcoming.map(eventRow)}</>}
           </div>
 
           {view === 'list' && past.length > 0 && (
             <div style={pageFrame}>
-              {sectionHead('Past', past.length)}
+              <BoxHeading label="Past" count={past.length} />
               {pastShown.map(eventRow)}
               {!showAll && past.length > PAGE_SIZE && (
                 <button onClick={() => setShowAll(true)} style={{ display: 'block', padding: '12px 20px', border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>Show all {past.length}</button>
@@ -428,7 +421,7 @@ export function AllEvents() {
 
           {view === 'list' && (
             <div style={pageFrame}>
-              {sectionHead('Some day', someDay.length, () => addEvent({ maybe: true }))}
+              <BoxHeading label="Some day" count={someDay.length} onAdd={() => addEvent({ maybe: true })} />
               {someDay.map(eventRow)}
               {someDay.length === 0 && <p style={{ margin: 0, padding: '2px 20px 16px', fontSize: 12, color: 'var(--wa-muted)' }}>Things you have talked about that might happen. No dates needed.</p>}
             </div>

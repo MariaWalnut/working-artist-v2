@@ -104,6 +104,7 @@ export interface Work {
   contractFile?: string // data URL of the contract itself, a PDF
   contractFileName?: string
   projectId?: number // the project it grew out of
+  inProgress?: boolean // still being made; missing = finished
   // set when copied over from the old books / releases tables
   legacyBookId?: number
   legacyReleaseId?: number

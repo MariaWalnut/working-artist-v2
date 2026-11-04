@@ -306,6 +306,7 @@ export function Career() {
   }
   if (show.work) {
     for (const w of works) {
+      if (w.inProgress) continue
       // Published works sit on their publication month; others on their own year and month.
       const pubYear = w.publishedDate ? parseInt(w.publishedDate.slice(0, 4), 10) || 0 : 0
       const year = pubYear || w.year

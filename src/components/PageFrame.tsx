@@ -19,6 +19,17 @@ export function FrameTitle({ children, count }: { children: ReactNode; count?: n
   )
 }
 
+// The heading of one box in a stacked list, like Upcoming or Finished.
+export function BoxHeading({ label, count, onAdd }: { label: string; count: number; onAdd?: () => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '14px 20px 10px', borderBottom: count ? '1px solid var(--wa-line)' : 'none' }}>
+      <h2 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 16, color: 'var(--wa-ink)' }}>{label}</h2>
+      <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{count}</span>
+      {onAdd && <button onClick={onAdd} style={{ marginLeft: 'auto', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>}
+    </div>
+  )
+}
+
 // A card of filters. On a phone it becomes a row that scrolls sideways.
 export function SidePanel({ title, narrow, children }: { title: string; narrow: boolean; children: ReactNode }) {
   if (narrow) return <div role="group" aria-label={title} style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 10, display: 'flex', gap: 2, overflowX: 'auto' }}>{children}</div>
