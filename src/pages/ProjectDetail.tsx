@@ -259,7 +259,7 @@ function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))', gap: narrow ? 20 : 24 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))', gap: narrow ? 20 : 16 }}>
       {COLUMNS.map(col => (
         <div key={col.key} onDragOver={e => { if (dragging == null) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOver(col.key) }}
           onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(o => o === col.key ? null : o) }}
@@ -451,20 +451,22 @@ export function ProjectDetail() {
 
             <ProjectMeta p={project} />
 
-            <div style={{ marginTop: 36 }}>
-              {project.id != null && <KanbanBoard projectId={project.id} deptId={dept?.id} />}
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))', gap: narrow ? 28 : 24, marginTop: 36, paddingTop: 28, borderTop: '1px solid var(--wa-line)', alignItems: 'start' }}>
+            {/* Tasks beside everything else, so Submissions and People are in view without scrolling */}
+            <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 300px', gap: narrow ? 32 : 36, marginTop: 36, alignItems: 'start' }}>
               <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <h2 style={heading}>Notes</h2>
-                  {!project.notes && <button onClick={startEdit} style={plainAdd}>+ Add</button>}
-                </div>
-                {project.notes && <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>{project.notes}</p>}
+                {project.id != null && <KanbanBoard projectId={project.id} deptId={dept?.id} />}
               </div>
-              {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
-              {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
+              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28, ...(narrow ? { borderTop: '1px solid var(--wa-line)', paddingTop: 28 } : { borderLeft: '1px solid var(--wa-line)', paddingLeft: 32 }) }}>
+                {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
+                {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <h2 style={heading}>Notes</h2>
+                    {!project.notes && <button onClick={startEdit} style={plainAdd}>+ Add</button>}
+                  </div>
+                  {project.notes && <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>{project.notes}</p>}
+                </div>
+              </div>
             </div>
           </>
         )}
