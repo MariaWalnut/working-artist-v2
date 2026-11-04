@@ -1,4 +1,4 @@
-import type { Project } from '../db/db'
+import type { Project, Work } from '../db/db'
 
 export function isActive(p: Project) {
   // A film stays active until its premiere, even after the shoot ends.
@@ -30,4 +30,22 @@ export function projectDate(p: Project) {
   if (!end) return fmt(start)
   if (start.slice(0, 7) === end.slice(0, 7)) return fmt(start)
   return `${fmt(start)} – ${fmt(end)}`
+}
+
+export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Film', 'Award', 'Commission', 'Books', 'Publications', 'Other']
+
+const WORK_KIND: Record<string, string> = { Books: 'Book', Publications: 'Book', Release: 'Release', Film: 'Film', Commission: 'Artwork' }
+
+// The work a finished project becomes, with everything the project already knows filled in.
+export function workFromProject(p: Project): Omit<Work, 'id'> {
+  const date = p.publishedDate ?? p.releaseDate ?? p.dateEnd ?? p.dateStart
+  const [year, month] = (date ?? '').split('-').map(Number)
+  return {
+    departmentId: p.departmentId, practice: p.practice, projectId: p.id, title: p.title,
+    kind: WORK_KIND[p.projectType ?? ''] ?? 'Other',
+    year: year || new Date().getFullYear(), month: month || undefined, location: p.location,
+    publisher: p.publisher, publishedDate: p.publishedDate, isbn: p.isbn,
+    credits: [...new Set([p.author, p.illustrator, p.designer].filter(Boolean))].join(', ') || undefined,
+    label: p.label, format: p.releaseFormat, production: p.projectType === 'Film' ? p.client : undefined,
+  }
 }

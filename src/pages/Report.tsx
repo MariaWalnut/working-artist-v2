@@ -12,7 +12,7 @@ import { careerTips, TIP_GROUPS, type TipData } from '../lib/tips'
 // A report on the whole studio, worked out on this computer from what is already in it.
 
 const HIDDEN_KEY = 'wa-tips-hidden'
-const FINISHED = ['Won', 'Rejected', 'Closed']
+const FINISHED = ['Won', 'Accepted', 'Rejected', 'Closed']
 const COMING_UP = 6
 
 function readHidden(): string[] {

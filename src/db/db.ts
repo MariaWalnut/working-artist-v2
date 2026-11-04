@@ -50,6 +50,7 @@ export interface Project {
   awardYear?: string
   // Commission
   client?: string
+  workId?: number // the work it became, once finished
 }
 
 export interface Opportunity {
@@ -63,6 +64,7 @@ export interface Opportunity {
   status: string
   notes?: string
   projectIds?: number[] // the projects it was for; one proposal can cover several
+  sentDate?: string // yyyy-MM-dd, when it went out
 }
 
 export interface Work {
@@ -101,6 +103,7 @@ export interface Work {
   contract?: BookContract
   contractFile?: string // data URL of the contract itself, a PDF
   contractFileName?: string
+  projectId?: number // the project it grew out of
   // set when copied over from the old books / releases tables
   legacyBookId?: number
   legacyReleaseId?: number

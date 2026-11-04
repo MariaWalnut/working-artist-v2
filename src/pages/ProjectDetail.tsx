@@ -7,7 +7,7 @@ import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { ProjectSubmissions } from '../components/ProjectSubmissions'
 import { useNarrow } from '../lib/useNarrow'
-import { PROJECT_TYPES } from './Projects'
+import { PROJECT_TYPES, workFromProject } from '../lib/projects'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
@@ -295,6 +295,8 @@ export function ProjectDetail() {
   const narrow = useNarrow()
 
   const project = useLiveQuery(() => db.projects.get(pid), [pid])
+  const work = useLiveQuery(async () => { const p = await db.projects.get(pid); return p?.workId != null ? db.works.get(p.workId) : undefined }, [pid, project?.workId])
+  const [askWorks, setAskWorks] = useState(false)
   const { acts, multi, mode, name } = usePractice()
   const [practice, setPractice] = useState<Activity | undefined>()
   const [editing, setEditing] = useState(false)
@@ -349,6 +351,13 @@ export function ProjectDetail() {
       client: f.client || undefined,
     })
     setEditing(false)
+    if (status === 'Completed' && project!.status !== 'Completed' && !work) setAskWorks(true)
+  }
+
+  async function addToWorks() {
+    const id = await db.works.add(workFromProject(project!)) as number
+    await db.projects.update(pid, { workId: id })
+    navigate(`/studio/${id}`)
   }
 
   async function deleteProject() {
@@ -359,6 +368,18 @@ export function ProjectDetail() {
 
   return (
     <Shell>
+      {askWorks && (
+        <div role="dialog" aria-modal="true" aria-label="Add to Works" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width: 380, maxWidth: '100%', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+            <p style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: 'var(--wa-ink)', margin: '0 0 6px', textWrap: 'balance' }}>Add {project.title} to Works?</p>
+            <p style={{ fontSize: 13, color: 'var(--wa-text-2)', lineHeight: 1.5, margin: '0 0 18px' }}>Its details carry over, and the project and the work stay linked.</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => void addToWorks()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer', fontFamily: 'inherit' }}>Add to Works</button>
+              <button onClick={() => setAskWorks(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>Not now</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '22px 18px' : '30px 36px' }}>
         <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
           ← On My Desk
@@ -420,6 +441,9 @@ export function ProjectDetail() {
                   {project.projectType && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{project.projectType}</span>}
                   {multi && mode === 'together' && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--wa-text-2)' }}>{name(practiceOf(acts).project(project))}</span>}
                   {project.status && <span style={{ fontSize: 11, background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 10px', color: 'var(--wa-text-2)' }}>{project.status}</span>}
+                  {work
+                    ? <button onClick={() => navigate(`/studio/${work.id}`)} style={plainAdd}>In Works →</button>
+                    : project.status === 'Completed' && <button onClick={() => void addToWorks()} style={plainAdd}>+ Add to Works</button>}
                 </div>
               </div>
               <button onClick={startEdit} style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer', flexShrink: 0, marginLeft: 16 }}>Edit</button>
@@ -439,7 +463,7 @@ export function ProjectDetail() {
                 </div>
                 {project.notes && <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>{project.notes}</p>}
               </div>
-              {project.id != null && <ProjectSubmissions projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
+              {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
               {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
             </div>
           </>

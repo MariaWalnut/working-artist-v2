@@ -11,8 +11,8 @@ import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
 
 const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Press', 'Commission']
-export const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Rejected', 'Closed']
-const FINISHED = ['Won', 'Rejected', 'Closed']
+export const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Accepted', 'Won', 'Rejected', 'Closed']
+const FINISHED = ['Won', 'Accepted', 'Rejected', 'Closed']
 
 // Open submissions stand out; finished ones step back. Won keeps its colour.
 const BADGE: Record<string, string> = {
@@ -21,6 +21,7 @@ const BADGE: Record<string, string> = {
   Applied:     'bg-[var(--accent)] text-[#111111]',
   Shortlisted: 'bg-[var(--accent)] text-[#111111]',
   Won:         'bg-[var(--accent)] text-[#111111]',
+  Accepted:    'bg-[var(--accent)] text-[#111111]',
   Rejected:    'text-[var(--wa-muted)]',
   Closed:      'text-[var(--wa-muted)]',
 }
@@ -212,7 +213,7 @@ export function Opportunities() {
   }).sort((a, b) => Number(FINISHED.includes(a.status)) - Number(FINISHED.includes(b.status)) || (a.deadline ?? '9999').localeCompare(b.deadline ?? '9999'))
 
   const activeCount = opps.filter(o => !FINISHED.includes(o.status)).length
-  const wonCount = opps.filter(o => o.status === 'Won').length
+  const wonCount = opps.filter(o => o.status === 'Won' || o.status === 'Accepted').length
   const shortCount = opps.filter(o => o.status === 'Shortlisted').length
   const closedCount = opps.filter(o => o.status === 'Closed' || o.status === 'Rejected').length
 
@@ -301,7 +302,7 @@ export function Opportunities() {
             const deadlineCell = (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 10, color: deadlineColor }}>
-                    {o.deadline ? new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}
+                    {o.deadline ? new Date(o.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : o.sentDate ? `Sent ${new Date(o.sentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : '—'}
                   </span>
                   {overdue && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--wa-red)', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>overdue</span>}
                   {!overdue && critical && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--wa-red)', background: 'rgba(224,82,82,0.1)', padding: '1px 5px', borderRadius: 4 }}>{days === 0 ? 'today' : days === 1 ? '1d' : `${days}d`}</span>}

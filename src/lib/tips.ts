@@ -46,8 +46,9 @@ export function careerTips({ works, projects, opportunities, events, contacts, t
   const recent = books.filter(w => (publishedYear(w) ?? 0) > today.getFullYear() - RECENT_YEARS)
 
   for (const o of opportunities) {
-    if (!o.deadline) continue
-    const days = daysUntil(o.deadline, today)
+    const date = o.deadline ?? o.sentDate
+    if (!date) continue
+    const days = daysUntil(date, today)
     const add = (text: string) => tips.push({ key: `opp-${o.id}-${o.status}`, group: 'Submissions', text, to: '/opportunities' })
     if ((o.status === 'Applied' || o.status === 'Shortlisted') && days <= -NO_REPLY_DAYS) add(`${o.title}: no result recorded after ${-days} days.`)
     else if ((o.status === 'Active' || o.status === 'Draft') && days < 0) add(`${o.title}: the deadline has passed.`)

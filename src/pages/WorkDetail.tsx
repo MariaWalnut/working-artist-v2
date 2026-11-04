@@ -73,6 +73,7 @@ export function WorkDetail() {
   const [pressType, setPressType] = useState('')
   const [addingRight, setAddingRight] = useState(false)
   const [addingPeople, setAddingPeople] = useState(false)
+  const fromProject = useLiveQuery(async () => { const x = await db.works.get(wid); return x?.projectId != null ? db.projects.get(x.projectId) : undefined }, [wid])
   const [shown, setShown] = useState(0) // the picture in view
   const [dropping, setDropping] = useState(false)
   const [rightLang, setRightLang] = useState('')
@@ -233,6 +234,7 @@ export function WorkDetail() {
         {!editing && (
           <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--wa-text-2)' }}>
             {[w.subtitle, shelfOf(w), w.year].filter(Boolean).join(' · ')}
+            {fromProject && <> · <button onClick={() => navigate(`/projects/${fromProject.id}`)} style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', borderBottom: '1px solid var(--accent)' }}>Project</button></>}
           </p>
         )}
       </div>

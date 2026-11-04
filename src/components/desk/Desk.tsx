@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { NewProjectForm } from '../NewProjectForm'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem, type EventEntry, type Opportunity, type Project, type Todo } from '../../db/db'
 import { isActive, projectDate, projectSubtitle } from '../../lib/projects'
@@ -442,7 +443,7 @@ function PickRow({ title, sub, onClick }: { title: string; sub?: string | null; 
 
 // ── desk ──────────────────────────────────────────────────────────────────────
 
-export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: () => void }) {
+export function Desk({ deptId }: { deptId: number }) {
   const navigate = useNavigate()
   const canvasRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -655,7 +656,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   const projectIdsOnDesk = new Set((items ?? []).filter(i => i.itemType === 'project').map(i => i.content))
   const offDesk = (projects ?? []).filter(p => isActive(p) && !projectIdsOnDesk.has(String(p.id)))
   const subIdsOnDesk = new Set((items ?? []).filter(i => i.itemType === 'submission').map(i => i.content))
-  const openSubs = opps.filter(o => !['Won', 'Rejected', 'Closed'].includes(o.status) && !subIdsOnDesk.has(String(o.id)))
+  const openSubs = opps.filter(o => !['Won', 'Accepted', 'Rejected', 'Closed'].includes(o.status) && !subIdsOnDesk.has(String(o.id)))
 
   async function addBlock(type: DeskType, content = '', extra: Partial<BoardItem> = {}) {
     if (board?.id == null || !items) return
@@ -1007,14 +1008,12 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       )}
 
       {picker === 'project' && (
-        <Modal title="Project" onClose={() => setPicker(null)}>
-          <button onClick={() => { setPicker(null); onNewProject() }}
-            style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 12 }}>
-            New project
-          </button>
-          {offDesk.length === 0
-            ? <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: 0 }}>Every active project is on the desk.</p>
-            : offDesk.map(p => <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => void restoreProject(p)} />)}
+        <Modal title="New project" onClose={() => setPicker(null)}>
+          <NewProjectForm onDone={() => setPicker(null)} />
+          {offDesk.length > 0 && <>
+            <p style={{ ...smallLabel, margin: '20px 0 2px' }}>Back on the desk</p>
+            {offDesk.map(p => <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => void restoreProject(p)} />)}
+          </>}
         </Modal>
       )}
 
