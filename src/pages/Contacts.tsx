@@ -65,6 +65,33 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   )
 }
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+
+// The letter a name files under, accents dropped so Órla sits under O. Anything else files under #.
+function letterOf(name: string) {
+  const l = name.trim().normalize('NFD').charAt(0).toUpperCase()
+  return ALPHABET.includes(l) ? l : '#'
+}
+
+// Stays in view beside the list. Letters with no one under them are there but do nothing.
+function Alphabet({ people, onJump, narrow }: { people: Contact[]; onJump: (letter: string) => void; narrow: boolean }) {
+  const present = new Set(people.map(c => letterOf(c.name)))
+  const letters = present.has('#') ? ['#', ...ALPHABET] : ALPHABET
+  return (
+    <nav aria-label="Jump to a letter" style={{ position: 'sticky', top: 12, alignSelf: 'flex-start', flexShrink: 0, width: narrow ? 26 : 34, height: 'min(560px, calc(100dvh - 24px))', display: 'flex', flexDirection: 'column', padding: '10px 0', boxSizing: 'border-box' }}>
+      {letters.map(l => {
+        const on = present.has(l)
+        return (
+          <button key={l} type="button" disabled={!on} onClick={() => onJump(l)} aria-label={`Jump to ${l}`}
+            style={{ flex: 1, minHeight: 0, padding: 0, border: 'none', background: 'none', fontFamily: 'Recoleta, serif', fontSize: narrow ? 12 : 14, lineHeight: 1, color: on ? 'var(--wa-ink)' : 'var(--wa-muted)', cursor: on ? 'pointer' : 'default' }}>
+            {l}
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
+
 // ── Contact form ─────────────────────────────────────────────────────────────
 
 function ContactForm({ contact, deptId, categories, lists, onDone }: {
@@ -260,6 +287,7 @@ export function Contacts() {
   const [listForm, setListForm] = useState<ContactList | 'new' | null>(null)
   const [picking, setPicking] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [jumped, setJumped] = useState<string | null>(null)
 
   // Links from elsewhere in the app open a contact (?c=) or a list (?list=).
   const cParam = params.get('c')
@@ -271,6 +299,12 @@ export function Contacts() {
   useEffect(() => { if (listParam) { setView({ kind: 'list', id: Number(listParam) }); setParams({}, { replace: true }) } }, [listParam])
 
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 2400); return () => clearTimeout(t) }, [toast])
+  useEffect(() => {
+    if (!jumped) return
+    document.getElementById(`contacts-${jumped}`)?.scrollIntoView({ block: 'start' })
+    const t = setTimeout(() => setJumped(null), 1600)
+    return () => clearTimeout(t)
+  }, [jumped])
 
   if (deptId == null) return <Shell><div /></Shell>
   const categories = categoriesFor(dept, contacts)
@@ -341,7 +375,7 @@ export function Contacts() {
         </div>
 
         {/* Right */}
-        <div style={{ background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--wa-surface)', borderRadius: 20 }}>
           <div style={{ padding: narrow ? '18px 16px 12px' : '22px 24px 14px', borderBottom: '1px solid var(--wa-line)' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <h1 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: 'var(--wa-ink)' }}>{title}</h1>
@@ -380,46 +414,53 @@ export function Contacts() {
             <p style={{ textAlign: 'center', padding: '48px 24px', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {list && list.members.length === 0 ? 'No one on this list yet' : 'Nothing matches'}
             </p>
-          ) : people.map(c => {
-            const done = isDone(c)
-            return (
-              <div key={c.id} onClick={() => setEditing(c)}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: narrow ? '13px 16px' : '14px 24px', borderBottom: '1px solid var(--wa-line)', cursor: 'pointer' }}>
-                {list && (
-                  <input type="checkbox" checked={done} aria-label={`Tick off ${c.name}`} onClick={e => e.stopPropagation()} onChange={() => void toggleDone(c)}
-                    style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: 'var(--wa-ink)' }} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 500, color: done ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: done ? 'line-through' : undefined }}>{c.name}</span>
-                    {c.category && !list && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--wa-text)', background: 'var(--wa-fill)', padding: '2px 7px', borderRadius: 999 }}>{c.category}</span>}
-                  </div>
-                  {(c.organisation || c.role) && <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--wa-muted)' }}>{[c.role, c.organisation].filter(Boolean).join(', ')}</p>}
-                  {narrow && (c.email || c.phone) && (
-                    <p style={{ margin: '3px 0 0', fontSize: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
-                      {c.email && <a href={`mailto:${c.email}`} style={{ color: 'var(--wa-ink)', textDecoration: 'none' }}>{c.email}</a>}
-                      {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} style={{ color: 'var(--wa-muted)', textDecoration: 'none' }}>{c.phone}</a>}
-                    </p>
-                  )}
-                  {list && c.address && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--wa-text)', whiteSpace: 'pre-line' }}>{c.address}</p>}
-                  {(c.tags?.length ?? 0) > 0 && !list && (
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                      {c.tags!.map(t => <span key={t} style={{ fontSize: 10, color: 'var(--wa-text)', background: 'var(--wa-fill)', padding: '1px 7px', borderRadius: 999 }}>{t}</span>)}
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {people.map((c, i) => {
+                  const done = isDone(c)
+                  const letter = letterOf(c.name)
+                  const first = i === 0 || letterOf(people[i - 1].name) !== letter
+                  const link: React.CSSProperties = { display: 'block', fontSize: 12, color: 'var(--wa-muted)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+                  return (
+                    <div key={c.id} id={first ? `contacts-${letter}` : undefined} onClick={() => setEditing(c)}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: narrow ? '14px 6px 14px 16px' : '16px 12px 16px 24px', borderBottom: '1px solid var(--wa-line)', cursor: 'pointer', scrollMarginTop: 12 }}>
+                      {list && (
+                        <input type="checkbox" checked={done} aria-label={`Tick off ${c.name}`} onClick={e => e.stopPropagation()} onChange={() => void toggleDone(c)}
+                          style={{ marginTop: 5, width: 16, height: 16, flexShrink: 0, accentColor: 'var(--wa-ink)' }} />
+                      )}
+                      <div style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr)', gap: narrow ? 6 : 20, alignItems: 'start' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontFamily: 'Recoleta, serif', fontSize: narrow ? 20 : 22, lineHeight: 1.2, color: done ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: done ? 'line-through' : undefined, borderBottom: first && jumped === letter ? '2px solid var(--accent)' : '2px solid transparent' }}>{c.name}</span>
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          {c.role && <p style={{ margin: 0, fontSize: 12, color: 'var(--wa-ink)' }}>{c.role}</p>}
+                          {c.organisation && <p style={{ margin: c.role ? '2px 0 0' : 0, fontSize: 12, color: 'var(--wa-muted)' }}>{c.organisation}</p>}
+                          {list && c.address && <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--wa-text)', whiteSpace: 'pre-line' }}>{c.address}</p>}
+                          {!list && (c.category || (c.tags?.length ?? 0) > 0) && (
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: c.role || c.organisation ? 6 : 0 }}>
+                              {c.category && <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--wa-text)', background: 'var(--wa-fill)', padding: '2px 7px', borderRadius: 999 }}>{c.category}</span>}
+                              {c.tags?.map(t => <span key={t} style={{ fontSize: 10, color: 'var(--wa-text)', background: 'var(--wa-fill)', padding: '1px 7px', borderRadius: 999 }}>{t}</span>)}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {c.email && <a href={`mailto:${c.email}`} onClick={e => e.stopPropagation()} style={{ ...link, color: 'var(--wa-ink)' }}>{c.email}</a>}
+                          {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} onClick={e => e.stopPropagation()} style={link}>{c.phone}</a>}
+                          {c.website && <a href={websiteHref(c.website)} target="_blank" rel="noopener" onClick={e => e.stopPropagation()} style={link}>{c.website.replace(/^https?:\/\//, '')}</a>}
+                        </div>
+                      </div>
+                      {list && (
+                        <button aria-label={`Take ${c.name} off this list`} onClick={e => { e.stopPropagation(); void setOnList(list, c.id!, false) }}
+                          style={{ background: 'none', border: 'none', fontSize: 14, color: 'var(--wa-muted)', cursor: 'pointer', flexShrink: 0, padding: '0 2px' }}>×</button>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div style={{ display: narrow ? 'none' : 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0, maxWidth: 260 }} onClick={e => e.stopPropagation()}>
-                  {c.email && <a href={`mailto:${c.email}`} style={{ fontSize: 12, color: 'var(--wa-ink)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{c.email}</a>}
-                  {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} style={{ fontSize: 12, color: 'var(--wa-muted)', textDecoration: 'none' }}>{c.phone}</a>}
-                  {c.website && <a href={websiteHref(c.website)} target="_blank" rel="noopener" style={{ fontSize: 12, color: 'var(--wa-muted)', textDecoration: 'none' }}>{c.website.replace(/^https?:\/\//, '')}</a>}
-                </div>
-                {list && (
-                  <button aria-label={`Take ${c.name} off this list`} onClick={e => { e.stopPropagation(); void setOnList(list, c.id!, false) }}
-                    style={{ background: 'none', border: 'none', fontSize: 14, color: 'var(--wa-muted)', cursor: 'pointer', flexShrink: 0, padding: '0 2px' }}>×</button>
-                )}
+                  )
+                })}
               </div>
-            )
-          })}
+              <Alphabet people={people} onJump={setJumped} narrow={narrow} />
+            </div>
+          )}
         </div>
       </div>
     </Shell>
