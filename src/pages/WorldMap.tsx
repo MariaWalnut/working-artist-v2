@@ -9,7 +9,7 @@ import { practiceOf, usePractice } from '../lib/practice'
 import { Shell } from '../components/layout/Shell'
 import { CareerFrame } from '../components/CareerTabs'
 import { PickPopover } from '../components/PickPopover'
-import { formatAnyDate } from '../lib/eventDates'
+import { formatAnyDate, isMeeting } from '../lib/eventDates'
 import { findPlace, indexCities, loadCities, placeKey, type City } from '../lib/places'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
@@ -70,7 +70,7 @@ export function WorldMapPanel() {
   const allEvents = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const of = practiceOf(acts, allWorks)
-  const events = allEvents.filter(e => of.eventAll(e).some(keep))
+  const events = allEvents.filter(e => of.eventAll(e).some(keep) && !isMeeting(e))
   const works = allWorks.filter(w => keep(of.work(w)))
 
   const [cityList, setCityList] = useState<City[]>([])

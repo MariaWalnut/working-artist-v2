@@ -4,7 +4,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { fileToDataUrl } from '../lib/images'
-import { currentMonth, formatEventDate, isOngoing, isUpcoming } from '../lib/eventDates'
+import { currentMonth, formatEventDate, isOngoing, isUpcoming, onTimeline } from '../lib/eventDates'
+import { EventCalendar } from '../components/EventCalendar'
 import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
@@ -14,9 +15,10 @@ import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
 
 
-const EVENT_TYPES = ['Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Festival', 'Award', 'Residency', 'Other']
+const EVENT_TYPES = ['Meeting', 'Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Festival', 'Award', 'Residency', 'Other']
 
 const TYPE_DOT: Record<string, string> = {
+  Meeting:     'var(--accent)',
   Reading:     '#8CB4D4',
   Exhibition:  'var(--wa-ink)',
   'Book Fair': '#F0C878',
@@ -45,8 +47,11 @@ function useNarrow() {
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
-function EventForm({ entry, works, allWorks, onDone }: {
+type Draft = Partial<Pick<EventEntry, 'date' | 'type' | 'projectIds'>>
+
+function EventForm({ entry, draft, works, allWorks, onDone }: {
   entry: EventEntry | null
+  draft?: Draft
   works: Array<{ id?: number; title: string; medium?: string }>
   allWorks: Work[]
   onDone: () => void
@@ -59,9 +64,17 @@ function EventForm({ entry, works, allWorks, onDone }: {
     return one ? [one] : undefined
   })
   const [title, setTitle] = useState(entry?.title ?? '')
-  const [type, setType] = useState(entry?.type ?? '')
+  const [type, setType] = useState(entry?.type ?? draft?.type ?? '')
   const [location, setLocation] = useState(entry?.location ?? '')
-  const [date, setDate] = useState(entry?.date ?? '')
+  const [date, setDate] = useState(entry?.date ?? draft?.date ?? '')
+  const [time, setTime] = useState(entry?.time ?? '')
+  const [projectIds, setProjectIds] = useState<number[]>(entry?.projectIds ?? draft?.projectIds ?? [])
+  const [personIds, setPersonIds] = useState<number[]>([])
+  // Older events stay on the timeline until taken off; new ones go on when ticked.
+  const [timeline, setTimeline] = useState(entry ? onTimeline(entry) : false)
+  const allProjects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const contacts = useLiveQuery(() => dept?.id == null ? [] : db.contacts.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const meeting = type === 'Meeting'
   const [url, setUrl] = useState(entry?.url ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [goals, setGoals] = useState(entry?.goals ?? '')
@@ -93,9 +106,15 @@ function EventForm({ entry, works, allWorks, onDone }: {
       practice: practices?.[0],
       practices,
       image,
+      time: meeting && time ? time : undefined,
+      projectIds: meeting && projectIds.length ? projectIds : undefined,
+      onTimeline: meeting ? false : timeline,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
-    else await db.eventEntries.add(data)
+    else {
+      const id = await db.eventEntries.add(data) as number
+      for (const c of contacts.filter(x => personIds.includes(x.id!))) await db.contacts.update(c.id!, { eventIds: [...(c.eventIds ?? []), id] })
+    }
     onDone()
   }
 
@@ -140,6 +159,22 @@ function EventForm({ entry, works, allWorks, onDone }: {
             action={
               <button type="button" onClick={() => { setShowEnd(false); setEndDate('') }} style={{ background: 'none', border: 'none', padding: 0, fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>Remove</button>
             } />
+        )}
+
+        {meeting && <>
+          <label style={{ display: 'block', marginBottom: 10 }}>
+            <span style={{ display: 'block', fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 6px' }}>Time</span>
+            <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ ...inp, width: 130 }} />
+          </label>
+          {allProjects.length > 0 && <ChipField label="Projects" items={allProjects.map(p => ({ id: p.id!, label: p.title }))} on={projectIds} onChange={setProjectIds} />}
+          {entry?.id == null && contacts.length > 0 && <ChipField label="People" items={contacts.map(c => ({ id: c.id!, label: c.name }))} on={personIds} onChange={setPersonIds} />}
+        </>}
+
+        {!meeting && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={timeline} onChange={e => setTimeline(e.target.checked)} style={{ width: 14, height: 14, margin: 0, accentColor: 'var(--wa-ink)' }} />
+            Show on my career timeline
+          </label>
         )}
 
         <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" aria-label="Link" style={{ ...inp, marginBottom: 10 }} />
@@ -189,6 +224,21 @@ function EventForm({ entry, works, allWorks, onDone }: {
   )
 }
 
+function ChipField({ label, items, on, onChange }: { label: string; items: Array<{ id: number; label: string }>; on: number[]; onChange: (ids: number[]) => void }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 8px' }}>{label}</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto' }}>
+        {items.map(i => {
+          const sel = on.includes(i.id)
+          return <button key={i.id} type="button" onClick={() => onChange(sel ? on.filter(x => x !== i.id) : [...on, i.id])}
+            style={{ padding: '4px 11px', borderRadius: 999, border: sel ? '1px solid transparent' : '1px solid var(--wa-line)', background: sel ? 'var(--accent)' : 'transparent', color: sel ? '#111111' : 'var(--wa-text)', fontSize: 11, fontWeight: sel ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>{i.label}</button>
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toYear(s?: string) { return s ? Number(s.slice(0, 4)) : 0 }
@@ -224,6 +274,9 @@ export function AllEvents() {
   const [sortAsc, setSortAsc] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [editing, setEditing] = useState<EventEntry | 'new' | null>(null)
+  const [draft, setDraft] = useState<Draft | undefined>()
+  const [view, setView] = useState<'list' | 'calendar'>('list')
+  const addEvent = (d?: Draft) => { setDraft(d); setEditing('new') }
 
   const { acts, keep } = usePractice({ filter: true })
   const allEntries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
@@ -236,6 +289,13 @@ export function AllEvents() {
     const e = allEntries.find(x => x.id === Number(eParam))
     if (e) { setEditing(e); setParams({}, { replace: true }) }
   }, [eParam, allEntries.length])
+  // A project page adds a meeting about itself (?new=meeting&project=).
+  useEffect(() => {
+    if (params.get('new') !== 'meeting') return
+    const project = Number(params.get('project'))
+    addEvent({ type: 'Meeting', projectIds: project ? [project] : undefined })
+    setParams({}, { replace: true })
+  }, [params])
   const of = practiceOf(acts, allWorks)
   const entries = allEntries.filter(e => of.eventAll(e).some(keep))
   const works = allWorks.filter(w => keep(of.work(w)))
@@ -281,7 +341,7 @@ export function AllEvents() {
   return (
     <Shell>
       {editing !== null && (
-        <EventForm entry={editing === 'new' ? null : editing} works={works} allWorks={allWorks} onDone={() => setEditing(null)} />
+        <EventForm entry={editing === 'new' ? null : editing} draft={draft} works={works} allWorks={allWorks} onDone={() => setEditing(null)} />
       )}
 
       <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', gap: 10, alignItems: narrow ? 'stretch' : 'flex-start' }}>
@@ -326,31 +386,41 @@ export function AllEvents() {
             <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: 'var(--wa-ink)' }}>Events</span>
             <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 500 }}>{filtered.length}</span>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button onClick={() => setSortAsc(v => !v)}
+              <div role="radiogroup" aria-label="View" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)' }}>
+                {(['list', 'calendar'] as const).map(v => (
+                  <button key={v} role="radio" aria-checked={view === v} onClick={() => setView(v)}
+                    style={{ padding: '4px 10px', border: 'none', borderRadius: 6, background: view === v ? 'var(--wa-surface)' : 'none', fontSize: 10, fontWeight: view === v ? 600 : 400, color: view === v ? 'var(--wa-ink)' : 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {v === 'list' ? 'List' : 'Calendar'}
+                  </button>
+                ))}
+              </div>
+              {view === 'list' && <button onClick={() => setSortAsc(v => !v)}
                 style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '5px 10px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>
                 Date {sortAsc ? '↑' : '↓'}
-              </button>
-              <button onClick={() => setEditing('new')}
+              </button>}
+              <button onClick={() => addEvent()}
                 style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
                 + Add
               </button>
             </div>
           </div>
 
-          {!narrow && (
+          {view === 'calendar' && <EventCalendar events={filtered} narrow={narrow} dot={e => TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line-strong)'} onOpen={setEditing} onDay={date => addEvent({ date })} />}
+
+          {view === 'list' && !narrow && (
             <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', columnGap: 16, padding: '10px 20px', borderBottom: '1px solid var(--wa-line)' }}>
               {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
             </div>
           )}
 
-          {filtered.length === 0 ? (
+          {view === 'calendar' ? null : filtered.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {entries.length === 0 ? 'No events yet' : 'Nothing matches'}
             </p>
           ) : visible.map((e, i) => (
             <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
               style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid var(--wa-line)' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
-              <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{formatEventDate(e.date, e.endDate)}</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{[formatEventDate(e.date, e.endDate), e.time].filter(Boolean).join(' · ')}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
               {e.image && <img src={e.image} alt="" style={{ width: 30, height: 40, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>

@@ -124,8 +124,8 @@ function ComingUpBlock({ events, opps }: { events: EventEntry[]; opps: Opportuni
   const rows: Row[] = [
     ...events.filter(e => isUpcoming(e, month)).map(e => ({
       key: `e${e.id}`, date: e.date ?? '', title: e.title,
-      sub: [e.type, e.location].filter(Boolean).join(' · ') + (e.endDate ? `, until ${formatEventDate(e.endDate, undefined, { year: false })}` : ''),
-      go: () => navigate('/projects/events'),
+      sub: [e.time, e.type, e.location].filter(Boolean).join(' · ') + (e.endDate ? `, until ${formatEventDate(e.endDate, undefined, { year: false })}` : ''),
+      go: () => navigate(`/projects/events?e=${e.id}`),
     })),
     ...opps.filter(o => notSent(o) && o.deadline && o.deadline >= today).map(o => {
       const n = daysUntil(o.deadline!)

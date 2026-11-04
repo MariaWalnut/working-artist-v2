@@ -153,6 +153,9 @@ export interface EventEntry {
   workIds?: number[]
   goals?: string // one per line
   image?: string // data URL: a poster, flyer or photo
+  time?: string // HH:mm, for meetings
+  projectIds?: number[] // the projects a meeting is about
+  onTimeline?: boolean // shown on the career timeline; older events have no value and count as shown
 }
 
 export interface PressEntry {

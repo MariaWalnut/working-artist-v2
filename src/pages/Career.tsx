@@ -9,7 +9,7 @@ import { kindOf, parseLooseDate, workSubtitle } from '../lib/works'
 import { ClippingViewer } from '../components/ClippingViewer'
 import { CareerFrame } from '../components/CareerTabs'
 import type { PressEntry } from '../db/db'
-import { formatAnyDate, formatEventDate } from '../lib/eventDates'
+import { formatAnyDate, formatEventDate, onTimeline } from '../lib/eventDates'
 import { useNarrow } from '../lib/useNarrow'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
@@ -27,6 +27,7 @@ interface CareerEvent {
   open?: string // route for "Open"
   groups?: Array<{ title: string; links: Array<{ label: string; to: string }> }>
   clipping?: PressEntry
+  eventId?: number // set for events, which can be taken off the timeline
 }
 
 function projectDate(p: { projectType?: string; dateStart?: string; dateEnd?: string; publishedDate?: string; releaseDate?: string; awardYear?: string }): [number, number] | null {
@@ -233,6 +234,10 @@ function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
           {e.open && <button onClick={() => navigate(e.open!)} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, fontWeight: 600, color: '#111111', cursor: 'pointer' }}>Open</button>}
           <button onClick={onClose} style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 11, color: 'var(--wa-text)', cursor: 'pointer' }}>Close</button>
         </div>
+        {e.eventId != null && (
+          <button onClick={() => { void db.eventEntries.update(e.eventId!, { onTimeline: false }); onClose() }}
+            style={{ display: 'block', marginTop: 14, padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>Remove from timeline</button>
+        )}
       </div>
     </div>
   )
@@ -285,7 +290,7 @@ export function Career() {
   }
   if (show.event) {
     for (const ev of events) {
-      if (!ev.date) continue
+      if (!ev.date || !onTimeline(ev)) continue
       const y = parseInt(ev.date.slice(0, 4), 10)
       if (!y) continue
       const shown = (ev.workIds ?? []).flatMap(id => {
@@ -295,7 +300,7 @@ export function Career() {
       all.push({
         key: `e${ev.id}`, year: y, month: parseInt(ev.date.slice(5, 7), 10) || 0, kind: 'event', label: ev.title,
         sub: [ev.type, ev.location].filter(Boolean).join(' · ') || 'Event', dateLabel: formatEventDate(ev.date, ev.endDate),
-        open: '/projects/events', groups: [{ title: 'Works shown', links: shown }],
+        open: `/projects/events?e=${ev.id}`, eventId: ev.id, groups: [{ title: 'Works shown', links: shown }],
       })
     }
   }

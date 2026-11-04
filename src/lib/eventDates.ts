@@ -9,6 +9,11 @@ export const currentMonth = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+export const isMeeting = (e: Pick<EventEntry, 'type'>) => e.type === 'Meeting'
+
+// Whether an event belongs on the career timeline. Meetings are private and never do.
+export const onTimeline = (e: Pick<EventEntry, 'type' | 'onTimeline'>) => !isMeeting(e) && e.onTimeline !== false
+
 export function isUpcoming(e: EventEntry, month = currentMonth()) {
   const last = e.endDate ?? e.date
   return !!last && last.slice(0, 7) >= month

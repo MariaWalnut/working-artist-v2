@@ -5,6 +5,7 @@ import { db, type Project, type Todo } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
+import { ProjectMeetings } from '../components/ProjectMeetings'
 import { ProjectSubmissions } from '../components/ProjectSubmissions'
 import { useNarrow } from '../lib/useNarrow'
 import { PROJECT_STATUSES, PROJECT_TYPES, workFromProject } from '../lib/projects'
@@ -466,6 +467,7 @@ export function ProjectDetail() {
               </div>
               <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28, ...(narrow ? { borderTop: '1px solid var(--wa-line)', paddingTop: 28 } : { borderLeft: '1px solid var(--wa-line)', paddingLeft: 32 }) }}>
                 {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
+                {project.id != null && <ProjectMeetings projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
                 {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
