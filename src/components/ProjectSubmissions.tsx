@@ -7,7 +7,7 @@ import { PickPopover } from './PickPopover'
 
 // The submissions a project went out to. A submission can belong to several projects, and is the same
 // entry as on the Submissions page, so a status changed here changes there.
-export function ProjectSubmissions({ projectId, deptId, labelStyle }: { projectId: number; deptId?: number; labelStyle?: React.CSSProperties }) {
+export function ProjectSubmissions({ projectId, deptId, labelStyle, addStyle }: { projectId: number; deptId?: number; labelStyle?: React.CSSProperties; addStyle?: React.CSSProperties }) {
   const navigate = useNavigate()
   const all = useLiveQuery(() => deptId == null ? [] : db.opportunities.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const [adding, setAdding] = useState(false)
@@ -27,11 +27,10 @@ export function ProjectSubmissions({ projectId, deptId, labelStyle }: { projectI
     <div>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <p style={labelStyle}>Submissions</p>
-        <button onClick={() => setAdding(v => !v)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add</button>
+        <button onClick={() => setAdding(v => !v)} style={addStyle}>+ Add</button>
         {adding && <PickPopover items={others.map(o => ({ id: o.id!, label: o.title, sub: o.organisation }))} placeholder="Search submissions" newLabel={t => `+ New submission: ${t}`}
           onPick={id => { const o = others.find(x => x.id === id); if (o) void link(o); setAdding(false) }} onCreate={t => void create(t)} onClose={() => setAdding(false)} />}
       </div>
-      {linked.length === 0 && <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: '4px 0 0' }}>Not sent anywhere yet.</p>}
       {linked.map(o => {
         const out = o.status === 'Rejected' || o.status === 'Closed'
         const good = o.status === 'Won' || o.status === 'Shortlisted'

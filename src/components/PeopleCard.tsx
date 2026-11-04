@@ -9,7 +9,7 @@ type Kind = 'work' | 'event' | 'project'
 const FIELD = { work: 'workIds', event: 'eventIds', project: 'projectIds' } as const
 
 // The people linked to a work, event or project, with their lists on a project. Links are kept on the contact.
-export function PeopleCard({ kind, id, deptId, style, labelStyle, startAdding = false }: { kind: Kind; id: number; deptId?: number; style?: React.CSSProperties; labelStyle?: React.CSSProperties; startAdding?: boolean }) {
+export function PeopleCard({ kind, id, deptId, style, labelStyle, addStyle, startAdding = false }: { kind: Kind; id: number; deptId?: number; style?: React.CSSProperties; labelStyle?: React.CSSProperties; addStyle?: React.CSSProperties; startAdding?: boolean }) {
   const navigate = useNavigate()
   const field = FIELD[kind]
   const contacts = useLiveQuery(() => deptId == null ? [] : db.contacts.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
@@ -40,11 +40,11 @@ export function PeopleCard({ kind, id, deptId, style, labelStyle, startAdding = 
     <div style={style}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <p style={labelStyle ?? label}>People</p>
-        <button onClick={() => setAdding(v => !v)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add</button>
+        <button onClick={() => setAdding(v => !v)} style={addStyle ?? { background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add</button>
         {adding && <PickPopover items={others.map(c => ({ id: c.id!, label: c.name, sub: [c.role, c.organisation].filter(Boolean).join(', ') }))} placeholder="Search contacts" newLabel={t => `+ New contact: ${t}`}
           onPick={pick} onCreate={deptId == null ? undefined : t => void create(t)} onClose={() => setAdding(false)} />}
       </div>
-      {linked.length === 0 && <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: '4px 0 0' }}>No one linked yet.</p>}
+      {linked.length === 0 && !addStyle && <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: '4px 0 0' }}>No one linked yet.</p>}
       {linked.map(c => (
         <div key={c.id} style={row}>
           <button onClick={() => navigate(`/contacts?c=${c.id}`)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
