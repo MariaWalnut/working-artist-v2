@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import type { Work } from '../db/db'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db, type Activity, type Work } from '../db/db'
+import { PRACTICE_CATEGORIES, usePractice } from '../lib/practice'
+import { useActiveDept } from '../lib/useDept'
 import { KIND_FIELDS, NUMERIC_FIELDS, WORK_KINDS, usesPublishedDate, type WorkField, type WorkKind } from '../lib/works'
 import { normalizeDate } from '../lib/eventDates'
 import { DateFields } from './DateFields'
@@ -69,6 +72,35 @@ async function lookupIsbn(isbn: string): Promise<IsbnResult | null> {
 }
 
 const label: React.CSSProperties = { fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
+
+// A work's category: one of the practice's suggestions, one already in use, or anything typed.
+export function CategoryField({ value, onChange, practice, style }: { value: string; onChange: (c: string) => void; practice?: Activity; style: React.CSSProperties }) {
+  const dept = useActiveDept()
+  const { acts } = usePractice()
+  const used = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const offered = [...new Set([
+    ...(practice ? [practice] : acts).flatMap(a => PRACTICE_CATEGORIES[a]),
+    ...used.map(w => w.category?.trim() ?? '').filter(Boolean),
+  ])]
+  return (
+    <div>
+      <label>
+        <span style={label}>Category</span>
+        <input value={value} onChange={e => onChange(e.target.value)} style={style} />
+      </label>
+      {offered.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+          {offered.map(c => (
+            <button key={c} type="button" onClick={() => onChange(c === value ? '' : c)} aria-pressed={c === value}
+              style={{ minHeight: 26, padding: '0 10px', borderRadius: 999, border: '1px solid var(--wa-line)', background: c === value ? 'var(--accent)' : 'none', color: c === value ? '#111111' : 'var(--wa-text-2)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function KindSelect({ value, onChange, style }: { value: WorkKind; onChange: (k: WorkKind) => void; style: React.CSSProperties }) {
   return (

@@ -8,6 +8,9 @@ export type WorkKind = typeof WORK_KINDS[number]
 export const kindOf = (w: Pick<Work, 'kind'>): WorkKind =>
   (WORK_KINDS as readonly string[]).includes(w.kind ?? '') ? (w.kind as WorkKind) : 'Artwork'
 
+// Where a work sits on the Works page: its category, or else its kind.
+export const shelfOf = (w: Pick<Work, 'kind' | 'category'>): string => w.category?.trim() || kindOf(w)
+
 export type WorkField =
   | 'year' | 'month' | 'medium' | 'dimensions' | 'location' | 'collection'
   | 'subtitle' | 'publisher' | 'publishedDate' | 'isbn' | 'language' | 'credits' | 'pages' | 'technique'

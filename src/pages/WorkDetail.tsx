@@ -4,11 +4,11 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type RightItem } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
-import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
+import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, type FieldValues } from '../components/WorkFields'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
-import { KIND_FIELDS, fieldDisplay, kindOf, type WorkKind } from '../lib/works'
+import { KIND_FIELDS, fieldDisplay, kindOf, shelfOf, type WorkKind } from '../lib/works'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
@@ -60,6 +60,7 @@ export function WorkDetail() {
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
   const [kind, setKind] = useState<WorkKind>('Artwork')
+  const [category, setCategory] = useState('')
   const [practice, setPractice] = useState<Activity | undefined>()
   const { acts } = usePractice()
   const [fields, setFields] = useState<FieldValues>(() => fieldsFromWork(null))
@@ -114,6 +115,7 @@ export function WorkDetail() {
     setTitle(w.title)
     setNotes(w.notes ?? '')
     setKind(wKind)
+    setCategory(w.category ?? '')
     setPractice(w.practice)
     setFields(fieldsFromWork(w))
     setPendingImage(undefined)
@@ -126,6 +128,7 @@ export function WorkDetail() {
       title: title.trim() || w.title,
       notes,
       kind,
+      category: category.trim() || undefined,
       practice,
       ...(pendingImage && !w.image ? { image: pendingImage } : {}),
     })
@@ -229,7 +232,7 @@ export function WorkDetail() {
         )}
         {!editing && (
           <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--wa-text-2)' }}>
-            {[w.subtitle, wKind, w.year].filter(Boolean).join(' · ')}
+            {[w.subtitle, shelfOf(w), w.year].filter(Boolean).join(' · ')}
           </p>
         )}
       </div>
@@ -303,6 +306,7 @@ export function WorkDetail() {
                   {sectionLabel('Details')}
                   <KindSelect value={kind} onChange={setKind} style={inp} />
                   <PracticeSelect labelled value={practice ?? practiceOf(acts).work({ kind })} onChange={setPractice} style={inp} />
+                  <CategoryField value={category} onChange={setCategory} practice={practice ?? practiceOf(acts).work({ kind })} style={inp} />
                   <WorkFields kind={kind} values={fields} onChange={setFields} inp={inp}
                     onIsbnFound={r => { if (r.image) setPendingImage(r.image) }} />
                   <label>

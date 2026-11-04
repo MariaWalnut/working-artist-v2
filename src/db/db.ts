@@ -69,6 +69,7 @@ export interface Work {
   practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   kind?: string // Artwork (default) / Illustration / Book / Release / Film / Other
+  category?: string // the artist's own shelf: Paintings, Works on paper, Singles…
   medium?: string
   dimensions?: string
   year?: number

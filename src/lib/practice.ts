@@ -31,6 +31,19 @@ export const PRACTICE_KIND: Partial<Record<Activity, WorkKind>> = {
   writer: 'Book',
 }
 
+// Categories offered for a work in each practice. People can type their own.
+export const PRACTICE_CATEGORIES: Record<Activity, string[]> = {
+  visual_artist: ['Paintings', 'Works on paper', 'Studies', 'Prints', 'Sculpture', 'Installations', 'Video'],
+  musician: ['Albums', 'EPs', 'Singles', 'Live', 'Soundtracks'],
+  writer: ['Novels', 'Short stories', 'Essays', 'Poetry', 'Translations'],
+  picture_book: ['Picture books', 'Covers', 'Editorial', 'Posters', 'Character sheets'],
+  photographer: ['Series', 'Portraits', 'Commissions', 'Photobooks'],
+  filmmaker: ['Features', 'Shorts', 'Documentaries', 'Series', 'Music videos'],
+  designer: ['Identity', 'Editorial', 'Posters', 'Web'],
+  performer: ['Solo', 'Ensemble', 'Commissions'],
+  other: [],
+}
+
 // Likely practices for each kind or type, best first. The first one the artist has wins.
 const BY_KIND: Record<string, Activity[]> = {
   Release: ['musician', 'performer'],

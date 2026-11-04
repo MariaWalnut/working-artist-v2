@@ -7,8 +7,8 @@ import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
 import { PracticeSelect } from '../components/Practice'
 import { Shell } from '../components/layout/Shell'
-import { KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
-import { WORK_KINDS, kindOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
+import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
+import { WORK_KINDS, shelfOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
 
 const NARROW = '(max-width: 760px)'
 
@@ -23,18 +23,19 @@ function useNarrow() {
   return narrow
 }
 
-function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (id?: number) => void }) {
+function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKind: WorkKind; defaultCategory?: string; onDone: (id?: number) => void }) {
   const dept = useActiveDept()
   const { acts, start } = usePractice({ filter: true })
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<WorkKind>(defaultKind)
+  const [category, setCategory] = useState(defaultCategory)
   const [practice, setPractice] = useState<Activity | undefined>(start)
   const [fields, setFields] = useState(() => fieldsFromWork(null))
   const [image, setImage] = useState<string | undefined>()
 
   async function save() {
     if (!title.trim()) return
-    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, practice, image, ...fieldsToPatch(fields, kind) }) as number
+    const id = await db.works.add({ departmentId: dept?.id, title: title.trim(), kind, category: category.trim() || undefined, practice, image, ...fieldsToPatch(fields, kind) }) as number
     onDone(id)
   }
 
@@ -52,6 +53,9 @@ function NewWorkForm({ defaultKind, onDone }: { defaultKind: WorkKind; onDone: (
         </div>
         <div style={{ marginBottom: 12 }}>
           <PracticeSelect labelled value={practice ?? practiceOf(acts).work({ kind })} onChange={setPractice} style={inp} />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <CategoryField value={category} onChange={setCategory} practice={practice ?? practiceOf(acts).work({ kind })} style={inp} />
         </div>
         <WorkFields kind={kind} values={fields} onChange={setFields} inp={inp} columns={2}
           onIsbnFound={r => { if (r.title && !title.trim()) setTitle(r.title); if (r.image) setImage(r.image) }} />
@@ -72,13 +76,17 @@ export function Studio() {
   const defaultKind: WorkKind = PRACTICE_KIND[start ?? acts[0]] ?? 'Artwork'
 
   const [adding, setAdding] = useState(false)
-  const [kindFilter, setKindFilter] = useState<WorkKind | null>(null)
+  const [picked, setPicked] = useState<string | null>(null)
 
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const works = allWorks.filter(w => keep(practiceOf(acts).work(w)))
-  const usedKinds = WORK_KINDS.filter(k => works.some(w => kindOf(w) === k))
+  // Categories, and the kind for works without one, fullest first.
+  const count = (shelf: string) => works.filter(w => shelfOf(w) === shelf).length
+  const shelves = [...new Set(works.map(shelfOf))].sort((a, b) => count(b) - count(a) || a.localeCompare(b))
+  const shelf = picked && shelves.includes(picked) ? picked : null
+  const shelfKind = WORK_KINDS.find(k => k === shelf)
   const shown = works
-    .filter(w => !kindFilter || kindOf(w) === kindFilter)
+    .filter(w => !shelf || shelfOf(w) === shelf)
     .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
   const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{t}</span>
@@ -93,16 +101,16 @@ export function Studio() {
 
   return (
     <Shell>
-      {adding && <NewWorkForm defaultKind={kindFilter ?? defaultKind} onDone={id => { setAdding(false); if (id != null) navigate(`/studio/${id}`) }} />}
+      {adding && <NewWorkForm defaultKind={shelfKind ?? defaultKind} defaultCategory={shelf && !shelfKind ? shelf : ''} onDone={id => { setAdding(false); if (id != null) navigate(`/studio/${id}`) }} />}
 
       <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '220px minmax(0, 1fr)', gap: 10 }}>
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {usedKinds.length > 1 && (
+          {shelves.length > 1 && (
             <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? 10 : '18px 16px', display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 2, overflowX: narrow ? 'auto' : undefined }}>
-              {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px', margin: 0 }}>Kind</p>}
-              {filterBtn('All', works.length, kindFilter === null, () => setKindFilter(null))}
-              {usedKinds.map(k => filterBtn(k, works.filter(w => kindOf(w) === k).length, kindFilter === k, () => setKindFilter(kindFilter === k ? null : k)))}
+              {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px', margin: 0 }}>Category</p>}
+              {filterBtn('All', works.length, shelf === null, () => setPicked(null))}
+              {shelves.map(s => filterBtn(s, count(s), shelf === s, () => setPicked(shelf === s ? null : s)))}
             </div>
           )}
           {!narrow && (
@@ -115,7 +123,7 @@ export function Studio() {
         {/* List */}
         <div data-tour="works-list" style={{ background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid var(--wa-line)' }}>
-            <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{kindFilter ? `${kindFilter}s` : 'Works'}</p>
+            <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</p>
             <span style={{ marginLeft: 8, background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: 'var(--wa-text-2)' }}>{shown.length}</span>
             <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? 'var(--accent)' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : 'var(--wa-muted)', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
           </div>
@@ -125,7 +133,7 @@ export function Studio() {
             <>
               {!narrow && (
                 <div style={{ display: 'grid', gridTemplateColumns: columns, padding: '10px 24px', borderBottom: '1px solid var(--wa-line)' }}>
-                  {['', 'Title', 'Kind', 'Location', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
+                  {['', 'Title', 'Category', 'Location', 'Year'].map(h => <span key={h}>{colH(h)}</span>)}
                 </div>
               )}
               {shown.map(w => {
@@ -139,10 +147,10 @@ export function Studio() {
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
                       <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {narrow ? [kindOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
+                        {narrow ? [shelfOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
                       </p>
                     </div>
-                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{kindOf(w)}</span>}
+                    {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{shelfOf(w)}</span>}
                     {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
                     <span style={{ fontSize: 10, color: 'var(--wa-muted)', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
                   </button>
