@@ -10,11 +10,11 @@ import { Shell } from '../components/layout/Shell'
 import { CareerFrame } from '../components/CareerTabs'
 import { PickPopover } from '../components/PickPopover'
 import { formatAnyDate, isMeeting } from '../lib/eventDates'
-import { findPlace, indexCities, loadCities, placeKey, type City } from '../lib/places'
+import { findPlace, indexCities, loadCities, type City } from '../lib/places'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-interface CityItem { key: string; title: string; kind: 'Event' | 'Work'; date?: string; year?: number; to: string; picture?: string }
+interface CityItem { key: string; title: string; kind: 'Event' | 'Work'; date?: string; year?: number; to: string }
 type View = { center: [number, number]; zoom: number }
 
 const MAP_W = 800
@@ -40,25 +40,17 @@ function fitView(coords: Array<[number, number]>): View {
 
 const yearOf = (d?: string | number) => Number(String(d ?? '').slice(0, 4)) || undefined
 
-function Pin({ city, count, picture, selected, scale, onClick }: { city: string; count: number; picture?: string; selected: boolean; scale: number; onClick: () => void }) {
-  const r = Math.min(24, 15 + count * 1.5)
-  const clip = `pin-${placeKey(city).replace(/[^a-z0-9]/g, '-')}`
-  const c = r * 0.72
+function Pin({ city, items, selected, scale, onClick }: { city: string; items: CityItem[]; selected: boolean; scale: number; onClick: () => void }) {
+  const hub = items.length >= 3
+  const onlyWorks = items.every(i => i.kind === 'Work')
+  const bright = hub || onlyWorks
   return (
-    <g transform={`scale(${scale})`} onClick={onClick} role="button" aria-label={`${city}, ${count}`} style={{ cursor: 'pointer' }}>
-      <circle r={r + 2.5} style={{ fill: selected ? 'var(--accent)' : 'var(--wa-surface)', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.28))' }} />
-      {picture ? <>
-        <clipPath id={clip}><circle r={r} /></clipPath>
-        <image href={picture} x={-r} y={-r} width={r * 2} height={r * 2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip})`} />
-      </> : <>
-        <circle r={r} style={{ fill: 'var(--wa-ink)' }} />
-        <text y={r * 0.34} textAnchor="middle" style={{ fontFamily: 'Recoleta, serif', fontSize: r, fill: 'var(--wa-surface)', pointerEvents: 'none' }}>{city.charAt(0)}</text>
-      </>}
-      {count > 1 && <>
-        <circle cx={c} cy={-c} r={8} style={{ fill: 'var(--accent)', stroke: 'var(--wa-surface)', strokeWidth: 1.5 }} />
-        <text x={c} y={-c + 3.2} textAnchor="middle" style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, fontWeight: 700, fill: '#111111', pointerEvents: 'none' }}>{count}</text>
-      </>}
-      <text y={r + 15} textAnchor="middle" style={{ fontFamily: 'Recoleta, serif', fontSize: 12, fill: 'var(--wa-ink)', stroke: 'var(--wa-surface)', strokeWidth: 3, paintOrder: 'stroke', pointerEvents: 'none' }}>{city}</text>
+    <g transform={`scale(${scale})`} onClick={onClick} role="button" aria-label={`${city}, ${items.length}`} style={{ cursor: 'pointer' }}>
+      <circle r={12} style={{ fill: 'transparent' }} />
+      {selected && <circle r={hub ? 13 : 9} style={{ fill: 'none', stroke: 'var(--wa-ink)', strokeWidth: 1 }} />}
+      <circle r={hub ? 9 : 5} style={{ fill: bright ? 'var(--accent)' : 'var(--wa-ink)' }} stroke={bright ? '#111111' : 'none'} strokeWidth={bright ? 1.5 : 0} />
+      {hub && <text y={4} textAnchor="middle" style={{ fontFamily: 'sans-serif', fontSize: 7, fontWeight: 700, fill: '#111111', pointerEvents: 'none' }}>{items.length}</text>}
+      <text y={hub ? 22 : 16} textAnchor="middle" style={{ fontFamily: 'sans-serif', fontSize: 7, fontWeight: 600, fill: 'var(--wa-muted)', letterSpacing: '0.04em', pointerEvents: 'none' }}>{city.toUpperCase()}</text>
     </g>
   )
 }
@@ -81,13 +73,12 @@ export function WorldMapPanel() {
   const [placing, setPlacing] = useState<string | null>(null)
 
   const everything: Array<CityItem & { place: string }> = [
-    ...events.filter(e => e.location?.trim()).map(e => {
-      const work = e.workIds?.map(id => allWorks.find(w => w.id === id)).find(w => w?.image)
-      return { key: `e${e.id}`, place: e.location!.trim(), title: e.title, kind: 'Event' as const, date: e.date, year: yearOf(e.date), to: `/projects/events?e=${e.id}`, picture: e.image ?? work?.image }
-    }),
+    ...events.filter(e => e.location?.trim()).map(e => (
+      { key: `e${e.id}`, place: e.location!.trim(), title: e.title, kind: 'Event' as const, date: e.date, year: yearOf(e.date), to: `/projects/events?e=${e.id}` }
+    )),
     ...works.filter(w => w.location?.trim()).map(w => {
       const date = w.publishedDate ?? (w.year != null ? String(w.year) : undefined)
-      return { key: `w${w.id}`, place: w.location!.trim(), title: w.title, kind: 'Work' as const, date, year: yearOf(date), to: `/studio/${w.id}`, picture: w.image }
+      return { key: `w${w.id}`, place: w.location!.trim(), title: w.title, kind: 'Work' as const, date, year: yearOf(date), to: `/studio/${w.id}` }
     }),
   ]
   const years = [...new Set(everything.map(i => i.year).filter((y): y is number => y != null))].sort((a, b) => b - a)
@@ -183,7 +174,7 @@ export function WorldMapPanel() {
           {/* The chosen city is drawn last so it sits on top */}
           {[...located].sort((a, b) => Number(a.city === selected) - Number(b.city === selected)).map(({ city, items, coords }) => (
             <Marker key={city} coordinates={coords}>
-              <Pin city={city} count={items.length} picture={items.find(i => i.picture)?.picture} selected={city === selected} scale={markerScale} onClick={() => choose(city, coords)} />
+              <Pin city={city} items={items} selected={city === selected} scale={markerScale} onClick={() => choose(city, coords)} />
             </Marker>
           ))}
           </ZoomableGroup>
@@ -216,7 +207,6 @@ export function WorldMapPanel() {
           <h2 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: 'var(--wa-ink)', margin: '0 0 12px' }}>{open.city}</h2>
           {[...open.items].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).map(i => (
             <button key={i.key} onClick={() => navigate(i.to)} style={{ ...plainBtn, display: 'flex', gap: 10, alignItems: 'center', padding: '9px 0', borderTop: '1px solid var(--wa-line)' }}>
-              {i.picture && <img src={i.picture} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />}
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wa-ink)' }}>{i.title}</span>
                 <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-muted)', marginTop: 2 }}>{[i.kind, formatAnyDate(i.date)].filter(Boolean).join(' · ')}</span>
