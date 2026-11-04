@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem, type EventEntry, type Opportunity, type Project, type Todo } from '../../db/db'
@@ -217,7 +217,8 @@ function ProjectBlock({ p, todos, compact, onOpen, practice }: { p: Project; tod
   )
 }
 
-// A Tasks box shows every task, one project's tasks, or a named list of its own, over a span of time.
+// A Tasks box shows tasks from everywhere by date, the loose ones outside any project, or a named list of its own.
+// Boxes for one project still work, but project boxes list their own tasks now, so new ones aren't offered.
 type TaskRange = 'today' | 'week' | 'overdue' | 'all'
 const TASK_RANGES: Array<[TaskRange, string, string]> = [
   ['today', 'Today', 'Nothing due today'],
@@ -225,7 +226,7 @@ const TASK_RANGES: Array<[TaskRange, string, string]> = [
   ['overdue', 'Overdue', 'Nothing overdue'],
   ['all', 'All open', 'No open tasks'],
 ]
-interface TaskBox { range: TaskRange; projectId?: number; name?: string; list?: string }
+interface TaskBox { range: TaskRange; projectId?: number; name?: string; list?: string; loose?: boolean }
 
 function parseTaskBox(content: string): TaskBox {
   if (content === 'week' || content === 'all') return { range: content }
@@ -259,7 +260,7 @@ function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: 
     : box.range === 'overdue' ? !!t.dueDate && t.dueDate < today
     : box.range === 'today' ? !!t.dueDate && t.dueDate <= today
     : !t.dueDate || t.dueDate <= weekEnd
-  const inBox = (t: Todo) => box.projectId != null ? t.projectId === box.projectId : box.list ? t.taskList === box.list : true
+  const inBox = (t: Todo) => box.projectId != null ? t.projectId === box.projectId : box.list ? t.taskList === box.list : box.loose ? t.projectId == null && !t.taskList : true
   // Ticked tasks stay where they are, with a line through them, until cleared.
   const open = todos.filter(t => (!t.done || t.ticked) && inBox(t) && inRange(t)).sort(byDue)
   const shown = open.slice(0, 8)
@@ -284,7 +285,7 @@ function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: 
         {box.list
           ? <input value={box.name ?? ''} onChange={e => void save({ name: e.target.value })} aria-label="List name" placeholder="Name"
               style={{ ...bareInput, flex: 1, minWidth: 0, fontFamily: 'Recoleta, serif', fontSize: 15 }} />
-          : <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)', minWidth: 0 }}>{boxProject?.title ?? 'Tasks'}</span>}
+          : <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)', minWidth: 0 }}>{boxProject?.title ?? (box.loose ? 'Loose tasks' : 'Tasks')}</span>}
         <select value={box.range} onChange={e => void save({ range: e.target.value as TaskRange })} aria-label="Show"
           style={{ appearance: 'none', flexShrink: 0, fontSize: 10, color: 'var(--wa-text)', background: 'rgba(0,0,0,.08)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
           {TASK_RANGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -466,13 +467,16 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
+  // Measured once the canvas exists, which can be after the first render, and straight away so boxes never wait on a resize.
+  const [canvasEl, setCanvasEl] = useState<HTMLDivElement | null>(null)
+  const attachCanvas = useCallback((el: HTMLDivElement | null) => { canvasRef.current = el; setCanvasEl(el) }, [])
   useEffect(() => {
-    const el = canvasRef.current
-    if (!el || narrow) return
-    const ro = new ResizeObserver(() => setDeskW(el.clientWidth))
-    ro.observe(el)
+    if (!canvasEl || narrow) return
+    setDeskW(canvasEl.clientWidth)
+    const ro = new ResizeObserver(() => setDeskW(canvasEl.clientWidth))
+    ro.observe(canvasEl)
     return () => ro.disconnect()
-  }, [narrow])
+  }, [narrow, canvasEl])
 
   const colW = Math.max(120, (deskW - 2 * PAD - (COLS - 1) * GAP) / COLS)
   const colLeft = (c: number) => PAD + c * (colW + GAP)
@@ -620,7 +624,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       case 'submission': return opps.find(o => String(o.id) === i.content)?.title ?? 'Submission'
       case 'tasks': {
         const box = parseTaskBox(i.content)
-        return box.name || projects?.find(p => p.id === box.projectId)?.title || 'Tasks'
+        return box.name || projects?.find(p => p.id === box.projectId)?.title || (box.loose ? 'Loose tasks' : 'Tasks')
       }
       case 'comingup': return 'Coming up'
       case 'list': return parseList(i.content).title
@@ -943,12 +947,12 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     <>
       {topRow}
       {narrow ? (
-        <div ref={canvasRef} data-tour="desk" style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 120 }}>
+        <div ref={attachCanvas} data-tour="desk" style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 120 }}>
           {ordered.map(renderBlock)}
           {earlierButton}
         </div>
       ) : (
-        <div ref={canvasRef} data-tour="desk"
+        <div ref={attachCanvas} data-tour="desk"
           style={{ position: 'relative', height: canvasH, background: 'var(--wa-desk)', borderRadius: 20 }}>
           {live && Array.from({ length: COLS }, (_, c) => (
             <div key={c} aria-hidden="true"
@@ -1016,7 +1020,10 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
       {picker === 'tasks' && (
         <Modal title="Tasks" onClose={() => setPicker(null)}>
-          <PickRow title="All tasks" sub="Everything open" onClick={() => { setPicker(null); void addBlock('tasks', 'week') }} />
+          {([['Today', 'All projects, due today or earlier', { range: 'today' }], ['This week', 'All projects, due this week or undated', { range: 'week' }],
+            ['Overdue', 'All projects, past their date', { range: 'overdue' }], ['Loose tasks', 'Outside any project', { range: 'all', loose: true }]] as Array<[string, string, TaskBox]>).map(([title, sub, box]) => (
+            <PickRow key={title} title={title} sub={sub} onClick={() => { setPicker(null); void addBlock('tasks', JSON.stringify(box)) }} />
+          ))}
           <form onSubmit={e => {
             e.preventDefault()
             const name = listName.trim()
@@ -1028,10 +1035,6 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
               style={{ ...bareInput, flex: 1, minWidth: 0, fontFamily: 'Recoleta, serif', fontSize: 15 }} />
             <button type="submit" style={{ flexShrink: 0, background: 'var(--accent)', color: '#111111', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
           </form>
-          {(projects ?? []).some(isActive) && <p style={{ ...smallLabel, margin: '18px 0 2px' }}>One project</p>}
-          {(projects ?? []).filter(isActive).map(p => (
-            <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => { setPicker(null); void addBlock('tasks', JSON.stringify({ range: 'all', projectId: p.id })) }} />
-          ))}
         </Modal>
       )}
 
