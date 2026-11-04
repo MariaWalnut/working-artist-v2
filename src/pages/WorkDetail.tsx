@@ -352,7 +352,7 @@ export function WorkDetail() {
             )}
 
             {showPeople && w.id != null && <PeopleCard kind="work" id={w.id} deptId={w.departmentId} startAdding={addingPeople && peopleCount === 0} style={{ ...card }} />}
-            {(wKind === 'Book' || w.contract) && <ContractCard key={w.id} work={w} />}
+            {(wKind === 'Book' || w.contract || w.contractFile) && <ContractCard key={w.id} work={w} />}
 
             {showPress && (
               <div style={{ ...card }}>

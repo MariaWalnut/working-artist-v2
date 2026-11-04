@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { db, type BookContract, type Work } from '../db/db'
 import { formatAnyDate } from '../lib/eventDates'
+import { readRaw } from '../lib/images'
+import { ClippingViewer } from './ClippingViewer'
 import { DateFields } from './DateFields'
 
 const CURRENCIES = ['€', '$', '£', 'R$']
 const BINDINGS = ['Hardcover', 'Paperback', 'Board book', 'Other']
+const MAX_PDF_BYTES = 20 * 1024 * 1024
 const PAID_LABEL: Record<NonNullable<BookContract['advancePaid']>, string> = { no: 'Not paid yet', part: 'Partly paid', full: 'Paid in full' }
 
 // Accepts German and English styles: "18", "18,50", "18.50", "3.000", "3,000", "1.234,50", "1,234.50".
@@ -46,6 +49,7 @@ function fromDraft(d: Draft): BookContract {
   return out as BookContract
 }
 
+const quiet: React.CSSProperties = { flexShrink: 0, padding: 0, border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', fontFamily: 'inherit' }
 const label: React.CSSProperties = { fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
 export function ContractCard({ work }: { work: Work }) {
@@ -54,6 +58,24 @@ export function ContractCard({ work }: { work: Work }) {
   const [draft, setDraft] = useState<Draft>(() => toDraft(c))
   const cur = c.currency ?? '€'
   const set = (k: keyof BookContract, v: string) => setDraft(d => ({ ...d, [k]: v }))
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [viewing, setViewing] = useState(false)
+  const [removing, setRemoving] = useState(false)
+
+  async function addPdf(file?: File) {
+    if (!file) return
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return window.alert('A contract has to be a PDF.')
+    if (file.size > MAX_PDF_BYTES) return window.alert('That file is over 20 MB. Try a smaller scan or export.')
+    const raw = await readRaw(file)
+    // Some systems send a PDF without its type, which the viewer needs.
+    const contractFile = raw.replace(/^data:[^;,]*/, 'data:application/pdf')
+    await db.works.update(work.id!, { contractFile, contractFileName: file.name } as Partial<Work>)
+  }
+
+  async function removePdf() {
+    await db.works.update(work.id!, { contractFile: undefined, contractFileName: undefined } as Partial<Work>)
+    setRemoving(false)
+  }
 
   async function save() {
     await db.works.update(work.id!, { contract: fromDraft(draft) } as Partial<Work>)
@@ -152,6 +174,27 @@ export function ContractCard({ work }: { work: Work }) {
           {c.notes && <p style={{ fontSize: 12, color: 'var(--wa-text-2)', lineHeight: 1.6, margin: '10px 0 0', whiteSpace: 'pre-wrap' }}>{c.notes}</p>}
         </>
       )}
+
+      {!editing && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+          {work.contractFile ? <>
+            <button onClick={() => setViewing(true)} style={{ minWidth: 0, flex: 1, padding: 0, border: 'none', background: 'none', textAlign: 'left', fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', fontFamily: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ borderBottom: '2px solid var(--accent)' }}>{work.contractFileName ?? 'Contract.pdf'}</span>
+            </button>
+            {removing ? <>
+              <button onClick={() => void removePdf()} style={{ ...quiet, color: '#C53030' }}>Remove</button>
+              <button onClick={() => setRemoving(false)} style={quiet}>Keep</button>
+            </> : <>
+              <button onClick={() => fileRef.current?.click()} style={quiet}>Replace</button>
+              <button onClick={() => setRemoving(true)} style={quiet}>Remove</button>
+            </>}
+          </> : (
+            <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add PDF</button>
+          )}
+          <input ref={fileRef} type="file" accept="application/pdf,.pdf" hidden aria-label="Contract PDF" onChange={e => { void addPdf(e.target.files?.[0]); e.target.value = '' }} />
+        </div>
+      )}
+      {viewing && work.contractFile && <ClippingViewer entry={{ title: work.title, outlet: 'Contract', clipping: work.contractFile, clippingName: work.contractFileName }} onClose={() => setViewing(false)} />}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { formatAnyDate } from '../lib/eventDates'
 
 export const isPdf = (data?: string) => !!data && data.startsWith('data:application/pdf')
 
-export function ClippingViewer({ entry, onClose }: { entry: PressEntry; onClose: () => void }) {
+export function ClippingViewer({ entry, onClose }: { entry: Pick<PressEntry, 'title'> & Partial<PressEntry>; onClose: () => void }) {
   const data = entry.clipping ?? ''
   const pdf = isPdf(data)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)

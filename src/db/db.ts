@@ -97,6 +97,8 @@ export interface Work {
   runtime?: string // e.g. 14 min
   production?: string // production company
   contract?: BookContract
+  contractFile?: string // data URL of the contract itself, a PDF
+  contractFileName?: string
   // set when copied over from the old books / releases tables
   legacyBookId?: number
   legacyReleaseId?: number
