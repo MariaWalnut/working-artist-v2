@@ -14,7 +14,7 @@ import { findPlace, indexCities, loadCities, type City } from '../lib/places'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
-interface CityItem { key: string; title: string; kind: 'Event' | 'Work'; date?: string; year?: number; to: string }
+interface CityItem { key: string; title: string; kind: 'Event' | 'Work' | 'Rights sold'; date?: string; year?: number; to: string }
 type View = { center: [number, number]; zoom: number }
 
 const MAP_W = 800
@@ -42,7 +42,7 @@ const yearOf = (d?: string | number) => Number(String(d ?? '').slice(0, 4)) || u
 
 function Pin({ city, items, selected, scale, onClick }: { city: string; items: CityItem[]; selected: boolean; scale: number; onClick: () => void }) {
   const hub = items.length >= 3
-  const onlyWorks = items.every(i => i.kind === 'Work')
+  const onlyWorks = items.every(i => i.kind !== 'Event')
   const bright = hub || onlyWorks
   return (
     <g transform={`scale(${scale})`} onClick={onClick} role="button" aria-label={`${city}, ${items.length}`} style={{ cursor: 'pointer' }}>
@@ -81,6 +81,12 @@ export function WorldMapPanel() {
       return { key: `w${w.id}`, place: w.location!.trim(), title: w.title, kind: 'Work' as const, date, year: yearOf(date), to: `/studio/${w.id}` }
     }),
   ]
+  for (const w of works) {
+    for (const r of w.rights ?? []) {
+      if (r.status !== 'sold' || !r.location?.trim()) continue
+      everything.push({ key: `r${w.id}-${r.id}`, place: r.location.trim(), title: `${w.title}, ${r.language}`, kind: 'Rights sold', date: r.year != null ? String(r.year) : undefined, year: r.year, to: `/studio/${w.id}` })
+    }
+  }
   const years = [...new Set(everything.map(i => i.year).filter((y): y is number => y != null))].sort((a, b) => b - a)
   const shown = year == null ? everything : everything.filter(i => i.year === year)
 

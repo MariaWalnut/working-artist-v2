@@ -14,7 +14,7 @@ import { useNarrow } from '../lib/useNarrow'
 
 // ─── Event model ─────────────────────────────────────────────────────────────
 
-type EventKind = 'project' | 'event' | 'work' | 'press' | 'award'
+type EventKind = 'project' | 'event' | 'work' | 'rights' | 'press' | 'award'
 
 interface CareerEvent {
   key: string
@@ -82,6 +82,7 @@ const KIND_DOT: Record<EventKind, string> = {
   project: 'var(--wa-ink)',
   event: '#E0A030',
   work: '#7A7A7A',
+  rights: '#D0805A',
   press: '#9C86C4',
   award: '#5FA897',
 }
@@ -90,6 +91,7 @@ const KIND_LABELS: Record<EventKind, string> = {
   project: 'Projects',
   event: 'Events',
   work: 'Works',
+  rights: 'Rights',
   press: 'Press',
   award: 'Awards',
 }
@@ -261,7 +263,7 @@ export function Career() {
   const press = allPress.filter(p => keep(of.press(p)))
 
   const narrow = useNarrow()
-  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, press: true, award: true })
+  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, rights: true, press: true, award: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
   const [chartW, setChartW] = useState(0)
@@ -320,6 +322,15 @@ export function Career() {
         key: `w${w.id}`, year, month, kind: 'work', label: w.title, sub: workSubtitle(w).split(' · ')[0] || kindOf(w), open: `/studio/${w.id}`,
         groups: [{ title: 'Shown at', links: shownAt }, { title: 'Press', links: pressAbout }, { title: 'Awards', links: awardsFor }],
       })
+    }
+  }
+
+  if (show.rights) {
+    for (const w of works) {
+      for (const r of w.rights ?? []) {
+        if (r.status !== 'sold' || !r.year) continue
+        all.push({ key: `rt${w.id}-${r.id}`, year: r.year, month: 0, kind: 'rights', label: `${w.title}, ${r.language}`, sub: r.publisher ?? 'Rights sold', dateLabel: String(r.year), open: `/studio/${w.id}` })
+      }
     }
   }
 

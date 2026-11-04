@@ -191,6 +191,7 @@ export interface RightItem {
   id: string
   language: string
   publisher?: string
+  location?: string // the publisher's city, for the map
   year?: number
   status: 'live' | 'sold' | 'pending'
   advance?: number

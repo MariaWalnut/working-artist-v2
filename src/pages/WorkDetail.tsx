@@ -79,6 +79,8 @@ export function WorkDetail() {
   const [rightLang, setRightLang] = useState('')
   const [rightPub, setRightPub] = useState('')
   const [rightYear, setRightYear] = useState('')
+  const [rightCity, setRightCity] = useState('')
+  const [editingRight, setEditingRight] = useState<string | null>(null)
   const [rightStatus, setRightStatus] = useState<RightItem['status']>('live')
   const [rightAdvance, setRightAdvance] = useState('')
   const [rightRoyalty, setRightRoyalty] = useState('')
@@ -183,14 +185,32 @@ export function WorkDetail() {
     await db.pressEntries.update(id, { workId: undefined })
   }
 
-  async function addRight() {
+  function closeRight() {
+    setRightLang(''); setRightPub(''); setRightYear(''); setRightCity(''); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice('')
+    setEditingRight(null); setAddingRight(false)
+  }
+
+  function editRight(r: RightItem) {
+    setRightLang(r.language); setRightPub(r.publisher ?? ''); setRightYear(r.year != null ? String(r.year) : ''); setRightCity(r.location ?? ''); setRightStatus(r.status)
+    setRightAdvance(r.advance != null ? String(r.advance) : ''); setRightRoyalty(r.royaltyRate != null ? String(r.royaltyRate) : '')
+    setRightRun(r.printRun != null ? String(r.printRun) : ''); setRightPrice(r.price != null ? String(r.price) : '')
+    setEditingRight(r.id); setAddingRight(true)
+  }
+
+  async function saveRight() {
     if (!rightLang.trim()) return
     const item: RightItem = {
-      id: uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined, status: rightStatus,
+      id: editingRight ?? uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined,
+      location: rightCity.trim() || undefined, status: rightStatus,
       advance: parseAmount(rightAdvance), royaltyRate: parseAmount(rightRoyalty), printRun: parseAmount(rightRun), price: parseAmount(rightPrice),
     }
-    await db.works.update(wid, { rights: [...rights, item] })
-    setRightLang(''); setRightPub(''); setRightYear(''); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice(''); setAddingRight(false)
+    await db.works.update(wid, { rights: editingRight ? rights.map(r => r.id === editingRight ? item : r) : [...rights, item] })
+    closeRight()
+  }
+
+  async function deleteRight() {
+    await db.works.update(wid, { rights: rights.filter(r => r.id !== editingRight) })
+    closeRight()
   }
 
   async function deleteWork() {
@@ -401,7 +421,7 @@ export function WorkDetail() {
               <div style={{ ...card }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   {sectionLabel('Rights')}
-                  <button onClick={() => setAddingRight(v => !v)} style={addBtn}>+ Add</button>
+                  <button onClick={() => { if (addingRight) closeRight(); else setAddingRight(true) }} style={addBtn}>+ Add</button>
                 </div>
                 {addingRight && (
                   <div style={{ background: 'var(--wa-fill-2)', borderRadius: 10, padding: 12, marginBottom: 12 }}>
@@ -410,6 +430,7 @@ export function WorkDetail() {
                       <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder="Publisher" style={{ ...inp, flex: 2 }} />
                       <input type="number" value={rightYear} onChange={e => setRightYear(e.target.value)} placeholder="Year" style={{ ...inp, flex: 1 }} />
                     </div>
+                    <input value={rightCity} onChange={e => setRightCity(e.target.value)} placeholder="Publisher's city, for the map" aria-label="Publisher's city" style={{ ...inp, marginBottom: 6 }} />
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
                       <input value={rightAdvance} onChange={e => setRightAdvance(e.target.value)} placeholder="Advance" aria-label="Advance" inputMode="decimal" style={inp} />
                       <input value={rightRoyalty} onChange={e => setRightRoyalty(e.target.value)} placeholder="Royalty %" aria-label="Royalty %" inputMode="decimal" style={inp} />
@@ -420,16 +441,17 @@ export function WorkDetail() {
                       {RIGHT_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                     </select>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => void addRight()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
-                      <button onClick={() => setAddingRight(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
+                      <button onClick={() => void saveRight()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{editingRight ? 'Save' : 'Add'}</button>
+                      <button onClick={closeRight} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
+                      {editingRight && <button onClick={() => void deleteRight()} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer' }}>Delete</button>}
                     </div>
                   </div>
                 )}
                 {rights.map(r => (
-                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--wa-line)' }}>
+                  <button key={r.id} onClick={() => editRight(r)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 0', border: 'none', borderBottom: '1px solid var(--wa-line)', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div>
                       <div style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--wa-ink)' }}>{r.language}</div>
-                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.year].filter(Boolean).join(' · ')}</div>
+                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.location, r.year].filter(Boolean).join(' · ')}</div>
                       {(r.advance != null || r.royaltyRate != null || r.printRun != null || r.price != null) && (
                         <div style={{ fontSize: 10, color: 'var(--wa-text-2)', marginTop: 2 }}>
                           {[r.advance != null ? `Advance ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}
@@ -439,7 +461,7 @@ export function WorkDetail() {
                     <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, ...(RIGHT_BADGE[r.status] ?? {}) }}>
                       {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
