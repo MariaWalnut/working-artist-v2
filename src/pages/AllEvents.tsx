@@ -179,7 +179,7 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
         {!meeting && !maybe && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer' }}>
             <input type="checkbox" checked={timeline} onChange={e => setTimeline(e.target.checked)} style={{ width: 14, height: 14, margin: 0, accentColor: 'var(--wa-ink)' }} />
-            Show on my career timeline
+            Show on my career timeline and map
           </label>
         )}
 
