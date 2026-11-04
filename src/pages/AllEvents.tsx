@@ -4,12 +4,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { fileToDataUrl } from '../lib/images'
-import { currentMonth, formatEventDate, isOngoing, isUpcoming, onTimeline } from '../lib/eventDates'
+import { currentMonth, formatEventDate, isUpcoming, onTimeline } from '../lib/eventDates'
 import { EventCalendar } from '../components/EventCalendar'
 import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
+import { FrameHeader } from '../components/FrameHeader'
+import { AddButton, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { PracticeFilter, PracticePicker } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
@@ -153,7 +155,7 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
         {!meeting && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: 12, color: 'var(--wa-text)', cursor: 'pointer' }}>
             <input type="checkbox" checked={maybe} onChange={e => setMaybe(e.target.checked)} style={{ width: 14, height: 14, margin: 0, accentColor: 'var(--wa-ink)' }} />
-            Maybe, not confirmed yet
+            Some day, not confirmed yet
           </label>
         )}
         <PracticePicker value={practices ?? [practiceOf(acts, allWorks).event({ type, workIds })]} onChange={setPractices} style={{ marginBottom: 14 }} />
@@ -279,11 +281,10 @@ export function AllEvents() {
   const [yearFilter, setYearFilter] = useState<number | null>(null)
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [cityFilter, setCityFilter] = useState<string | null>(null)
-  const [sortAsc, setSortAsc] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [editing, setEditing] = useState<EventEntry | 'new' | null>(null)
   const [draft, setDraft] = useState<Draft | undefined>()
-  const [view, setView] = useState<'list' | 'calendar' | 'maybe'>('list')
+  const [view, setView] = useState<'list' | 'calendar'>('list')
   const addEvent = (d?: Draft) => { setDraft(d); setEditing('new') }
 
   const { acts, keep } = usePractice({ filter: true })
@@ -306,13 +307,11 @@ export function AllEvents() {
   }, [params])
   const of = practiceOf(acts, allWorks)
   const inPractice = allEntries.filter(e => of.eventAll(e).some(keep))
-  const entries = inPractice.filter(e => !e.maybe)
-  const maybes = inPractice.filter(e => e.maybe).sort((a, b) => a.title.localeCompare(b.title))
+  // Some day: not confirmed, or nothing fixed yet. Everything else has a date.
+  const entries = inPractice.filter(e => !e.maybe && e.date)
   const works = allWorks.filter(w => keep(of.work(w)))
 
-  const sorted = useMemo(() => [...entries].sort((a, b) => sortAsc
-    ? (a.date ?? '').localeCompare(b.date ?? '')
-    : (b.date ?? '').localeCompare(a.date ?? '')), [entries, sortAsc])
+  const sorted = useMemo(() => [...entries].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')), [entries])
 
   const years = useMemo(() => [...new Set(sorted.map(e => toYear(e.date)).filter(Boolean))].sort((a, b) => b - a), [sorted])
   const types = useMemo(() => [...new Set(sorted.map(e => e.type).filter(Boolean))] as string[], [sorted])
@@ -325,120 +324,21 @@ export function AllEvents() {
     return true
   }), [sorted, yearFilter, typeFilter, cityFilter])
 
-  const visible = showAll ? filtered : filtered.slice(0, PAGE_SIZE)
+  const upcoming = filtered.filter(e => isUpcoming(e, today)).reverse()
+  const past = filtered.filter(e => !isUpcoming(e, today))
+  const pastShown = showAll ? past : past.slice(0, PAGE_SIZE)
+  const someDay = yearFilter ? [] : inPractice.filter(e => (e.maybe || !e.date) && (!typeFilter || e.type === typeFilter) && (!cityFilter || e.location === cityFilter)).sort((a, b) => a.title.localeCompare(b.title))
 
-  const typeCounts = useMemo(() => {
-    const m: Record<string, number> = {}
-    filtered.forEach(e => { if (e.type) m[e.type] = (m[e.type] ?? 0) + 1 })
-    return Object.entries(m).sort((a, b) => b[1] - a[1])
-  }, [filtered])
-
-  const cityCounts = useMemo(() => {
-    const m: Record<string, number> = {}
-    filtered.forEach(e => { if (e.location) m[e.location] = (m[e.location] ?? 0) + 1 })
-    return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 6)
-  }, [filtered])
-
-  const maxCity = cityCounts[0]?.[1] ?? 1
-
-  const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t}</span>
-  const filterBtn = (label: string, active: boolean, onClick: () => void) => (
-    <button key={label} onClick={onClick} style={{ display: 'block', width: narrow ? 'auto' : '100%', flexShrink: 0, whiteSpace: 'nowrap', textAlign: 'left', padding: narrow ? '6px 10px' : '4px 8px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontSize: 11, fontWeight: active ? 600 : 400, cursor: 'pointer' }}>
-      {label}
-    </button>
+  const sectionHead = (label: string, count: number, onAdd?: () => void) => (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '18px 20px 8px', borderBottom: count ? '1px solid var(--wa-line)' : 'none' }}>
+      <h2 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 16, color: 'var(--wa-ink)' }}>{label}</h2>
+      <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{count}</span>
+      {onAdd && <button onClick={onAdd} style={{ marginLeft: 'auto', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>}
+    </div>
   )
-
-  return (
-    <Shell>
-      {editing !== null && (
-        <EventForm entry={editing === 'new' ? null : editing} draft={draft} works={works} allWorks={allWorks} onDone={() => setEditing(null)} />
-      )}
-
-      <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', gap: 10, alignItems: narrow ? 'stretch' : 'flex-start' }}>
-
-        {/* ── Left: filters ─────────────────────────────────────── */}
-        <div style={{ width: narrow ? 'auto' : 144, flexShrink: 0, background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '14px' : '20px 14px', display: 'flex', flexDirection: 'column', gap: narrow ? 10 : 20 }}>
-          <PracticeFilter narrow={narrow} plain />
-          <div>
-            <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>Year</p>
-            <div style={narrow ? { display: 'flex', gap: 4, overflowX: 'auto' } : undefined}>
-              {filterBtn('All', yearFilter === null, () => setYearFilter(null))}
-              {years.map(y => filterBtn(String(y), yearFilter === y, () => setYearFilter(yearFilter === y ? null : y)))}
-            </div>
-          </div>
-          {types.length > 0 && (
-            <div>
-              <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>Type</p>
-              <div style={narrow ? { display: 'flex', gap: 4, overflowX: 'auto' } : undefined}>
-              {types.map(t => (
-                <button key={t} onClick={() => setTypeFilter(typeFilter === t ? null : t)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, width: narrow ? 'auto' : '100%', flexShrink: 0, whiteSpace: 'nowrap', textAlign: 'left', padding: narrow ? '6px 10px' : '4px 8px', borderRadius: 8, border: 'none', background: typeFilter === t ? 'var(--wa-fill)' : 'none', color: typeFilter === t ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontSize: 11, fontWeight: typeFilter === t ? 600 : 400, cursor: 'pointer' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[t] ?? 'var(--wa-line)' }} />
-                  {t}
-                </button>
-              ))}
-              </div>
-            </div>
-          )}
-          {cities.length > 0 && (
-            <div>
-              <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 6px' }}>City</p>
-              <div style={narrow ? { display: 'flex', gap: 4, overflowX: 'auto' } : undefined}>
-                {cities.slice(0, 8).map(c => filterBtn(c, cityFilter === c, () => setCityFilter(cityFilter === c ? null : c)))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Centre: table ─────────────────────────────────────── */}
-        <div data-tour="events-list" style={{ flex: 1, background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '14px 20px 12px', borderBottom: '1px solid var(--wa-line)', gap: 8 }}>
-            <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: 'var(--wa-ink)' }}>Events</span>
-            <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 500 }}>{filtered.length}</span>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div role="radiogroup" aria-label="View" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)' }}>
-                {(['list', 'calendar', 'maybe'] as const).map(v => (
-                  <button key={v} role="radio" aria-checked={view === v} onClick={() => setView(v)}
-                    style={{ padding: '4px 10px', border: 'none', borderRadius: 6, background: view === v ? 'var(--wa-surface)' : 'none', fontSize: 10, fontWeight: view === v ? 600 : 400, color: view === v ? 'var(--wa-ink)' : 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {v === 'list' ? 'List' : v === 'calendar' ? 'Calendar' : `Maybe${maybes.length ? ` (${maybes.length})` : ''}`}
-                  </button>
-                ))}
-              </div>
-              {view === 'list' && <button onClick={() => setSortAsc(v => !v)}
-                style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '5px 10px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>
-                Date {sortAsc ? '↑' : '↓'}
-              </button>}
-              <button onClick={() => addEvent(view === 'maybe' ? { maybe: true } : undefined)}
-                style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
-                + Add
-              </button>
-            </div>
-          </div>
-
-          {view === 'calendar' && <EventCalendar events={filtered} narrow={narrow} dot={e => TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line-strong)'} onOpen={setEditing} onDay={date => addEvent({ date })} />}
-
-          {view === 'list' && !narrow && (
-            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', columnGap: 16, padding: '10px 20px', borderBottom: '1px solid var(--wa-line)' }}>
-              {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
-            </div>
-          )}
-
-          {view === 'maybe' && (maybes.length === 0
-            ? <p style={{ textAlign: 'center', padding: '48px 24px', margin: 0, fontSize: 12, color: 'var(--wa-muted)' }}>Things you have talked about that might happen. No dates needed.</p>
-            : maybes.map((e, i) => (
-              <button key={e.id} onClick={() => setEditing(e)} style={{ display: 'block', width: '100%', padding: narrow ? '13px 16px' : '13px 20px', border: 'none', borderBottom: i < maybes.length - 1 ? '1px solid var(--wa-line)' : 'none', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wa-ink)' }}>{e.title}</span>
-                {(e.location || e.date || e.notes) && <span style={{ display: 'block', marginTop: 2, fontSize: 11, color: 'var(--wa-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[e.location, formatEventDate(e.date, e.endDate), e.notes].filter(Boolean).join(' · ')}</span>}
-              </button>
-            )))}
-
-          {view !== 'list' ? null : filtered.length === 0 ? (
-            <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              {entries.length === 0 ? 'No events yet' : 'Nothing matches'}
-            </p>
-          ) : visible.map((e, i) => (
+  const eventRow = (e: EventEntry) => (
             <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
-              style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < visible.length - 1 ? '1px solid var(--wa-line)' : 'none', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
+              style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: '1px solid var(--wa-line)', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{[formatEventDate(e.date, e.endDate), e.time].filter(Boolean).join(' · ')}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
               {e.image && <img src={e.image} alt="" style={{ width: 30, height: 40, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />}
@@ -446,7 +346,6 @@ export function AllEvents() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line)' }} />
                   <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--wa-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
-                  {isUpcoming(e, today) && <span style={{ fontSize: 8, fontWeight: 700, background: 'var(--accent)', color: '#111111', padding: '2px 6px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>{isOngoing(e) ? 'On now' : 'Upcoming'}</span>}
                 </div>
                 {narrow && (e.location || e.type) && (
                   <span style={{ paddingLeft: 14, fontSize: 10, color: 'var(--wa-muted)' }}>{[e.location, e.type].filter(Boolean).join(' · ')}</span>
@@ -465,51 +364,77 @@ export function AllEvents() {
               {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.location ?? ''}</span>}
               {!narrow && <span style={{ fontSize: 9, fontWeight: 600, background: 'var(--wa-fill)', color: 'var(--wa-text-2)', padding: '3px 8px', borderRadius: 4, width: 'fit-content' }}>{e.type ?? ''}</span>}
             </div>
-          ))}
+  )
 
-          <div style={{ display: view === 'maybe' ? 'none' : 'flex', alignItems: 'center', flexWrap: 'wrap', padding: '12px 20px', borderTop: '1px solid var(--wa-line)', gap: 8 }}>
-            <span style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{filtered.length} events{!showAll && filtered.length > PAGE_SIZE ? ` · showing ${PAGE_SIZE}` : ''}</span>
-            {!showAll && filtered.length > PAGE_SIZE && (
-              <button onClick={() => setShowAll(true)} style={{ background: 'none', border: 'none', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer', textDecoration: 'underline' }}>Load all</button>
-            )}
-            <div style={{ marginLeft: 'auto' }}>
-              <button onClick={() => exportCSV(filtered)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Export CSV</button>
+  const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t}</span>
+  return (
+    <Shell>
+      {editing !== null && (
+        <EventForm entry={editing === 'new' ? null : editing} draft={draft} works={works} allWorks={allWorks} onDone={() => setEditing(null)} />
+      )}
+
+      <div style={pageGrid(narrow)}>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+          <PracticeFilter narrow={narrow} />
+          {years.length > 0 && (
+            <SidePanel title="Year" narrow={narrow}>
+              <SideItem label="All" active={yearFilter === null} narrow={narrow} onClick={() => setYearFilter(null)} />
+              {years.map(y => <SideItem key={y} label={String(y)} count={sorted.filter(e => toYear(e.date) === y).length} active={yearFilter === y} narrow={narrow} onClick={() => setYearFilter(yearFilter === y ? null : y)} />)}
+            </SidePanel>
+          )}
+          {types.length > 0 && (
+            <SidePanel title="Type" narrow={narrow}>
+              {types.map(t => <SideItem key={t} label={t} dot={TYPE_DOT[t] ?? 'var(--wa-line)'} count={sorted.filter(e => e.type === t).length} active={typeFilter === t} narrow={narrow} onClick={() => setTypeFilter(typeFilter === t ? null : t)} />)}
+            </SidePanel>
+          )}
+          {cities.length > 0 && (
+            <SidePanel title="City" narrow={narrow}>
+              {cities.slice(0, 8).map(c => <SideItem key={c} label={c} count={sorted.filter(e => e.location === c).length} active={cityFilter === c} narrow={narrow} onClick={() => setCityFilter(cityFilter === c ? null : c)} />)}
+            </SidePanel>
+          )}
+        </div>
+
+        <div data-tour="events-list" style={pageFrame}>
+          <FrameHeader right={<>
+              <div role="radiogroup" aria-label="View" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)' }}>
+                {(['list', 'calendar'] as const).map(v => (
+                  <button key={v} role="radio" aria-checked={view === v} onClick={() => setView(v)}
+                    style={{ padding: '4px 10px', border: 'none', borderRadius: 6, background: view === v ? 'var(--wa-surface)' : 'none', fontSize: 10, fontWeight: view === v ? 600 : 400, color: view === v ? 'var(--wa-ink)' : 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {v === 'list' ? 'List' : 'Calendar'}
+                  </button>
+                ))}
+              </div>
+              <AddButton onClick={() => addEvent()} />
+          </>}>
+            <FrameTitle count={filtered.length + someDay.length}>Events</FrameTitle>
+          </FrameHeader>
+
+          {view === 'calendar' && <EventCalendar events={filtered} narrow={narrow} dot={e => TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line-strong)'} onOpen={setEditing} onDay={date => addEvent({ date })} />}
+
+          {view === 'list' && !narrow && (
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', columnGap: 16, padding: '10px 20px', borderBottom: '1px solid var(--wa-line)' }}>
+              {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
             </div>
+          )}
+
+          {view === 'list' && <>
+            {upcoming.length > 0 && <>{sectionHead('Upcoming', upcoming.length)}{upcoming.map(eventRow)}</>}
+            {past.length > 0 && <>{sectionHead('Past', past.length)}{pastShown.map(eventRow)}</>}
+            {!showAll && past.length > PAGE_SIZE && (
+              <button onClick={() => setShowAll(true)} style={{ display: 'block', padding: '12px 20px', border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>Show all {past.length}</button>
+            )}
+            {sectionHead('Some day', someDay.length, () => addEvent({ maybe: true }))}
+            {someDay.map(eventRow)}
+            {someDay.length === 0 && <p style={{ margin: 0, padding: '2px 20px 16px', fontSize: 12, color: 'var(--wa-muted)' }}>Things you have talked about that might happen. No dates needed.</p>}
+          </>}
+
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 20px' }}>
+            <button onClick={() => exportCSV(filtered)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Export CSV</button>
           </div>
         </div>
-
-        {/* ── Right: analytics ──────────────────────────────────── */}
-        <div style={{ width: narrow ? 'auto' : 180, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {typeCounts.length > 0 && (
-            <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '18px 16px' }}>
-              <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 14px' }}>By type</p>
-              {typeCounts.map(([type, count]) => (
-                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: TYPE_DOT[type] ?? 'var(--wa-line)', flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, color: 'var(--wa-text)', flex: 1 }}>{type}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--wa-ink)' }}>{count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {cityCounts.length > 0 && (
-            <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '18px 16px' }}>
-              <p style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', margin: '0 0 14px' }}>By city</p>
-              {cityCounts.map(([city, count]) => (
-                <div key={city} style={{ marginBottom: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, color: 'var(--wa-text)' }}>{city}</span>
-                    <span style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{count}</span>
-                  </div>
-                  <div style={{ height: 3, borderRadius: 2, background: 'var(--wa-fill)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${(count / maxCity) * 100}%`, background: 'var(--wa-ink)', borderRadius: 2 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
       </div>
     </Shell>
   )

@@ -6,6 +6,8 @@ import { useActiveDept } from '../lib/useDept'
 import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
 import { PracticeFilter, PracticeSelect } from '../components/Practice'
+import { FrameHeader } from '../components/FrameHeader'
+import { AddButton, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { Shell } from '../components/layout/Shell'
 import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch } from '../components/WorkFields'
 import { WORK_KINDS, shelfOf, workSubtitle, workYear, type WorkKind } from '../lib/works'
@@ -90,44 +92,29 @@ export function Studio() {
     .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
   const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{t}</span>
-  const filterBtn = (label: string, count: number, active: boolean, onClick: () => void) => (
-    <button key={label} onClick={onClick}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: narrow ? 'auto' : '100%', flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', whiteSpace: 'nowrap' }}>
-      <span>{label}</span>
-      <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 400 }}>{count}</span>
-    </button>
-  )
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
 
   return (
     <Shell>
       {adding && <NewWorkForm defaultKind={shelfKind ?? defaultKind} defaultCategory={shelf && !shelfKind ? shelf : ''} onDone={id => { setAdding(false); if (id != null) navigate(`/studio/${id}`) }} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '220px minmax(0, 1fr)', gap: 10 }}>
-        {/* Sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={pageGrid(narrow)}>
+        {/* Filters */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           <PracticeFilter narrow={narrow} />
           {shelves.length > 1 && (
-            <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? 10 : '18px 16px', display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 2, overflowX: narrow ? 'auto' : undefined }}>
-              {!narrow && <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px', margin: 0 }}>Category</p>}
-              {filterBtn('All', works.length, shelf === null, () => setPicked(null))}
-              {shelves.map(s => filterBtn(s, count(s), shelf === s, () => setPicked(shelf === s ? null : s)))}
-            </div>
-          )}
-          {!narrow && (
-            <button onClick={() => setAdding(true)} style={{ background: 'var(--accent)', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-              + Add work
-            </button>
+            <SidePanel title="Category" narrow={narrow}>
+              <SideItem label="All" count={works.length} active={shelf === null} narrow={narrow} onClick={() => setPicked(null)} />
+              {shelves.map(s => <SideItem key={s} label={s} count={count(s)} active={shelf === s} narrow={narrow} onClick={() => setPicked(shelf === s ? null : s)} />)}
+            </SidePanel>
           )}
         </div>
 
         {/* List */}
-        <div data-tour="works-list" style={{ background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '18px 24px 14px', borderBottom: '1px solid var(--wa-line)' }}>
-            <p style={{ fontFamily: 'Recoleta, serif', fontSize: 16, margin: 0 }}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</p>
-            <span style={{ marginLeft: 8, background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 8px', fontSize: 10, color: 'var(--wa-text-2)' }}>{shown.length}</span>
-            <button onClick={() => setAdding(true)} style={{ marginLeft: 'auto', background: narrow ? 'var(--accent)' : 'none', border: 'none', borderRadius: 8, padding: narrow ? '7px 14px' : 0, fontSize: 10, fontWeight: narrow ? 600 : 400, color: narrow ? '#111111' : 'var(--wa-muted)', cursor: 'pointer', letterSpacing: '0.1em' }}>+ Add</button>
-          </div>
+        <div data-tour="works-list" style={pageFrame}>
+          <FrameHeader right={<AddButton onClick={() => setAdding(true)} />}>
+            <FrameTitle count={shown.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
+          </FrameHeader>
           {shown.length === 0 ? (
             <p style={{ textAlign: 'center', padding: '36px 0', fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>
           ) : (

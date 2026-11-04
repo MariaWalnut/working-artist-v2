@@ -9,6 +9,7 @@ import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer, isPdf } from '../components/ClippingViewer'
 import { pdfThumbnail } from '../lib/pdfThumb'
 import { CareerFrame } from '../components/CareerTabs'
+import { AddButton } from '../components/PageFrame'
 import { FrameTabs } from '../components/FrameHeader'
 import { DateFields } from '../components/DateFields'
 import { formatAnyDate, normalizeDate } from '../lib/eventDates'
@@ -352,7 +353,7 @@ export function Press() {
           )}
           <input ref={importRef} type="file" accept={CLIPPING_ACCEPT} hidden onChange={e => { void startNewWith(e.target.files?.[0]); e.target.value = '' }} />
           <button onClick={() => importRef.current?.click()} style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 10, color: 'var(--wa-text)', cursor: 'pointer' }}>Import file</button>
-          <button onClick={() => setEditing('new')} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>+ Add</button>
+          <AddButton onClick={() => setEditing('new')} />
         </div>
       }>
 

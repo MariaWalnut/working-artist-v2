@@ -5,6 +5,8 @@ import { db, type Opportunity } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { Hint } from '../components/Hint'
+import { FrameHeader } from '../components/FrameHeader'
+import { AddButton, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { useNarrow } from '../lib/useNarrow'
 import { PracticeFilter, PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
@@ -98,23 +100,6 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
   )
 }
 
-function FilterItem({ label, active, count, onClick }: { label: string; active: boolean; count?: number; onClick: () => void }) {
-  return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}>
-      <span>{label}</span>
-      {count != null && <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 400 }}>{count}</span>}
-    </button>
-  )
-}
-
-function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: active ? 'var(--wa-ink)' : 'var(--wa-surface)', color: active ? 'var(--wa-surface)' : 'var(--wa-text)', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-      {label}
-    </button>
-  )
-}
-
 export function Opportunities() {
   const dept = useActiveDept()
   const narrow = useNarrow()
@@ -147,67 +132,36 @@ export function Opportunities() {
     return true
   }).sort((a, b) => Number(FINISHED.includes(a.status)) - Number(FINISHED.includes(b.status)) || (a.deadline ?? '9999').localeCompare(b.deadline ?? '9999'))
 
-  const activeCount = opps.filter(o => !FINISHED.includes(o.status)).length
-  const wonCount = opps.filter(o => o.status === 'Won' || o.status === 'Accepted').length
-  const shortCount = opps.filter(o => o.status === 'Shortlisted').length
-  const closedCount = opps.filter(o => o.status === 'Closed' || o.status === 'Rejected').length
-
-  const sidePanel: React.CSSProperties = { background: 'var(--wa-surface)', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
-  const sectionLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px' }
+  const statusFilters: Array<[string, number]> = [
+    ['All', opps.length],
+    ['Open', opps.filter(o => !FINISHED.includes(o.status)).length],
+    ...OPP_STATUSES.filter(st => st !== 'Active').map((st): [string, number] => [st, opps.filter(o => o.status === st).length]).filter(([, n]) => n > 0),
+  ]
 
   return (
     <Shell>
       {editing !== null && <OppForm opp={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />}
-      <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '220px 1fr', gap: 10, minHeight: narrow ? undefined : 600 }}>
+      <div style={pageGrid(narrow)}>
 
-        {/* Left */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', flexDirection: narrow ? 'row' : 'column', gap: 10 }}>
-          <button onClick={() => setEditing('new')} style={{ flex: 1, background: 'var(--accent)', borderRadius: 999, padding: 11, textAlign: 'center', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-            + Add
-          </button>
-          </div>
-
-          {/* Stats */}
-          <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'grid', gridTemplateColumns: narrow ? 'repeat(4, 1fr)' : '1fr 1fr' }}>
-            {[{ label: 'Open', v: activeCount, muted: false }, { label: 'Won', v: wonCount, muted: false }, { label: 'Shortlisted', v: shortCount, muted: false }, { label: 'Closed', v: closedCount, muted: true }].map((s, i) => (
-              <div key={s.label} style={{ textAlign: 'center', padding: '14px 0', borderTop: !narrow && i >= 2 ? '1px solid var(--wa-line)' : undefined, borderLeft: (narrow ? i > 0 : i % 2 === 1) ? '1px solid var(--wa-line)' : undefined }}>
-                <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, color: s.muted ? 'var(--wa-muted)' : 'var(--wa-ink)', margin: '0 0 2px', lineHeight: 1.1 }}>{s.v}</p>
-                <p style={{ fontSize: 9, color: s.muted ? 'var(--wa-muted)' : 'var(--wa-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-
+        {/* Filters */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           <PracticeFilter narrow={narrow} />
-
-          {narrow ? <>
-            {/* Filters as rows of chips that scroll sideways */}
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              {['All', 'Open', 'Draft', 'Applied', 'Shortlisted', 'Rejected'].map(s => <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
-            </div>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              <FilterChip label="All types" active={activeType === null} onClick={() => setTypeFilter(null)} />
-              {usedTypes.map(t => <FilterChip key={t} label={t} active={typeFilter === t} onClick={() => setTypeFilter(t)} />)}
-            </div>
-          </> : <>
-          {/* Type */}
-          <div style={sidePanel}>
-            <p style={sectionLabel}>Type</p>
-            <FilterItem label="All types" active={activeType === null} onClick={() => setTypeFilter(null)} />
-            {usedTypes.map(t => <FilterItem key={t} label={t} count={opps.filter(o => o.opportunityType === t).length} active={typeFilter === t} onClick={() => setTypeFilter(t)} />)}
-          </div>
-
-          {/* Status */}
-          <div style={sidePanel}>
-            <p style={sectionLabel}>Status</p>
-            {['All', 'Open', 'Draft', 'Applied', 'Shortlisted', 'Rejected'].map(s => <FilterItem key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
-          </div>
-          </>}
-
+          <SidePanel title="Status" narrow={narrow}>
+            {statusFilters.map(([s, n]) => <SideItem key={s} label={s} count={n} active={statusFilter === s} narrow={narrow} onClick={() => setStatusFilter(s)} />)}
+          </SidePanel>
+          {usedTypes.length > 1 && (
+            <SidePanel title="Type" narrow={narrow}>
+              <SideItem label="All" active={activeType === null} narrow={narrow} onClick={() => setTypeFilter(null)} />
+              {usedTypes.map(t => <SideItem key={t} label={t} count={opps.filter(o => o.opportunityType === t).length} active={typeFilter === t} narrow={narrow} onClick={() => setTypeFilter(t)} />)}
+            </SidePanel>
+          )}
         </div>
 
         {/* Right */}
-        <div data-tour="subs-list" style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div data-tour="subs-list" style={{ ...pageFrame, display: 'flex', flexDirection: 'column' }}>
+          <FrameHeader right={<AddButton onClick={() => setEditing('new')} />}>
+            <FrameTitle count={filtered.length}>Submissions</FrameTitle>
+          </FrameHeader>
           {/* Column headers */}
           {!narrow && <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', borderBottom: '1px solid var(--wa-line)' }}>
             {['Title', 'Type', 'Deadline', 'Status', ''].map(h => (

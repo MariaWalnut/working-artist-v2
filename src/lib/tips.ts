@@ -78,7 +78,7 @@ export function careerTips({ works, projects, opportunities, events, contacts, t
 
   for (const e of events) {
     if (e.maybe) continue
-    if (!e.date) { tips.push({ key: `event-undated-${e.id}`, group: 'Events', to: '/projects/events', text: `${e.title}: no date.` }); continue }
+    if (!e.date) continue
     const days = daysUntil(e.date, today)
     if (days < -31) continue
     if (e.date.length <= 7 && days <= DATE_NEEDED_DAYS && days >= -31) tips.push({ key: `event-day-${e.id}`, group: 'Events', to: '/projects/events', text: `${e.title}: no exact day yet.` })

@@ -6,6 +6,7 @@ import { useActiveDept } from '../lib/useDept'
 import { useNarrow } from '../lib/useNarrow'
 import { Shell } from '../components/layout/Shell'
 import { Hint } from '../components/Hint'
+import { AddButton, FrameTitle, pageGrid } from '../components/PageFrame'
 import { allTags, byName, categoriesFor, copyEmails, deleteContact, downloadCSV, setOnList, websiteHref } from '../lib/contacts'
 import { formatEventDate } from '../lib/eventDates'
 
@@ -347,10 +348,9 @@ export function Contacts() {
       {picking && list && <PeoplePicker list={list} contacts={contacts} onDone={() => setPicking(false)} />}
       {toast && <p role="status" style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 60, margin: 0, padding: '10px 18px', borderRadius: 999, background: 'var(--wa-black)', color: '#FFFFFF', fontSize: 12 }}>{toast}</p>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : '230px 1fr', gap: 10, minHeight: narrow ? undefined : 600, alignItems: 'start' }}>
+      <div style={pageGrid(narrow)}>
         {/* Left: people by category, then lists */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={() => setEditing('new')} style={{ background: 'var(--accent)', borderRadius: 999, padding: 11, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 600, border: 'none', cursor: 'pointer' }}>+ Add contact</button>
           {narrow ? <>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
               <FilterChip label="All" active={showingAll} onClick={() => select({ kind: 'all' })} />
@@ -375,18 +375,17 @@ export function Contacts() {
         </div>
 
         {/* Right */}
-        <div style={{ background: 'var(--wa-surface)', borderRadius: 20 }}>
-          <div style={{ padding: narrow ? '18px 16px 12px' : '22px 24px 14px', borderBottom: '1px solid var(--wa-line)' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <h1 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: 'var(--wa-ink)' }}>{title}</h1>
-              {list
-                ? <span style={{ fontSize: 12, color: 'var(--wa-muted)' }}>{doneCount} of {list.members.length} ticked off</span>
-                : <span style={{ fontSize: 12, color: 'var(--wa-muted)' }}>{people.length}</span>}
+        <div style={{ background: 'var(--wa-surface)', borderRadius: 20, minWidth: 0 }}>
+          <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid var(--wa-line)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <FrameTitle count={list ? undefined : people.length}>{title}</FrameTitle>
+              {list && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{doneCount} of {list.members.length} ticked off</span>}
               {listProject && (
                 <button onClick={() => navigate(`/projects/${listProject.id}`)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', borderBottom: '2px solid var(--accent)', fontFamily: 'inherit' }}>
                   {listProject.title}
                 </button>
               )}
+              <span style={{ marginLeft: 'auto' }}><AddButton onClick={() => setEditing('new')} /></span>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
               <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search" aria-label="Search contacts" style={{ ...inp, width: narrow ? '100%' : 200, padding: '6px 12px', fontSize: 12 }} />
