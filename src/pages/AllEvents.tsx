@@ -330,15 +330,15 @@ export function AllEvents() {
   const someDay = yearFilter ? [] : inPractice.filter(e => (e.maybe || !e.date) && (!typeFilter || e.type === typeFilter) && (!cityFilter || e.location === cityFilter)).sort((a, b) => a.title.localeCompare(b.title))
 
   const sectionHead = (label: string, count: number, onAdd?: () => void) => (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '18px 20px 8px', borderBottom: count ? '1px solid var(--wa-line)' : 'none' }}>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '14px 20px 10px', borderBottom: count ? '1px solid var(--wa-line)' : 'none' }}>
       <h2 style={{ margin: 0, fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 16, color: 'var(--wa-ink)' }}>{label}</h2>
       <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{count}</span>
       {onAdd && <button onClick={onAdd} style={{ marginLeft: 'auto', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>}
     </div>
   )
-  const eventRow = (e: EventEntry) => (
+  const eventRow = (e: EventEntry, i: number, all: EventEntry[]) => (
             <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
-              style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: '1px solid var(--wa-line)', alignItems: 'center', cursor: 'pointer', background: isUpcoming(e, today) ? 'rgba(245,230,66,0.04)' : 'transparent' }}>
+              style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none', alignItems: 'center', cursor: 'pointer' }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: isUpcoming(e, today) ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{[formatEventDate(e.date, e.endDate), e.time].filter(Boolean).join(' · ')}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
               {e.image && <img src={e.image} alt="" style={{ width: 30, height: 40, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />}
@@ -366,7 +366,6 @@ export function AllEvents() {
             </div>
   )
 
-  const colH = (t: string) => <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t}</span>
   return (
     <Shell>
       {editing !== null && (
@@ -396,7 +395,8 @@ export function AllEvents() {
           )}
         </div>
 
-        <div data-tour="events-list" style={pageFrame}>
+        <div data-tour="events-list" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={pageFrame}>
           <FrameHeader right={<>
               <div role="radiogroup" aria-label="View" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)' }}>
                 {(['list', 'calendar'] as const).map(v => (
@@ -413,26 +413,29 @@ export function AllEvents() {
 
           {view === 'calendar' && <EventCalendar events={filtered} narrow={narrow} dot={e => TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line-strong)'} onOpen={setEditing} onDay={date => addEvent({ date })} />}
 
-          {view === 'list' && !narrow && (
-            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 130px 110px', columnGap: 16, padding: '10px 20px', borderBottom: '1px solid var(--wa-line)' }}>
-              {['Date', 'Event', 'City', 'Type'].map(h => <span key={h}>{colH(h)}</span>)}
+          {view === 'list' && upcoming.length > 0 && <>{sectionHead('Upcoming', upcoming.length)}{upcoming.map(eventRow)}</>}
+          </div>
+
+          {view === 'list' && past.length > 0 && (
+            <div style={pageFrame}>
+              {sectionHead('Past', past.length)}
+              {pastShown.map(eventRow)}
+              {!showAll && past.length > PAGE_SIZE && (
+                <button onClick={() => setShowAll(true)} style={{ display: 'block', padding: '12px 20px', border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>Show all {past.length}</button>
+              )}
             </div>
           )}
 
-          {view === 'list' && <>
-            {upcoming.length > 0 && <>{sectionHead('Upcoming', upcoming.length)}{upcoming.map(eventRow)}</>}
-            {past.length > 0 && <>{sectionHead('Past', past.length)}{pastShown.map(eventRow)}</>}
-            {!showAll && past.length > PAGE_SIZE && (
-              <button onClick={() => setShowAll(true)} style={{ display: 'block', padding: '12px 20px', border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>Show all {past.length}</button>
-            )}
-            {sectionHead('Some day', someDay.length, () => addEvent({ maybe: true }))}
-            {someDay.map(eventRow)}
-            {someDay.length === 0 && <p style={{ margin: 0, padding: '2px 20px 16px', fontSize: 12, color: 'var(--wa-muted)' }}>Things you have talked about that might happen. No dates needed.</p>}
-          </>}
+          {view === 'list' && (
+            <div style={pageFrame}>
+              {sectionHead('Some day', someDay.length, () => addEvent({ maybe: true }))}
+              {someDay.map(eventRow)}
+              {someDay.length === 0 && <p style={{ margin: 0, padding: '2px 20px 16px', fontSize: 12, color: 'var(--wa-muted)' }}>Things you have talked about that might happen. No dates needed.</p>}
+            </div>
+          )}
 
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 20px' }}>
-            <button onClick={() => exportCSV(filtered)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Export CSV</button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button onClick={() => exportCSV(filtered)} style={{ background: 'none', border: '1px solid var(--wa-line-strong)', borderRadius: 8, padding: '5px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Export CSV</button>
           </div>
         </div>
       </div>
