@@ -5,7 +5,7 @@ import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Project, Work } from '../db/db'
-import { isActive, projectSubtitle } from '../lib/projects'
+import { isActive, isPlanned, projectSubtitle } from '../lib/projects'
 import { linkWorksInProgress } from '../lib/workProjects'
 import { NewProjectForm } from '../components/NewProjectForm'
 import { PracticeFilter, PracticeSelect } from '../components/Practice'
@@ -110,9 +110,11 @@ export function Studio() {
   const makingCount = allWorks.filter(w => w.inProgress).length
   useEffect(() => { if (dept?.id != null && makingCount > 0) void linkWorksInProgress(dept.id) }, [dept?.id, makingCount])
   const allProjects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const ongoing = shelf ? [] : allProjects
-    .filter(p => isActive(p) && keep(practiceOf(acts).project(p)) && !works.some(w => w.id === p.workId || w.projectId === p.id))
+  const notYetWorks = shelf ? [] : allProjects
+    .filter(p => keep(practiceOf(acts).project(p)) && !works.some(w => w.id === p.workId || w.projectId === p.id))
     .sort((a, b) => a.title.localeCompare(b.title))
+  const ongoing = notYetWorks.filter(isActive)
+  const planned = notYetWorks.filter(isPlanned)
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
 
   const rowStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }
@@ -147,9 +149,17 @@ export function Studio() {
       </div>
       {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{typeLabel(p)}</span>}
       {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location ?? ''}</span>}
-      <span style={{ fontSize: 10, textAlign: 'right', whiteSpace: 'nowrap', color: p.status === 'On hold' ? 'var(--wa-ink)' : 'var(--wa-muted)', fontWeight: p.status === 'On hold' ? 600 : 400 }}>{p.status ?? 'Active'}</span>
+      <span style={{ fontSize: 10, textAlign: 'right', whiteSpace: 'nowrap', color: p.status === 'On hold' ? 'var(--wa-ink)' : 'var(--wa-muted)', fontWeight: p.status === 'On hold' ? 600 : 400 }}>{isPlanned(p) ? '' : p.status ?? 'Active'}</span>
     </button>
   )
+
+  // Each stage is its own box; the first one sits under the page title.
+  const boxes = [
+    { label: 'In progress', count: ongoing.length, onAdd: () => setAddingProject(true), rows: ongoing.map(projectRow) },
+    { label: 'Planned', count: planned.length, onAdd: undefined, rows: planned.map(projectRow) },
+    { label: 'Completed', count: shown.length, onAdd: undefined, rows: shown.map(workRow) },
+  ].filter(b => b.count > 0)
+  const box = (b: typeof boxes[number]) => <><BoxHeading label={b.label} count={b.count} onAdd={b.onAdd} />{b.rows}</>
 
   return (
     <Shell>
@@ -180,18 +190,12 @@ export function Studio() {
         <div data-tour="works-list" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={pageFrame}>
             <FrameHeader right={<AddButton onClick={() => setAdding(true)} />}>
-              <FrameTitle count={shown.length + ongoing.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
+              <FrameTitle count={shown.length + ongoing.length + planned.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
             </FrameHeader>
-            {shown.length + ongoing.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
-            {ongoing.length > 0 && <><BoxHeading label="In progress" count={ongoing.length} onAdd={() => setAddingProject(true)} />{ongoing.map(projectRow)}</>}
-            {ongoing.length === 0 && shown.length > 0 && <><BoxHeading label="Completed" count={shown.length} />{shown.map(workRow)}</>}
+            {boxes.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
+            {boxes[0] && box(boxes[0])}
           </div>
-          {ongoing.length > 0 && shown.length > 0 && (
-            <div style={pageFrame}>
-              <BoxHeading label="Completed" count={shown.length} />
-              {shown.map(workRow)}
-            </div>
-          )}
+          {boxes.slice(1).map(b => <div key={b.label} style={pageFrame}>{box(b)}</div>)}
         </div>
       </div>
     </Shell>
