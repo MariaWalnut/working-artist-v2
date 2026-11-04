@@ -9,7 +9,7 @@ import { practiceOf, usePractice } from '../../lib/practice'
 import type { Activity } from '../../db/db'
 
 type DeskType = 'project' | 'tasks' | 'list' | 'submission' | 'comingup' | 'note' | 'quote' | 'image' | 'title'
-type Picker = 'project' | 'submission' | 'earlier' | null
+type Picker = 'project' | 'tasks' | 'submission' | 'earlier' | null
 type DragMode = 'move' | 'resize'
 interface Slot { col: number; span: number; y: number; h: number }
 interface Box { left: number; top: number; width: number; height: number }
@@ -191,58 +191,104 @@ function ProjectBlock({ p, todos, compact, onOpen, practice }: { p: Project; tod
   )
 }
 
-function TasksBlock({ item, todos, projects, deptId, practice }: { item: BoardItem; todos: Todo[]; projects: Project[]; deptId: number; practice?: Activity }) {
+// A Tasks box shows every task, one project's tasks, or a named list of its own, over a span of time.
+type TaskRange = 'today' | 'week' | 'overdue' | 'all'
+const TASK_RANGES: Array<[TaskRange, string, string]> = [
+  ['today', 'Today', 'Nothing due today'],
+  ['week', 'This week', 'Nothing due this week'],
+  ['overdue', 'Overdue', 'Nothing overdue'],
+  ['all', 'All open', 'No open tasks'],
+]
+interface TaskBox { range: TaskRange; projectId?: number; name?: string; list?: string }
+
+function parseTaskBox(content: string): TaskBox {
+  if (content === 'week' || content === 'all') return { range: content }
+  try { return { range: 'week', ...(JSON.parse(content) as Partial<TaskBox>) } } catch { return { range: 'week' } }
+}
+
+function DueDate({ task }: { task: Todo }) {
+  const ref = useRef<HTMLInputElement>(null)
+  const due = dueLabel(task.dueDate)
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex' }}>
+      <button onClick={() => { try { ref.current?.showPicker() } catch { ref.current?.focus() } }}
+        style={{ ...plainBtn, fontSize: 10, ...(due?.overdue ? { color: 'var(--wa-red)', fontWeight: 600 } : {}) }}>
+        {due?.text ?? 'Add date'}
+      </button>
+      <input ref={ref} type="date" value={task.dueDate ?? ''} aria-label={`Due date for ${task.title}`} tabIndex={-1}
+        onChange={e => void db.todos.update(task.id!, { dueDate: e.target.value || undefined })}
+        style={{ position: 'absolute', left: 0, bottom: 0, width: 1, height: 1, padding: 0, border: 'none', opacity: 0, pointerEvents: 'none' }} />
+    </span>
+  )
+}
+
+function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: BoardItem; todos: Todo[]; projects: Project[]; lists: Record<string, string>; deptId: number; practice?: Activity }) {
   const [draft, setDraft] = useState('')
-  const range = item.content === 'all' ? 'all' : 'week'
+  const box = parseTaskBox(item.content)
+  const boxProject = box.projectId != null ? projects.find(p => p.id === box.projectId) : undefined
+  const today = localISO()
   const weekEnd = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return localISO(d) })()
-  const open = todos
-    .filter(t => !t.done && (range === 'all' || !t.dueDate || t.dueDate <= weekEnd))
-    .sort(byDue)
+  const inRange = (t: Todo) =>
+    box.range === 'all' ? true
+    : box.range === 'overdue' ? !!t.dueDate && t.dueDate < today
+    : box.range === 'today' ? !!t.dueDate && t.dueDate <= today
+    : !t.dueDate || t.dueDate <= weekEnd
+  const inBox = (t: Todo) => box.projectId != null ? t.projectId === box.projectId : box.list ? t.taskList === box.list : true
+  const open = todos.filter(t => !t.done && inBox(t) && inRange(t)).sort(byDue)
   const shown = open.slice(0, 8)
+  const save = (next: Partial<TaskBox>) => db.boardItems.update(item.id!, { content: JSON.stringify({ ...box, ...next }) })
 
   async function add() {
     const title = draft.trim()
     if (!title) return
-    await db.todos.add({ departmentId: deptId, title, done: false, kanbanStatus: 'todo', practice })
+    await db.todos.add({
+      departmentId: deptId, title, done: false, kanbanStatus: 'todo',
+      projectId: box.projectId, taskList: box.list, practice: box.projectId == null ? practice : undefined,
+      // So it stays in view in a box that only shows today.
+      dueDate: box.range === 'today' ? today : undefined,
+    })
     setDraft('')
   }
 
   return (
     <div style={{ padding: '16px 18px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)' }}>Tasks</span>
-        <button onClick={() => void db.boardItems.update(item.id!, { content: range === 'week' ? 'all' : 'week' })}
-          style={{ fontSize: 10, color: 'var(--wa-text)', background: 'rgba(0,0,0,.08)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
-          {range === 'week' ? 'This week' : 'All open'}
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+        {box.list
+          ? <input value={box.name ?? ''} onChange={e => void save({ name: e.target.value })} aria-label="List name" placeholder="Name"
+              style={{ ...bareInput, flex: 1, minWidth: 0, fontFamily: 'Recoleta, serif', fontSize: 15 }} />
+          : <span style={{ fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)', minWidth: 0 }}>{boxProject?.title ?? 'Tasks'}</span>}
+        <select value={box.range} onChange={e => void save({ range: e.target.value as TaskRange })} aria-label="Show"
+          style={{ appearance: 'none', flexShrink: 0, fontSize: 10, color: 'var(--wa-text)', background: 'rgba(0,0,0,.08)', border: 'none', borderRadius: 999, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
+          {TASK_RANGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
       </div>
       {shown.length === 0 && (
-        <p style={{ fontSize: 12, color: 'rgba(0,0,0,.55)', margin: '8px 0' }}>{range === 'week' ? 'Nothing due this week' : 'No open tasks'}</p>
+        <p style={{ fontSize: 12, color: 'rgba(0,0,0,.55)', margin: '8px 0' }}>{TASK_RANGES.find(([value]) => value === box.range)?.[2]}</p>
       )}
       {shown.map(t => {
-        const project = t.projectId != null ? projects.find(p => p.id === t.projectId) : undefined
-        const due = dueLabel(t.dueDate)
+        const where = box.projectId != null || box.list ? undefined
+          : t.projectId != null ? projects.find(p => p.id === t.projectId)?.title
+          : t.taskList ? lists[t.taskList] : undefined
         return (
-          <label key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={false}
+          <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)' }}>
+            <input id={`task-${item.id}-${t.id}`} type="checkbox" checked={false}
               onChange={() => { void db.todos.update(t.id!, { done: true, kanbanStatus: 'done' }); window.dispatchEvent(new Event('wa:task-done')) }}
-              style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0 }} />
+              style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0, cursor: 'pointer' }} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-              <span style={{ fontSize: 12, color: 'var(--wa-ink)' }}>{t.title}</span>
-              {(project || due) && (
-                <span style={{ fontSize: 10, color: 'rgba(0,0,0,.62)' }}>
-                  {project?.title}{project && due ? ' · ' : ''}
-                  {due && <span style={due.overdue ? { color: 'var(--wa-red)', fontWeight: 600 } : undefined}>{due.text}</span>}
-                </span>
-              )}
+              <label htmlFor={`task-${item.id}-${t.id}`} style={{ fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer' }}>{t.title}</label>
+              <span style={{ fontSize: 10, color: 'rgba(0,0,0,.62)' }}>
+                {where && `${where} · `}<DueDate task={t} />
+              </span>
             </span>
-          </label>
+          </div>
         )
       })}
       {open.length > shown.length && <p style={{ fontSize: 10, color: 'rgba(0,0,0,.55)', margin: '8px 0 0' }}>{open.length - shown.length} more</p>}
-      <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void add() }}
-        placeholder="+ Add task" aria-label="Add task"
-        style={{ ...bareInput, fontSize: 11.5, marginTop: 10 }} />
+      {box.range !== 'overdue' && (
+        <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void add() }}
+          placeholder="+ Add task" aria-label="Add task"
+          style={{ ...bareInput, fontSize: 11.5, marginTop: 10 }} />
+      )}
     </div>
   )
 }
@@ -368,6 +414,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   const [hovered, setHovered] = useState<number | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [picker, setPicker] = useState<Picker>(null)
+  const [listName, setListName] = useState('')
   const [canvasH, setCanvasH] = useState(600)
   const [heights, setHeights] = useState<Record<number, number>>({})
   const [deskW, setDeskW] = useState(0)
@@ -522,6 +569,10 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
       return !!p && isActive(p)
     }
     if (i.itemType === 'submission') return opps.some(o => String(o.id) === i.content)
+    if (i.itemType === 'tasks') {
+      const { projectId } = parseTaskBox(i.content)
+      if (projectId != null && !projects?.some(p => p.id === projectId)) return false
+    }
     return !i.practice || keep(i.practice)
   })
   const hiddenItems = (items ?? []).filter(i => i.hidden && (i.itemType === 'project' ? projects?.some(p => String(p.id) === i.content) : i.itemType === 'submission' ? opps.some(o => String(o.id) === i.content) : !i.practice || keep(i.practice)))
@@ -529,13 +580,23 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     switch (i.itemType) {
       case 'project': return projects?.find(p => String(p.id) === i.content)?.title ?? 'Project'
       case 'submission': return opps.find(o => String(o.id) === i.content)?.title ?? 'Submission'
-      case 'tasks': return 'Tasks'
+      case 'tasks': {
+        const box = parseTaskBox(i.content)
+        return box.name || projects?.find(p => p.id === box.projectId)?.title || 'Tasks'
+      }
       case 'comingup': return 'Coming up'
       case 'list': return parseList(i.content).title
       case 'image': return i.content || 'Image'
       case 'quote': return i.content ? `“${i.content.slice(0, 40)}${i.content.length > 40 ? '…' : ''}”` : 'Quote'
       default: return i.content ? i.content.slice(0, 40) + (i.content.length > 40 ? '…' : '') : 'Note'
     }
+  }
+  // The names of the named Tasks boxes, so other boxes can say where a task comes from.
+  const taskLists: Record<string, string> = {}
+  for (const i of items ?? []) {
+    if (i.itemType !== 'tasks') continue
+    const box = parseTaskBox(i.content)
+    if (box.list) taskLists[box.list] = box.name ?? ''
   }
   const [trayOpen, setTrayOpen] = useState(false)
   const [hintDone, setHintDone] = useState(() => {
@@ -699,7 +760,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         return p ? <ProjectBlock p={p} todos={todos} compact={narrow} onOpen={() => navigate(`/projects/${p.id}`)} practice={multi && mode === 'together' ? name(of.project(p)) : undefined} /> : null
       }
       case 'tasks':
-        return <TasksBlock item={item} todos={todos} projects={projects ?? []} deptId={deptId} practice={stamp} />
+        return <TasksBlock item={item} todos={todos} projects={projects ?? []} lists={taskLists} deptId={deptId} practice={stamp} />
       case 'list':
         return <ListBlock item={item} />
       case 'submission': {
@@ -799,8 +860,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   const toolButtons: Array<{ label: string; run: () => void }> = [
     { label: 'Project', run: () => setPicker('project') },
-    // The first Tasks box gathers every task; any more are blank lists of their own.
-    { label: 'Tasks', run: () => void (items?.some(i => i.itemType === 'tasks') ? addBlock('list', JSON.stringify({ title: 'Tasks', tasks: true, items: [] })) : addBlock('tasks', 'week')) },
+    { label: 'Tasks', run: () => setPicker('tasks') },
     { label: 'List', run: () => void addBlock('list', JSON.stringify({ title: 'List', items: [] })) },
     { label: 'Submission', run: () => setPicker('submission') },
     { label: 'Coming up', run: () => void addBlock('comingup') },
@@ -910,6 +970,27 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
           {offDesk.length === 0
             ? <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: 0 }}>Every active project is on the desk.</p>
             : offDesk.map(p => <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => void restoreProject(p)} />)}
+        </Modal>
+      )}
+
+      {picker === 'tasks' && (
+        <Modal title="Tasks" onClose={() => setPicker(null)}>
+          <PickRow title="All tasks" sub="Everything open" onClick={() => { setPicker(null); void addBlock('tasks', 'week') }} />
+          <form onSubmit={e => {
+            e.preventDefault()
+            const name = listName.trim()
+            if (!name) return
+            setPicker(null); setListName('')
+            void addBlock('tasks', JSON.stringify({ range: 'all', name, list: uid() }))
+          }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--wa-line)' }}>
+            <input value={listName} onChange={e => setListName(e.target.value)} placeholder="New list, like Studio admin" aria-label="List name"
+              style={{ ...bareInput, flex: 1, minWidth: 0, fontFamily: 'Recoleta, serif', fontSize: 15 }} />
+            <button type="submit" style={{ flexShrink: 0, background: 'var(--accent)', color: '#111111', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
+          </form>
+          {(projects ?? []).some(isActive) && <p style={{ ...smallLabel, margin: '18px 0 2px' }}>One project</p>}
+          {(projects ?? []).filter(isActive).map(p => (
+            <PickRow key={p.id} title={p.title} sub={p.projectType} onClick={() => { setPicker(null); void addBlock('tasks', JSON.stringify({ range: 'all', projectId: p.id })) }} />
+          ))}
         </Modal>
       )}
 

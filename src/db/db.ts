@@ -219,6 +219,7 @@ export interface Todo {
   departmentId?: number
   projectId?: number
   practice?: Activity // tasks without a project; missing = shown in every practice
+  taskList?: string // the named Tasks box on the desk it was added to
   title: string
   done: boolean
   kanbanStatus?: 'todo' | 'in-progress' | 'done'
