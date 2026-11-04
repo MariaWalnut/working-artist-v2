@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NewProjectForm } from '../NewProjectForm'
+import { linkWorksInProgress } from '../../lib/workProjects'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem, type EventEntry, type Opportunity, type Project, type Todo } from '../../db/db'
 import { isActive, isPlanned, projectDate, projectSubtitle } from '../../lib/projects'
@@ -562,6 +563,8 @@ export function Desk({ deptId }: { deptId: number }) {
       }
     })
   }, [items, narrow])
+
+  useEffect(() => { void linkWorksInProgress(deptId) }, [deptId])
 
   // Keep the desk in step with projects: new active ones get a card, deleted ones lose theirs.
   useEffect(() => {

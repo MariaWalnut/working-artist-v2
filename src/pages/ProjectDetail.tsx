@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Project, type Todo } from '../db/db'
+import { db, type Project, type Todo, type Work } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { DateFields } from '../components/DateFields'
@@ -274,6 +274,7 @@ function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const fromWorks = (useLocation().state as { from?: string } | null)?.from === 'works'
   const pid = Number(id)
   const dept = useActiveDept()
   const narrow = useNarrow()
@@ -357,6 +358,7 @@ export function ProjectDetail() {
   }
 
   async function deleteProject() {
+    if (work) await db.works.update(work.id!, { projectId: undefined, noProject: true } as Partial<Work>)
     await db.opportunities.filter(o => !!o.projectIds?.includes(pid)).modify(o => { o.projectIds = o.projectIds!.filter(x => x !== pid) })
     await db.projects.delete(pid)
     navigate('/projects', { replace: true })
@@ -430,8 +432,8 @@ export function ProjectDetail() {
         </div>
       )}
       <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '22px 18px' : '30px 36px' }}>
-        <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
-          ← On My Desk
+        <button onClick={() => navigate(fromWorks ? '/studio' : '/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
+          ← {fromWorks ? 'Works' : 'On My Desk'}
         </button>
 
         <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: narrow ? 30 : 38, lineHeight: 1.1, fontWeight: 400, margin: 0, color: 'var(--wa-ink)', textWrap: 'balance' }}>{project.title}</h1>

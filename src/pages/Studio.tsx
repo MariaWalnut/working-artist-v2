@@ -6,6 +6,7 @@ import { useActiveDept } from '../lib/useDept'
 import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Project, Work } from '../db/db'
 import { isActive, projectSubtitle } from '../lib/projects'
+import { linkWorksInProgress } from '../lib/workProjects'
 import { PracticeFilter, PracticeSelect } from '../components/Practice'
 import { FrameHeader } from '../components/FrameHeader'
 import { AddButton, BoxHeading, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
@@ -98,6 +99,8 @@ export function Studio() {
     .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
   const making = shown.filter(w => w.inProgress)
+  const makingCount = allWorks.filter(w => w.inProgress).length
+  useEffect(() => { if (dept?.id != null && makingCount > 0) void linkWorksInProgress(dept.id) }, [dept?.id, makingCount])
   // Projects on the desk count as work in progress too, until they have a work of their own.
   const allProjects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const ongoing = shelf ? [] : allProjects
@@ -130,7 +133,7 @@ export function Studio() {
 
   const typeLabel = (p: Project) => p.projectType === 'Books' || p.projectType === 'Publications' ? 'Book' : p.projectType
   const projectRow = (p: Project, i: number) => (
-    <button key={`p${p.id}`} data-tour-title={p.title} onClick={() => navigate(`/projects/${p.id}`)}
+    <button key={`p${p.id}`} data-tour-title={p.title} onClick={() => navigate(`/projects/${p.id}`, { state: { from: 'works' } })}
       style={{ ...rowStyle, borderTop: making.length > 0 || i > 0 ? '1px solid var(--wa-line)' : 'none', borderBottom: 'none' }}>
       <div style={{ width: 34, height: 42, borderRadius: 5, background: 'var(--wa-line)' }} />
       <div style={{ minWidth: 0 }}>
