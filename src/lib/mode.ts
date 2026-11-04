@@ -42,6 +42,10 @@ function readUserId(): string | null {
 export const demoField = readDemo()
 export const userId = demoField ? null : readUserId()
 
+// Career tips are tried out on one account before anyone else sees them. Local development shows them too.
+const TIPS_TESTER = 'f429069f-c114-4053-b821-0bbd066db0b3'
+export const tipsEnabled = import.meta.env.DEV || userId === TIPS_TESTER
+
 // The browser database for this studio. Each account and each demo has its own,
 // so they never mix on a shared computer.
 export const studioDbName = demoField ? `WorkingArtistDemo-${demoField}`

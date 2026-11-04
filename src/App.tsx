@@ -2,7 +2,7 @@ import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from '
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db/db'
-import { demoField, userId } from './lib/mode'
+import { demoField, tipsEnabled, userId } from './lib/mode'
 import { needsPassword } from './lib/supabase'
 import { demoOutdated, seedDemo } from './lib/demoSeed'
 import { AuthScreens } from './components/auth/AuthScreens'
@@ -13,6 +13,7 @@ import { Account } from './pages/Account'
 import { Onboarding } from './pages/Onboarding'
 import { ProjectDetail } from './pages/ProjectDetail'
 import { WorkDetail, LegacyBookRedirect } from './pages/WorkDetail'
+import { Tips } from './pages/Tips'
 import { AllEvents } from './pages/AllEvents'
 import { VisionBoard } from './pages/VisionBoard'
 import { WorldMap } from './pages/WorldMap'
@@ -110,6 +111,7 @@ function AppRoutes() {
       <Route path="/career" element={<Career />} />
       <Route path="/career/map" element={<WorldMap />} />
       <Route path="/career/recognition" element={<Press />} />
+      <Route path="/career/tips" element={tipsEnabled ? <Tips /> : <Navigate to="/career" replace />} />
       <Route path="/press" element={<Navigate to="/career/recognition" replace />} />
       <Route path="/account" element={<Account />} />
       <Route path="/demo/:field" element={<Navigate to="/projects" replace />} />
