@@ -194,6 +194,8 @@ export interface RightItem {
   location?: string // the publisher's city, for the map
   year?: number
   month?: number // 1–12, optional
+  contractFile?: string // data URL of the contract, a PDF
+  contractFileName?: string
   status: 'live' | 'sold' | 'pending'
   advance?: number
   royaltyRate?: number // percent

@@ -12,7 +12,8 @@ import { KIND_FIELDS, fieldDisplay, kindOf, shelfOf, type WorkKind } from '../li
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
-import { fileToDataUrl } from '../lib/images'
+import { fileToDataUrl, readRaw } from '../lib/images'
+import { ClippingViewer } from '../components/ClippingViewer'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
 const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile']
@@ -81,6 +82,9 @@ export function WorkDetail() {
   const [rightYear, setRightYear] = useState('')
   const [rightCity, setRightCity] = useState('')
   const [rightMonth, setRightMonth] = useState('')
+  const [rightFile, setRightFile] = useState<{ data: string; name: string } | null>(null)
+  const [viewingRightFile, setViewingRightFile] = useState(false)
+  const rightFileRef = useRef<HTMLInputElement>(null)
   const [editingRight, setEditingRight] = useState<string | null>(null)
   const [rightStatus, setRightStatus] = useState<RightItem['status']>('live')
   const [rightAdvance, setRightAdvance] = useState('')
@@ -186,13 +190,21 @@ export function WorkDetail() {
     await db.pressEntries.update(id, { workId: undefined })
   }
 
+  async function pickRightFile(file?: File) {
+    if (!file) return
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return window.alert('A contract has to be a PDF.')
+    if (file.size > 20 * 1024 * 1024) return window.alert('That file is over 20 MB. Try a smaller scan or export.')
+    const raw = await readRaw(file)
+    setRightFile({ data: raw.replace(/^data:[^;,]*/, 'data:application/pdf'), name: file.name })
+  }
+
   function closeRight() {
-    setRightLang(''); setRightPub(''); setRightYear(''); setRightMonth(''); setRightCity(''); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice('')
+    setRightLang(''); setRightPub(''); setRightYear(''); setRightMonth(''); setRightCity(''); setRightFile(null); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice('')
     setEditingRight(null); setAddingRight(false)
   }
 
   function editRight(r: RightItem) {
-    setRightLang(r.language); setRightPub(r.publisher ?? ''); setRightYear(r.year != null ? String(r.year) : ''); setRightMonth(r.month != null ? String(r.month) : ''); setRightCity(r.location ?? ''); setRightStatus(r.status)
+    setRightLang(r.language); setRightPub(r.publisher ?? ''); setRightYear(r.year != null ? String(r.year) : ''); setRightMonth(r.month != null ? String(r.month) : ''); setRightCity(r.location ?? ''); setRightFile(r.contractFile ? { data: r.contractFile, name: r.contractFileName ?? 'Contract.pdf' } : null); setRightStatus(r.status)
     setRightAdvance(r.advance != null ? String(r.advance) : ''); setRightRoyalty(r.royaltyRate != null ? String(r.royaltyRate) : '')
     setRightRun(r.printRun != null ? String(r.printRun) : ''); setRightPrice(r.price != null ? String(r.price) : '')
     setEditingRight(r.id); setAddingRight(true)
@@ -202,7 +214,7 @@ export function WorkDetail() {
     if (!rightLang.trim()) return
     const item: RightItem = {
       id: editingRight ?? uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined, month: rightYear && rightMonth ? Number(rightMonth) : undefined,
-      location: rightCity.trim() || undefined, status: rightStatus,
+      location: rightCity.trim() || undefined, status: rightStatus, contractFile: rightFile?.data, contractFileName: rightFile?.name,
       advance: parseAmount(rightAdvance), royaltyRate: parseAmount(rightRoyalty), printRun: parseAmount(rightRun), price: parseAmount(rightPrice),
     }
     await db.works.update(wid, { rights: editingRight ? rights.map(r => r.id === editingRight ? item : r) : [...rights, item] })
@@ -442,6 +454,14 @@ export function WorkDetail() {
                       <input value={rightRun} onChange={e => setRightRun(e.target.value)} placeholder="Print run" aria-label="Print run" inputMode="numeric" style={inp} />
                       <input value={rightPrice} onChange={e => setRightPrice(e.target.value)} placeholder="Price" aria-label="Price" inputMode="decimal" style={inp} />
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      {rightFile ? <>
+                        <button type="button" onClick={() => setViewingRightFile(true)} style={{ flex: 1, minWidth: 0, padding: 0, border: 'none', background: 'none', textAlign: 'left', fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', fontFamily: 'inherit', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><span style={{ borderBottom: '2px solid var(--accent)' }}>{rightFile.name}</span></button>
+                        <button type="button" onClick={() => setRightFile(null)} style={{ flexShrink: 0, padding: 0, border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
+                      </> : <button type="button" onClick={() => rightFileRef.current?.click()} style={addBtn}>+ Contract PDF</button>}
+                      <input ref={rightFileRef} type="file" accept="application/pdf,.pdf" hidden aria-label="Rights contract PDF" onChange={e => { void pickRightFile(e.target.files?.[0]); e.target.value = '' }} />
+                    </div>
+                    {viewingRightFile && rightFile && <ClippingViewer entry={{ title: w.title, outlet: `${rightLang} contract`, clipping: rightFile.data, clippingName: rightFile.name }} onClose={() => setViewingRightFile(false)} />}
                     <select value={rightStatus} onChange={e => setRightStatus(e.target.value as RightItem['status'])} style={{ ...inp, marginBottom: 8 }}>
                       {RIGHT_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                     </select>
@@ -456,7 +476,7 @@ export function WorkDetail() {
                   <button key={r.id} onClick={() => editRight(r)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 0', border: 'none', borderBottom: '1px solid var(--wa-line)', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div>
                       <div style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--wa-ink)' }}>{r.language}</div>
-                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.location, r.year && r.month ? new Date(r.year, r.month - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : r.year].filter(Boolean).join(' · ')}</div>
+                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.location, r.year && r.month ? new Date(r.year, r.month - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : r.year, r.contractFile ? 'Contract' : ''].filter(Boolean).join(' · ')}</div>
                       {(r.advance != null || r.royaltyRate != null || r.printRun != null || r.price != null) && (
                         <div style={{ fontSize: 10, color: 'var(--wa-text-2)', marginTop: 2 }}>
                           {[r.advance != null ? `Advance ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}
