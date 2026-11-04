@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
@@ -46,7 +46,7 @@ function center(i: BoardItem) { return { x: i.x + i.w / 2, y: i.y + i.h / 2 } }
 
 // Where the line from this item's centre towards (tx, ty) leaves the item, plus a small gap,
 // so a connector starts and ends at the edges and its arrowhead stays visible.
-function edgePoint(i: BoardItem, tx: number, ty: number, gap = 6) {
+function edgePoint(i: BoardItem, tx: number, ty: number, gap = 3) {
   const c = center(i)
   const dx = tx - c.x, dy = ty - c.y
   if (dx === 0 && dy === 0) return c
@@ -461,13 +461,24 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // The boxes as drawn, so arrows reach their real edges.
+  const [heights, setHeights] = useState<Record<number, number>>({})
+  useLayoutEffect(() => {
+    const seen: Record<number, number> = {}
+    document.querySelectorAll<HTMLElement>('[data-board-item]').forEach(el => { seen[Number(el.dataset.boardItem)] = el.offsetHeight })
+    if (Object.keys(seen).some(id => seen[Number(id)] !== heights[Number(id)])) setHeights(seen)
+  })
+
   // ── arrow rendering ────────────────────────────────────────────────────────
   function renderArrow(a: BoardItem) {
     let d: ArrowData
     try { d = JSON.parse(a.content) } catch { return null }
-    const from = items.find(i => i.id === d.fromId)
-    const to   = items.find(i => i.id === d.toId)
-    if (!from || !to) return null
+    const rawFrom = items.find(i => i.id === d.fromId)
+    const rawTo   = items.find(i => i.id === d.toId)
+    if (!rawFrom || !rawTo) return null
+    // Text boxes grow with their words, so the height drawn can differ from the height saved.
+    const from = { ...rawFrom, h: heights[rawFrom.id!] ?? rawFrom.h }
+    const to   = { ...rawTo, h: heights[rawTo.id!] ?? rawTo.h }
     const toC = center(to), fromC = center(from)
     const fc = edgePoint(from, toC.x, toC.y), tc = edgePoint(to, fromC.x, fromC.y)
     return (
@@ -623,7 +634,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
           const isEdit = editingId === item.id
 
           return (
-            <div key={item.id}
+            <div key={item.id} data-board-item={item.id}
               onPointerDown={e => onItemMouseDown(e, item)}
               onMouseEnter={() => setHoverId(item.id ?? null)}
               onMouseLeave={() => setHoverId(h => (h === item.id ? null : h))}
