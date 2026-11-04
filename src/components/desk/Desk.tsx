@@ -534,13 +534,15 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     const missing = projects.filter(p => p.id != null && isActive(p) && !onDesk.has(String(p.id)) && !hidden.has(p.id))
     const orphans = items.filter(i => i.itemType === 'project' && !projects.some(p => String(p.id) === i.content))
     if (missing.length === 0 && orphans.length === 0) return
-    void db.transaction('rw', db.boardItems, async () => {
+    void db.transaction('rw', db.boardItems, db.boards, async () => {
       if (orphans.length) await db.boardItems.bulkDelete(orphans.map(o => o.id!))
       const current = await db.boardItems.where('boardId').equals(deskId).toArray()
       const have = new Set(current.filter(i => i.itemType === 'project').map(i => i.content))
+      // Read again here: a card just removed may not have reached this render's copy of the board yet.
+      const removed = new Set((await db.boards.get(deskId))?.hiddenProjectIds ?? [])
       const slots = current.filter(i => !isLegacy(i)).map(slotOf)
       for (const p of missing) {
-        if (have.has(String(p.id))) continue
+        if (have.has(String(p.id)) || removed.has(p.id!)) continue
         const pos = findFreeSlot(slots, 1, 176)
         slots.push({ col: pos.col, span: 1, y: pos.y, h: 176 })
         await db.boardItems.add({ boardId: deskId, itemType: 'project', content: String(p.id), x: pos.col, y: pos.y, w: 1, h: 176, createdAt: Date.now() })
@@ -633,11 +635,14 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     if (item.id == null) return
     const t = item.itemType as DeskType
     if (CONFIRM_TYPES.includes(t) && item.content && !window.confirm('Remove this block?')) return
-    if (t === 'project' && board?.id != null) {
-      const hidden = [...new Set([...(board.hiddenProjectIds ?? []), Number(item.content)])]
-      await db.boards.update(board.id, { hiddenProjectIds: hidden } as Partial<Board>)
-    }
-    await db.boardItems.delete(item.id)
+    await db.transaction('rw', db.boardItems, db.boards, async () => {
+      if (t === 'project' && board?.id != null) {
+        const saved = await db.boards.get(board.id)
+        const hidden = [...new Set([...(saved?.hiddenProjectIds ?? []), Number(item.content)])]
+        await db.boards.update(board.id, { hiddenProjectIds: hidden } as Partial<Board>)
+      }
+      await db.boardItems.delete(item.id!)
+    })
     setHovered(null)
   }
 
