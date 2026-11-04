@@ -107,19 +107,19 @@ export function Studio() {
   const finished = shown.filter(w => !w.inProgress)
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
 
+  const rowStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }
+
   const workRow = (w: Work, i: number, all: Work[]) => {
     const sub = workSubtitle(w)
     return (
                   <button key={w.id} data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)}
-                    style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }}>
+                    style={{ ...rowStyle, borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none' }}>
                     <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, var(--wa-line) 0%, var(--wa-line) 100%)', overflow: 'hidden' }}>
                       {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.title}</p>
-                      <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {narrow ? [shelfOf(w), sub].filter(Boolean).join(' · ') : sub || ' '}
-                      </p>
+                      {(narrow || sub) && <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{narrow ? [shelfOf(w), sub].filter(Boolean).join(' · ') : sub}</p>}
                     </div>
                     {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{shelfOf(w)}</span>}
                     {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
@@ -128,15 +128,16 @@ export function Studio() {
     )
   }
 
+  const typeLabel = (p: Project) => p.projectType === 'Books' || p.projectType === 'Publications' ? 'Book' : p.projectType
   const projectRow = (p: Project, i: number) => (
     <button key={`p${p.id}`} data-tour-title={p.title} onClick={() => navigate(`/projects/${p.id}`)}
-      style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderTop: making.length > 0 || i > 0 ? '1px solid var(--wa-line)' : 'none', borderBottom: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', alignItems: 'center', columnGap: 12, fontFamily: 'inherit' }}>
+      style={{ ...rowStyle, borderTop: making.length > 0 || i > 0 ? '1px solid var(--wa-line)' : 'none', borderBottom: 'none' }}>
       <div style={{ width: 34, height: 42, borderRadius: 5, background: 'var(--wa-line)' }} />
       <div style={{ minWidth: 0 }}>
         <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</p>
-        <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(narrow ? [p.projectType, projectSubtitle(p)].filter(Boolean).join(' · ') : projectSubtitle(p)) || ' '}</p>
+        {(narrow || projectSubtitle(p)) && <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{narrow ? [typeLabel(p), projectSubtitle(p)].filter(Boolean).join(' · ') : projectSubtitle(p)}</p>}
       </div>
-      {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{p.projectType}</span>}
+      {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{typeLabel(p)}</span>}
       {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location ?? ''}</span>}
       <span />
     </button>
