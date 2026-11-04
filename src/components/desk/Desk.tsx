@@ -15,7 +15,8 @@ interface Slot { col: number; span: number; y: number; h: number }
 interface Box { left: number; top: number; width: number; height: number }
 interface Live extends Box { id: number; mode: DragMode }
 interface DragData extends Box { id: number; mode: DragMode; sx: number; sy: number; moved: boolean }
-interface ListData { title: string; items: Array<{ id: string; text: string; done: boolean }> }
+// `tasks` marks a list made as a Tasks box: its own tasks, in the yellow of the Tasks overview.
+interface ListData { title: string; items: Array<{ id: string; text: string; done: boolean }>; tasks?: boolean }
 
 // Desk blocks store their column in x (0 to 3) and their width in columns in w (1 to 4).
 const GRID = 24
@@ -79,7 +80,7 @@ function dueLabel(iso?: string): { text: string; overdue: boolean } | null {
 function parseList(content: string): ListData {
   try {
     const d = JSON.parse(content) as Partial<ListData>
-    return { title: d.title ?? 'List', items: Array.isArray(d.items) ? d.items : [] }
+    return { title: d.title ?? 'List', items: Array.isArray(d.items) ? d.items : [], tasks: d.tasks }
   } catch {
     return { title: 'List', items: [] }
   }
@@ -266,18 +267,18 @@ function ListBlock({ item }: { item: BoardItem }) {
         style={{ ...bareInput, fontFamily: 'Recoleta, serif', fontSize: 15, marginBottom: 6 }} />
       {data.items.map(it => (
         <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? 'var(--wa-muted)' : 'var(--wa-text)', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
+          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? (data.tasks ? 'rgba(0,0,0,.62)' : 'var(--wa-muted)') : 'var(--wa-text)', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
             <input type="checkbox" checked={it.done}
               onChange={() => void save({ ...data, items: data.items.map(x => x.id === it.id ? { ...x, done: !x.done } : x) })}
               style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: 0, flexShrink: 0 }} />
             {it.text}
           </label>
           <button aria-label={`Remove ${it.text}`} onClick={() => void save({ ...data, items: data.items.filter(x => x.id !== it.id) })}
-            style={{ ...plainBtn, fontSize: 12, color: 'var(--wa-muted)', padding: '2px 4px' }}>×</button>
+            style={{ ...plainBtn, fontSize: 12, color: data.tasks ? 'rgba(0,0,0,.62)' : 'var(--wa-muted)', padding: '2px 4px' }}>×</button>
         </div>
       ))}
       <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addItem() }}
-        placeholder="+ Add item" aria-label="Add item"
+        placeholder={data.tasks ? '+ Add task' : '+ Add item'} aria-label={data.tasks ? 'Add task' : 'Add item'}
         style={{ ...bareInput, fontSize: 11.5, marginTop: 8 }} />
     </div>
   )
@@ -722,7 +723,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   function renderBlock(item: BoardItem) {
     const t = item.itemType as DeskType
     const mine = live?.id === item.id ? live : null
-    const shell = blockShell(t)
+    const ownTasks = t === 'list' && parseList(item.content).tasks
+    const shell = ownTasks ? blockShell('tasks') : blockShell(t)
     const showRemove = (hovered === item.id || narrow) && !mine && editingId !== item.id
     const showHandle = !narrow && editingId !== item.id && ((hovered === item.id && !mine) || mine?.mode === 'resize')
     const imageHeight = mine ? mine.height : item.h
@@ -743,7 +745,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
         onPointerEnter={() => setHovered(item.id!)}
         onPointerLeave={() => setHovered(h => (h === item.id ? null : h))}
         onClick={narrow ? e => { if (!(e.target as HTMLElement).closest(INTERACTIVE)) onBlockClick(item) } : undefined}>
-        <div className={t === 'note' || t === 'tasks' ? 'wa-light' : undefined} style={{ ...shell, height: t === 'image' && !narrow ? imageHeight : undefined, boxShadow: mine ? '0 12px 32px rgba(0,0,0,.14)' : shell.boxShadow }}>
+        <div className={t === 'note' || t === 'tasks' || ownTasks ? 'wa-light' : undefined} style={{ ...shell, height: t === 'image' && !narrow ? imageHeight : undefined, boxShadow: mine ? '0 12px 32px rgba(0,0,0,.14)' : shell.boxShadow }}>
           {blockContent(item)}
         </div>
         {showRemove && (
@@ -797,7 +799,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
 
   const toolButtons: Array<{ label: string; run: () => void }> = [
     { label: 'Project', run: () => setPicker('project') },
-    { label: 'Tasks', run: () => void addBlock('tasks', 'week') },
+    // The first Tasks box gathers every task; any more are blank lists of their own.
+    { label: 'Tasks', run: () => void (items?.some(i => i.itemType === 'tasks') ? addBlock('list', JSON.stringify({ title: 'Tasks', tasks: true, items: [] })) : addBlock('tasks', 'week')) },
     { label: 'List', run: () => void addBlock('list', JSON.stringify({ title: 'List', items: [] })) },
     { label: 'Submission', run: () => setPicker('submission') },
     { label: 'Coming up', run: () => void addBlock('comingup') },
