@@ -252,7 +252,7 @@ export function Career() {
   const of = practiceOf(acts, allWorks)
   const projects = allProjects.filter(p => keep(of.project(p)))
   const works = allWorks.filter(w => keep(of.work(w)))
-  const events = allEvents.filter(e => keep(of.event(e)))
+  const events = allEvents.filter(e => of.eventAll(e).some(keep))
   const press = allPress.filter(p => keep(of.press(p)))
 
   const narrow = useNarrow()

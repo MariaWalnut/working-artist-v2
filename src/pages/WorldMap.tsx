@@ -111,7 +111,7 @@ export function WorldMapPanel() {
   const allEvents = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const of = practiceOf(acts, allWorks)
-  const events = allEvents.filter(e => keep(of.event(e)))
+  const events = allEvents.filter(e => of.eventAll(e).some(keep))
   const works = allWorks.filter(w => keep(of.work(w)))
 
   // Group by city

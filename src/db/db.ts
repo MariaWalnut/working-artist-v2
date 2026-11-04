@@ -138,6 +138,7 @@ export interface EventEntry {
   id?: number
   departmentId?: number
   practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
+  practices?: Activity[] // an event can belong to several; when set, this is the answer
   title: string
   type?: string // Reading, Exhibition, Book Fair, Talk, Performance, Screening, Award, Other
   location?: string

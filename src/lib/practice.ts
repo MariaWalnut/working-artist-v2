@@ -77,6 +77,8 @@ const own = (p: Activity | undefined, acts: Activity[]) => (p && acts.includes(p
 
 // Works the practice of each thing out. Events and press follow the first work they're linked to.
 export function practiceOf(acts: Activity[], works: Work[] = []) {
+  const event = (e: Pick<EventEntry, 'type' | 'workIds' | 'practice'>) =>
+    own(e.practice, acts) ?? workById(e.workIds?.[0]) ?? pick(BY_EVENT_TYPE[e.type ?? ''], acts)
   const work = (w: Pick<Work, 'kind' | 'practice'>) => own(w.practice, acts) ?? pick(BY_KIND[kindOf(w)], acts)
   const workById = (id?: number) => {
     const w = id == null ? undefined : works.find(x => x.id === id)
@@ -85,8 +87,12 @@ export function practiceOf(acts: Activity[], works: Work[] = []) {
   return {
     work,
     project: (p: Pick<Project, 'projectType' | 'practice'>) => own(p.practice, acts) ?? pick(BY_PROJECT_TYPE[p.projectType ?? ''], acts),
-    event: (e: Pick<EventEntry, 'type' | 'workIds' | 'practice'>) =>
-      own(e.practice, acts) ?? workById(e.workIds?.[0]) ?? pick(BY_EVENT_TYPE[e.type ?? ''], acts),
+    event,
+    // All the practices an event belongs to.
+    eventAll: (e: Pick<EventEntry, 'type' | 'workIds' | 'practice' | 'practices'>) => {
+      const chosen = (e.practices ?? []).filter(a => acts.includes(a))
+      return chosen.length ? chosen : [event(e)]
+    },
     opportunity: (o: Pick<Opportunity, 'opportunityType' | 'practice'>) => own(o.practice, acts) ?? pick(BY_OPP_TYPE[o.opportunityType ?? ''], acts),
     press: (p: Pick<PressEntry, 'workId' | 'practice'>) => own(p.practice, acts) ?? workById(p.workId) ?? pick(undefined, acts),
   }

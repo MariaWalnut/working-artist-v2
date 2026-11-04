@@ -64,6 +64,25 @@ export function PracticeFilter() {
   )
 }
 
+// For things that can belong to several practices at once. One always stays chosen. Only with several practices.
+export function PracticePicker({ value, onChange, style }: { value: Activity[]; onChange: (a: Activity[]) => void; style?: React.CSSProperties }) {
+  const { acts, multi, name } = usePractice()
+  if (!multi) return null
+  return (
+    <div role="group" aria-label="Practices" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, ...style }}>
+      {acts.map(a => {
+        const on = value.includes(a)
+        return (
+          <button key={a} type="button" aria-pressed={on} onClick={() => { if (!on) onChange([...value, a]); else if (value.length > 1) onChange(value.filter(x => x !== a)) }}
+            style={{ padding: '4px 11px', borderRadius: 999, border: on ? '1px solid transparent' : '1px solid var(--wa-line)', background: on ? 'var(--accent)' : 'transparent', color: on ? '#111111' : 'var(--wa-text)', fontSize: 12, fontWeight: on ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {name(a)}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // The practice a work, project, event, submission or press item belongs to. Only with several practices.
 export function PracticeSelect({ value, onChange, style, labelled }: { value: Activity; onChange: (a: Activity) => void; style?: React.CSSProperties; labelled?: boolean }) {
   const { acts, multi, name } = usePractice()

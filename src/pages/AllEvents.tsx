@@ -7,7 +7,7 @@ import { DateFields } from '../components/DateFields'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
 import { Hint } from '../components/Hint'
-import { PracticeSelect } from '../components/Practice'
+import { PracticePicker } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
 
@@ -51,7 +51,11 @@ function EventForm({ entry, works, allWorks, onDone }: {
 }) {
   const dept = useActiveDept()
   const { acts, start } = usePractice({ filter: true })
-  const [practice, setPractice] = useState<Activity | undefined>(entry ? entry.practice : start)
+  const [practices, setPractices] = useState<Activity[] | undefined>(() => {
+    if (entry?.practices?.length) return entry.practices
+    const one = entry ? entry.practice : start
+    return one ? [one] : undefined
+  })
   const [title, setTitle] = useState(entry?.title ?? '')
   const [type, setType] = useState(entry?.type ?? '')
   const [location, setLocation] = useState(entry?.location ?? '')
@@ -82,7 +86,8 @@ function EventForm({ entry, works, allWorks, onDone }: {
       notes: notes.trim() || undefined,
       goals: goals.trim() || undefined,
       workIds: workIds.length > 0 ? workIds : undefined,
-      practice,
+      practice: practices?.[0],
+      practices,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
     else await db.eventEntries.add(data)
@@ -110,7 +115,7 @@ function EventForm({ entry, works, allWorks, onDone }: {
           </select>
           <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City / Venue" style={{ ...inp, flex: 1 }} />
         </div>
-        <PracticeSelect value={practice ?? practiceOf(acts, allWorks).event({ type, workIds })} onChange={setPractice} style={{ ...inp, marginBottom: 14 }} />
+        <PracticePicker value={practices ?? [practiceOf(acts, allWorks).event({ type, workIds })]} onChange={setPractices} style={{ marginBottom: 14 }} />
 
         <DateFields label={showEnd ? 'Starts' : 'Date'} value={date} onChange={setDate} inp={inp}
           action={!showEnd && (
@@ -210,7 +215,7 @@ export function AllEvents() {
   const allEntries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const of = practiceOf(acts, allWorks)
-  const entries = allEntries.filter(e => keep(of.event(e)))
+  const entries = allEntries.filter(e => of.eventAll(e).some(keep))
   const works = allWorks.filter(w => keep(of.work(w)))
 
   const sorted = useMemo(() => [...entries].sort((a, b) => sortAsc

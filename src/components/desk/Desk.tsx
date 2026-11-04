@@ -467,7 +467,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
     return p ? keep(of.project(p)) : !t.practice || keep(t.practice)
   })
   const opps = (useLiveQuery(() => db.opportunities.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []).filter(o => keep(of.opportunity(o)))
-  const events = (useLiveQuery(() => db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []).filter(e => keep(of.event(e)))
+  const events = (useLiveQuery(() => db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []).filter(e => of.eventAll(e).some(keep))
 
   function slotOf(i: BoardItem): Slot {
     const el = canvasRef.current?.querySelector<HTMLElement>(`[data-block-id="${i.id}"]`)
