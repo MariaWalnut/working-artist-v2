@@ -51,6 +51,7 @@ export function workFromProject(p: Project): Omit<Work, 'id'> {
   return {
     departmentId: p.departmentId, practice: p.practice, projectId: p.id, title: p.title,
     kind: WORK_KIND[p.projectType ?? ''] ?? 'Other',
+    category: PROJECT_TYPES.includes(p.projectType ?? 'Other') ? undefined : p.projectType,
     year: year || new Date().getFullYear(), month: month || undefined, location: p.location,
     publisher: p.publisher, publishedDate: p.publishedDate, isbn: p.isbn,
     credits: [...new Set([p.author, p.illustrator, p.designer].filter(Boolean))].join(', ') || undefined,

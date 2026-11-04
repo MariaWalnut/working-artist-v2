@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Activity, type Work } from '../db/db'
+import type { Activity, Work } from '../db/db'
+import { useCustomCategories } from '../lib/categories'
 import { PRACTICE_CATEGORIES, usePractice } from '../lib/practice'
-import { useActiveDept } from '../lib/useDept'
 import { KIND_FIELDS, NUMERIC_FIELDS, WORK_KINDS, usesPublishedDate, type WorkField, type WorkKind } from '../lib/works'
 import { normalizeDate } from '../lib/eventDates'
 import { DateFields } from './DateFields'
@@ -73,15 +72,11 @@ async function lookupIsbn(isbn: string): Promise<IsbnResult | null> {
 
 const label: React.CSSProperties = { fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
-// A work's category: one of the practice's suggestions, one already in use, or anything typed.
+// A work's category: one of the practice's suggestions, one of the studio's own, or anything typed.
 export function CategoryField({ value, onChange, practice, style }: { value: string; onChange: (c: string) => void; practice?: Activity; style: React.CSSProperties }) {
-  const dept = useActiveDept()
   const { acts } = usePractice()
-  const used = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
-  const offered = [...new Set([
-    ...(practice ? [practice] : acts).flatMap(a => PRACTICE_CATEGORIES[a]),
-    ...used.map(w => w.category?.trim() ?? '').filter(Boolean),
-  ])]
+  const custom = useCustomCategories({ withSuggested: true })
+  const offered = [...new Set([...(practice ? [practice] : acts).flatMap(a => PRACTICE_CATEGORIES[a]), ...custom])]
   return (
     <div>
       <label>

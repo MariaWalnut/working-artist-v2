@@ -9,7 +9,8 @@ import { PeopleCard } from '../components/PeopleCard'
 import { ProjectMeetings } from '../components/ProjectMeetings'
 import { ProjectSubmissions } from '../components/ProjectSubmissions'
 import { useNarrow } from '../lib/useNarrow'
-import { PROJECT_STATUSES, PROJECT_TYPES, statusOf, workFromProject } from '../lib/projects'
+import { PROJECT_STATUSES, statusOf, workFromProject } from '../lib/projects'
+import { projectTypeOptions, useCustomCategories } from '../lib/categories'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
@@ -290,6 +291,7 @@ export function ProjectDetail() {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('')
   const [customType, setCustomType] = useState('')
+  const typeOptions = projectTypeOptions(useCustomCategories())
   const [status, setStatus] = useState('')
   const [notes, setNotes] = useState('')
   const [fields, setFields] = useState<Record<string, string>>({})
@@ -302,10 +304,10 @@ export function ProjectDetail() {
 
   function startEdit() {
     const pt = project!.projectType ?? 'Exhibition'
-    const knownType = PROJECT_TYPES.includes(pt) ? pt : 'Other'
+    const knownType = typeOptions.includes(pt) ? pt : 'Other'
     setTitle(project!.title)
     setType(knownType)
-    setCustomType(knownType === 'Other' ? pt : '')
+    setCustomType(knownType === 'Other' && pt !== 'Other' ? pt : '')
     setStatus(statusOf(project!))
     setNotes(project!.notes ?? '')
     setPractice(project!.practice)
@@ -392,7 +394,7 @@ export function ProjectDetail() {
             <Row>
               <Field label="Type">
                 <select value={type} onChange={e => { setType(e.target.value); setCustomType('') }} style={inp}>
-                  {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
+                  {typeOptions.map(t => <option key={t}>{t}</option>)}
                 </select>
               </Field>
               {type === 'Other' && (

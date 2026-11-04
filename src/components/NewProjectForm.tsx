@@ -4,7 +4,7 @@ import { db } from '../db/db'
 import type { Activity } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { practiceOf, usePractice } from '../lib/practice'
-import { PROJECT_TYPES } from '../lib/projects'
+import { projectTypeOptions, useCustomCategories } from '../lib/categories'
 import { PracticeSelect } from './Practice'
 
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '9px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', fontFamily: 'inherit' }
@@ -23,6 +23,7 @@ export function NewProjectForm({ onDone, status = 'Active', from }: { onDone: ()
   const [chosenType, setType] = useState<string | undefined>()
   const type = chosenType ?? FIRST_TYPE[start ?? acts[0]] ?? 'Exhibition'
   const [customType, setCustomType] = useState('')
+  const custom = useCustomCategories()
 
   async function save() {
     if (!title.trim()) return
@@ -37,7 +38,7 @@ export function NewProjectForm({ onDone, status = 'Active', from }: { onDone: ()
       <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" aria-label="Title" style={{ ...inp, fontFamily: 'Recoleta, serif', fontSize: 16 }} />
       <div style={{ display: 'flex', gap: 8 }}>
         <select value={type} onChange={e => { setType(e.target.value); setCustomType('') }} aria-label="Type" style={inp}>
-          {PROJECT_TYPES.map(t => <option key={t}>{t}</option>)}
+          {projectTypeOptions(custom).map(t => <option key={t}>{t}</option>)}
         </select>
         {multi && <PracticeSelect value={practice ?? practiceOf(acts).project({ projectType: type })} onChange={setPractice} style={inp} />}
       </div>
