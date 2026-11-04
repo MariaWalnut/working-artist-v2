@@ -9,7 +9,7 @@ import { PeopleCard } from '../components/PeopleCard'
 import { ProjectMeetings } from '../components/ProjectMeetings'
 import { ProjectSubmissions } from '../components/ProjectSubmissions'
 import { useNarrow } from '../lib/useNarrow'
-import { PROJECT_STATUSES, PROJECT_TYPES, workFromProject } from '../lib/projects'
+import { PROJECT_STATUSES, PROJECT_TYPES, statusOf, workFromProject } from '../lib/projects'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
@@ -303,7 +303,7 @@ export function ProjectDetail() {
     setTitle(project!.title)
     setType(knownType)
     setCustomType(knownType === 'Other' ? pt : '')
-    setStatus(project!.status ?? 'Active')
+    setStatus(statusOf(project!))
     setNotes(project!.notes ?? '')
     setPractice(project!.practice)
     setFields(projectFieldsFromRecord(project!))
@@ -450,7 +450,7 @@ export function ProjectDetail() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr)', gap: '6px 10px', fontSize: 12, alignItems: 'baseline' }}>
                     <span style={{ color: 'var(--wa-muted)' }}>Status</span>
-                    <select value={project.status ?? 'Active'} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
+                    <select value={statusOf(project)} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
                       style={{ justifySelf: 'start', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', fontFamily: 'inherit' }}>
                       {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
                     </select>

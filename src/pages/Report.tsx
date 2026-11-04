@@ -79,7 +79,7 @@ export function Report() {
   const books = works.filter(w => w.kind === 'Book').sort((a, b) => (b.publishedDate ?? String(b.year ?? '')).localeCompare(a.publishedDate ?? String(a.year ?? '')))
   const sold = works.flatMap(w => (w.rights ?? []).filter(r => r.status === 'sold'))
   const awards = press.filter(isAward).length
-  const live = projects.filter(p => p.status !== 'Completed' && p.status !== 'Cancelled' && p.status !== 'One day')
+  const live = projects.filter(p => p.status !== 'Completed' && p.status !== 'Cancelled' && p.status !== 'Planned' && p.status !== 'One day')
 
   const stats = [
     { label: books.length ? 'Books' : 'Works', value: books.length || works.length },

@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { NewProjectForm } from '../NewProjectForm'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Board, type BoardItem, type EventEntry, type Opportunity, type Project, type Todo } from '../../db/db'
-import { isActive, isOneDay, projectDate, projectSubtitle } from '../../lib/projects'
+import { isActive, isPlanned, projectDate, projectSubtitle } from '../../lib/projects'
 import { formatEventDate, isUpcoming } from '../../lib/eventDates'
 import { fileToDataUrl } from '../../lib/images'
 import { practiceOf, usePractice } from '../../lib/practice'
 import type { Activity } from '../../db/db'
 
 type DeskType = 'project' | 'tasks' | 'list' | 'submission' | 'comingup' | 'note' | 'quote' | 'image' | 'title'
-type Picker = 'project' | 'tasks' | 'submission' | 'earlier' | 'oneday' | null
+type Picker = 'project' | 'tasks' | 'submission' | 'earlier' | 'planned' | null
 type DragMode = 'move' | 'resize'
 interface Slot { col: number; span: number; y: number; h: number }
 interface Box { left: number; top: number; width: number; height: number }
@@ -652,10 +652,10 @@ export function Desk({ deptId }: { deptId: number }) {
   }
 
   const ordered = narrow ? [...visible].sort((a, b) => a.y - b.y || a.x - b.x) : visible
-  const pastProjects = (projects ?? []).filter(p => !isActive(p) && !isOneDay(p)).sort((a, b) => (b.dateEnd ?? '').localeCompare(a.dateEnd ?? ''))
-  const oneDay = (projects ?? []).filter(isOneDay).sort((a, b) => a.title.localeCompare(b.title))
+  const pastProjects = (projects ?? []).filter(p => !isActive(p) && !isPlanned(p)).sort((a, b) => (b.dateEnd ?? '').localeCompare(a.dateEnd ?? ''))
+  const planned = (projects ?? []).filter(isPlanned).sort((a, b) => a.title.localeCompare(b.title))
   // Open tasks of projects that have left the desk don't ask for attention here.
-  const resting = new Set((allProjects ?? []).filter(p => isOneDay(p) || p.status === 'Completed' || p.status === 'Cancelled').map(p => p.id))
+  const resting = new Set((allProjects ?? []).filter(p => isPlanned(p) || p.status === 'Completed' || p.status === 'Cancelled').map(p => p.id))
   const deskTodos = todos.filter(t => t.projectId == null || !resting.has(t.projectId))
   const projectIdsOnDesk = new Set((items ?? []).filter(i => i.itemType === 'project').map(i => i.content))
   const offDesk = (projects ?? []).filter(p => isActive(p) && !projectIdsOnDesk.has(String(p.id)))
@@ -905,12 +905,12 @@ export function Desk({ deptId }: { deptId: number }) {
       <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--wa-text-2)', background: 'var(--wa-fill)', borderRadius: 999, padding: '2px 6px' }}>{count}</span>
     </button>
   )
-  const earlierButton = <>{shelfButton('One day', oneDay.length, 'oneday')}{shelfButton('Earlier work', pastProjects.length, 'earlier')}</>
+  const earlierButton = <>{shelfButton('Planned', planned.length, 'planned')}{shelfButton('Earlier work', pastProjects.length, 'earlier')}</>
 
   async function bringBack(p: Project) {
     await db.projects.update(p.id!, { status: 'Active' })
     if (board?.id != null) await db.boards.update(board.id, { hiddenProjectIds: (board.hiddenProjectIds ?? []).filter(id => id !== p.id) } as Partial<Board>)
-    if (oneDay.length === 1) setPicker(null)
+    if (planned.length === 1) setPicker(null)
   }
 
   const toolButtons: Array<{ label: string; run: () => void }> = [
@@ -1059,9 +1059,9 @@ export function Desk({ deptId }: { deptId: number }) {
         </Modal>
       )}
 
-      {picker === 'oneday' && (
-        <Modal title="One day" onClose={() => setPicker(null)}>
-          {oneDay.map(p => (
+      {picker === 'planned' && (
+        <Modal title="Planned" onClose={() => setPicker(null)}>
+          {planned.map(p => (
             <div key={p.id} style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '11px 0', borderBottom: '1px solid var(--wa-line)' }}>
               <button onClick={() => navigate(`/projects/${p.id}`)} style={{ ...plainBtn, flex: 1, minWidth: 0, fontFamily: 'Recoleta, serif', fontSize: 15, color: 'var(--wa-ink)' }}>{p.title}</button>
               <button onClick={() => void bringBack(p)} style={{ ...plainBtn, flexShrink: 0, fontSize: 11, color: 'var(--wa-text-2)', borderBottom: '1px solid var(--accent)' }}>Bring back</button>
