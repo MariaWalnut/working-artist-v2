@@ -14,6 +14,7 @@ import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
 import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer } from '../components/ClippingViewer'
+import { linkWorksInProgress } from '../lib/workProjects'
 
 const RIGHT_STATUSES: Array<RightItem['status']> = ['live', 'sold', 'pending']
 const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', 'Profile']
@@ -226,6 +227,15 @@ export function WorkDetail() {
     closeRight()
   }
 
+  // A work still being made belongs on the desk as a project.
+  async function moveToProgress() {
+    await db.works.update(wid, { inProgress: true, noProject: undefined } as Partial<typeof w>)
+    if (fromProject?.id != null) await db.projects.update(fromProject.id, { status: 'Active' })
+    else if (w!.departmentId != null) await linkWorksInProgress(w!.departmentId)
+    const projectId = fromProject?.id ?? (await db.works.get(wid))?.projectId
+    navigate(projectId != null ? `/projects/${projectId}` : '/studio', { state: { from: 'works' } })
+  }
+
   async function deleteWork() {
     if (!window.confirm(`Delete "${w.title}"?`)) return
     await db.works.delete(wid)
@@ -348,6 +358,7 @@ export function WorkDetail() {
                     <span style={{ fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Notes</span>
                     <textarea ref={notesRef} value={notes} onChange={e => setNotes(e.target.value)} rows={5} style={{ ...inp, resize: 'vertical' }} />
                   </label>
+                  <button onClick={() => void moveToProgress()} style={{ ...quietBtn, alignSelf: 'flex-start', marginTop: 6 }}>Move to In progress</button>
                   <button onClick={() => void deleteWork()} style={{ ...quietBtn, alignSelf: 'flex-start', marginTop: 6 }}>Delete work…</button>
                 </div>
               ) : shownFields.length > 0 ? (

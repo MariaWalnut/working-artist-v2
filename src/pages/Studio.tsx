@@ -37,6 +37,7 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
   const [practice, setPractice] = useState<Activity | undefined>(start)
   const [fields, setFields] = useState(() => fieldsFromWork(null))
   const [image, setImage] = useState<string | undefined>()
+  const [stage, setStage] = useState<'completed' | 'progress'>('completed')
 
   async function save() {
     if (!title.trim()) return
@@ -49,7 +50,16 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20 }}>
       <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 28, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
-        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginBottom: 16 }}>Add work</p>
+        <div role="radiogroup" aria-label="Stage" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)', marginBottom: 16 }}>
+          {([['completed', 'Completed'], ['progress', 'In progress']] as const).map(([v, label]) => (
+            <button key={v} type="button" role="radio" aria-checked={stage === v} onClick={() => setStage(v)}
+              style={{ padding: '5px 14px', border: 'none', borderRadius: 6, background: stage === v ? 'var(--wa-surface)' : 'none', fontSize: 11, fontWeight: stage === v ? 600 : 400, color: stage === v ? 'var(--wa-ink)' : 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>{label}</button>
+          ))}
+        </div>
+        {stage === 'progress' ? <>
+          <NewProjectForm onDone={() => onDone()} />
+          <button onClick={() => onDone()} style={{ marginTop: 10, padding: 0, background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
+        </> : <>
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" aria-label="Title"
           onKeyDown={e => { if (e.key === 'Enter') void save() }}
           style={{ ...inp, marginBottom: 12, fontSize: 14 }} />
@@ -68,6 +78,7 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
           <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Add</button>
           <button onClick={() => onDone()} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
         </div>
+        </>}
       </div>
     </div>
   )
