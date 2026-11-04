@@ -80,6 +80,7 @@ export function WorkDetail() {
   const [rightPub, setRightPub] = useState('')
   const [rightYear, setRightYear] = useState('')
   const [rightCity, setRightCity] = useState('')
+  const [rightMonth, setRightMonth] = useState('')
   const [editingRight, setEditingRight] = useState<string | null>(null)
   const [rightStatus, setRightStatus] = useState<RightItem['status']>('live')
   const [rightAdvance, setRightAdvance] = useState('')
@@ -186,12 +187,12 @@ export function WorkDetail() {
   }
 
   function closeRight() {
-    setRightLang(''); setRightPub(''); setRightYear(''); setRightCity(''); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice('')
+    setRightLang(''); setRightPub(''); setRightYear(''); setRightMonth(''); setRightCity(''); setRightStatus('live'); setRightAdvance(''); setRightRoyalty(''); setRightRun(''); setRightPrice('')
     setEditingRight(null); setAddingRight(false)
   }
 
   function editRight(r: RightItem) {
-    setRightLang(r.language); setRightPub(r.publisher ?? ''); setRightYear(r.year != null ? String(r.year) : ''); setRightCity(r.location ?? ''); setRightStatus(r.status)
+    setRightLang(r.language); setRightPub(r.publisher ?? ''); setRightYear(r.year != null ? String(r.year) : ''); setRightMonth(r.month != null ? String(r.month) : ''); setRightCity(r.location ?? ''); setRightStatus(r.status)
     setRightAdvance(r.advance != null ? String(r.advance) : ''); setRightRoyalty(r.royaltyRate != null ? String(r.royaltyRate) : '')
     setRightRun(r.printRun != null ? String(r.printRun) : ''); setRightPrice(r.price != null ? String(r.price) : '')
     setEditingRight(r.id); setAddingRight(true)
@@ -200,7 +201,7 @@ export function WorkDetail() {
   async function saveRight() {
     if (!rightLang.trim()) return
     const item: RightItem = {
-      id: editingRight ?? uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined,
+      id: editingRight ?? uid(), language: rightLang.trim(), publisher: rightPub.trim() || undefined, year: rightYear ? Number(rightYear) : undefined, month: rightYear && rightMonth ? Number(rightMonth) : undefined,
       location: rightCity.trim() || undefined, status: rightStatus,
       advance: parseAmount(rightAdvance), royaltyRate: parseAmount(rightRoyalty), printRun: parseAmount(rightRun), price: parseAmount(rightPrice),
     }
@@ -426,9 +427,13 @@ export function WorkDetail() {
                 {addingRight && (
                   <div style={{ background: 'var(--wa-fill-2)', borderRadius: 10, padding: 12, marginBottom: 12 }}>
                     <input autoFocus value={rightLang} onChange={e => setRightLang(e.target.value)} placeholder="Language / edition" style={{ ...inp, marginBottom: 6 }} />
+                    <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder="Publisher" style={{ ...inp, marginBottom: 6 }} />
                     <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                      <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder="Publisher" style={{ ...inp, flex: 2 }} />
-                      <input type="number" value={rightYear} onChange={e => setRightYear(e.target.value)} placeholder="Year" style={{ ...inp, flex: 1 }} />
+                      <select value={rightMonth} onChange={e => setRightMonth(e.target.value)} aria-label="Month" style={{ ...inp, flex: 2, color: rightMonth ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
+                        <option value="">Month…</option>
+                        {Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2000, i).toLocaleDateString('en-GB', { month: 'long' })}</option>)}
+                      </select>
+                      <input type="number" value={rightYear} onChange={e => setRightYear(e.target.value)} placeholder="Year" aria-label="Year" style={{ ...inp, flex: 1 }} />
                     </div>
                     <input value={rightCity} onChange={e => setRightCity(e.target.value)} placeholder="Publisher's city, for the map" aria-label="Publisher's city" style={{ ...inp, marginBottom: 6 }} />
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
@@ -451,7 +456,7 @@ export function WorkDetail() {
                   <button key={r.id} onClick={() => editRight(r)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '8px 0', border: 'none', borderBottom: '1px solid var(--wa-line)', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div>
                       <div style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--wa-ink)' }}>{r.language}</div>
-                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.location, r.year].filter(Boolean).join(' · ')}</div>
+                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.location, r.year && r.month ? new Date(r.year, r.month - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : r.year].filter(Boolean).join(' · ')}</div>
                       {(r.advance != null || r.royaltyRate != null || r.printRun != null || r.price != null) && (
                         <div style={{ fontSize: 10, color: 'var(--wa-text-2)', marginTop: 2 }}>
                           {[r.advance != null ? `Advance ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}

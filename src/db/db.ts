@@ -193,6 +193,7 @@ export interface RightItem {
   publisher?: string
   location?: string // the publisher's city, for the map
   year?: number
+  month?: number // 1–12, optional
   status: 'live' | 'sold' | 'pending'
   advance?: number
   royaltyRate?: number // percent

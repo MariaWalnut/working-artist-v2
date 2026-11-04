@@ -84,7 +84,7 @@ export function WorldMapPanel() {
   for (const w of works) {
     for (const r of w.rights ?? []) {
       if (r.status !== 'sold' || !r.location?.trim()) continue
-      everything.push({ key: `r${w.id}-${r.id}`, place: r.location.trim(), title: `${w.title}, ${r.language}`, kind: 'Rights sold', date: r.year != null ? String(r.year) : undefined, year: r.year, to: `/studio/${w.id}` })
+      everything.push({ key: `r${w.id}-${r.id}`, place: r.location.trim(), title: `${w.title}, ${r.language}`, kind: 'Rights sold', date: r.year != null ? `${r.year}${r.month ? `-${String(r.month).padStart(2, '0')}` : ''}` : undefined, year: r.year, to: `/studio/${w.id}` })
     }
   }
   const years = [...new Set(everything.map(i => i.year).filter((y): y is number => y != null))].sort((a, b) => b - a)

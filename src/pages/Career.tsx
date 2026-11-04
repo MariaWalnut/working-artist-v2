@@ -329,7 +329,7 @@ export function Career() {
     for (const w of works) {
       for (const r of w.rights ?? []) {
         if (r.status !== 'sold' || !r.year) continue
-        all.push({ key: `rt${w.id}-${r.id}`, year: r.year, month: 0, kind: 'rights', label: `${w.title}, ${r.language}`, sub: r.publisher ?? 'Rights sold', dateLabel: String(r.year), open: `/studio/${w.id}` })
+        all.push({ key: `rt${w.id}-${r.id}`, year: r.year, month: r.month ?? 0, kind: 'rights', label: `${w.title}, ${r.language}`, sub: r.publisher ?? 'Rights sold', open: `/studio/${w.id}` })
       }
     }
   }
