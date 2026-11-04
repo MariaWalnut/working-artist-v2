@@ -254,9 +254,9 @@ export function WorkDetail() {
         {!editing && (
           <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--wa-text-2)' }}>
             {[w.subtitle, shelfOf(w), w.year].filter(Boolean).join(' · ')}{' · '}
-            <select value={w.inProgress ? 'In progress' : 'Finished'} aria-label="Stage" onChange={e => void db.works.update(wid, { inProgress: e.target.value === 'In progress' || undefined } as Partial<Work>)}
+            <select value={w.inProgress ? 'In progress' : 'Completed'} aria-label="Stage" onChange={e => void db.works.update(wid, { inProgress: e.target.value === 'In progress' || undefined } as Partial<Work>)}
               style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer' }}>
-              <option>In progress</option><option>Finished</option>
+              <option>In progress</option><option>Completed</option>
             </select>
             {fromProject && <> · <button onClick={() => navigate(`/projects/${fromProject.id}`)} style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', color: 'inherit', cursor: 'pointer', borderBottom: '1px solid var(--accent)' }}>Project</button></>}
           </p>

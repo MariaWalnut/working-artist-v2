@@ -166,11 +166,11 @@ export function Studio() {
             </FrameHeader>
             {shown.length + ongoing.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
             {inProgressCount > 0 && <><BoxHeading label="In progress" count={inProgressCount} />{making.map(workRow)}{ongoing.map(projectRow)}</>}
-            {inProgressCount === 0 && finished.length > 0 && <><BoxHeading label="Finished" count={finished.length} />{finished.map(workRow)}</>}
+            {inProgressCount === 0 && finished.length > 0 && <><BoxHeading label="Completed" count={finished.length} />{finished.map(workRow)}</>}
           </div>
           {inProgressCount > 0 && finished.length > 0 && (
             <div style={pageFrame}>
-              <BoxHeading label="Finished" count={finished.length} />
+              <BoxHeading label="Completed" count={finished.length} />
               {finished.map(workRow)}
             </div>
           )}

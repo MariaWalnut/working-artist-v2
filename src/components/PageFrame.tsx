@@ -19,7 +19,7 @@ export function FrameTitle({ children, count }: { children: ReactNode; count?: n
   )
 }
 
-// The heading of one box in a stacked list, like Upcoming or Finished.
+// The heading of one box in a stacked list, like Upcoming or Completed.
 export function BoxHeading({ label, count, onAdd }: { label: string; count: number; onAdd?: () => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '14px 20px 10px', borderBottom: count ? '1px solid var(--wa-line)' : 'none' }}>
