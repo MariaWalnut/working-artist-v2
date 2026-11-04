@@ -61,6 +61,11 @@ export function careerTips({ works, projects, opportunities, events, contacts, t
       const others = open.length - 1
       tips.push({ key: `project-contract-${p.id}`, group: 'Contracts', to: `/projects/${p.id}`, text: `${p.title}: contract not signed${others ? `, with ${others} other ${others === 1 ? 'task' : 'tasks'} open` : ''}.` })
     }
+    const sent = opportunities.filter(o => o.projectIds?.includes(p.id!))
+    const rejected = sent.filter(o => o.status === 'Rejected')
+    if (rejected.length > 0 && p.status === 'Active' && rejected.length === sent.length) {
+      tips.push({ key: `project-resubmit-${p.id}`, group: 'Submissions', to: `/projects/${p.id}`, text: `${p.title}: rejected, and not sent anywhere else yet.` })
+    }
     if (p.status === 'Active' && open.length === 0) tips.push({ key: `project-idle-${p.id}`, group: 'Records', to: `/projects/${p.id}`, text: `${p.title}: active, with no open tasks.` })
   }
 

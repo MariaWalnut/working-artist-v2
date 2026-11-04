@@ -61,6 +61,7 @@ export interface Opportunity {
   deadline?: string
   status: string
   notes?: string
+  projectIds?: number[] // the projects it was for; one proposal can cover several
 }
 
 export interface Work {

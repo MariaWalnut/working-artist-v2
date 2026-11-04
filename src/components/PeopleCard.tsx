@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Contact } from '../db/db'
 import { byName } from '../lib/contacts'
+import { PickPopover } from './PickPopover'
 
 type Kind = 'work' | 'event' | 'project'
 const FIELD = { work: 'workIds', event: 'eventIds', project: 'projectIds' } as const
 
 // The people linked to a work, event or project, with their lists on a project. Links are kept on the contact.
-export function PeopleCard({ kind, id, deptId, style, startAdding = false }: { kind: Kind; id: number; deptId?: number; style?: React.CSSProperties; startAdding?: boolean }) {
+export function PeopleCard({ kind, id, deptId, style, labelStyle, startAdding = false }: { kind: Kind; id: number; deptId?: number; style?: React.CSSProperties; labelStyle?: React.CSSProperties; startAdding?: boolean }) {
   const navigate = useNavigate()
   const field = FIELD[kind]
   const contacts = useLiveQuery(() => deptId == null ? [] : db.contacts.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
@@ -22,27 +23,28 @@ export function PeopleCard({ kind, id, deptId, style, startAdding = false }: { k
     return db.contacts.update(c.id!, { [field]: ids } as Partial<Contact>)
   }
 
+  const pick = (contactId: number) => {
+    const c = others.find(x => x.id === contactId)
+    if (c) void link(c, true)
+    setAdding(false)
+  }
+  async function create(name: string) {
+    await db.contacts.add({ departmentId: deptId!, name, [field]: [id], createdAt: Date.now() })
+    setAdding(false)
+  }
+
   const label: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: 0 }
   const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--wa-line)' }
 
   return (
     <div style={style}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <p style={label}>People</p>
-        {others.length > 0 && <button onClick={() => setAdding(v => !v)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add</button>}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <p style={labelStyle ?? label}>People</p>
+        <button onClick={() => setAdding(v => !v)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add</button>
+        {adding && <PickPopover items={others.map(c => ({ id: c.id!, label: c.name, sub: [c.role, c.organisation].filter(Boolean).join(', ') }))} placeholder="Search contacts" newLabel={t => `+ New contact: ${t}`}
+          onPick={pick} onCreate={deptId == null ? undefined : t => void create(t)} onClose={() => setAdding(false)} />}
       </div>
-      {adding && (
-        <select autoFocus defaultValue="" aria-label="Contact" onChange={e => { const c = others.find(x => x.id === Number(e.target.value)); if (c) { void link(c, true); setAdding(false) } }}
-          style={{ width: '100%', borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '8px 10px', fontSize: 12, marginBottom: 8, fontFamily: 'inherit' }}>
-          <option value="">Choose a contact…</option>
-          {others.map(c => <option key={c.id} value={c.id}>{[c.name, c.organisation].filter(Boolean).join(' · ')}</option>)}
-        </select>
-      )}
-      {linked.length === 0 && !adding && (
-        <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: '4px 0 0' }}>
-          {contacts.length === 0 ? <>No contacts yet. <button onClick={() => navigate('/contacts')} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', borderBottom: '1px solid var(--accent)' }}>Add someone</button></> : 'No one linked yet.'}
-        </p>
-      )}
+      {linked.length === 0 && <p style={{ fontSize: 12, color: 'var(--wa-muted)', margin: '4px 0 0' }}>No one linked yet.</p>}
       {linked.map(c => (
         <div key={c.id} style={row}>
           <button onClick={() => navigate(`/contacts?c=${c.id}`)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>

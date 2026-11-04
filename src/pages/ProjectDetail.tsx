@@ -5,6 +5,8 @@ import { db, type Project, type Todo } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
 import { PeopleCard } from '../components/PeopleCard'
+import { ProjectSubmissions } from '../components/ProjectSubmissions'
+import { useNarrow } from '../lib/useNarrow'
 import { PROJECT_TYPES } from './Projects'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
@@ -172,27 +174,41 @@ const COLUMNS: { key: KanbanCol; label: string }[] = [
   { key: 'done', label: 'Done' },
 ]
 
-function TaskCard({ task, onMove, onDelete }: { task: Todo; onMove: (s: KanbanCol) => void; onDelete: () => void }) {
-  const isDone = task.kanbanStatus === 'done'
-  const today = new Date().toISOString().slice(0, 10)
-  const overdue = task.dueDate && task.dueDate < today && !isDone
+const heading: React.CSSProperties = { fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 20, color: 'var(--wa-ink)', margin: 0 }
+const COLUMN_RULE: Record<KanbanCol, string> = { todo: 'var(--wa-ink)', 'in-progress': 'var(--accent)', done: 'var(--wa-line)' }
+
+function dueLabel(date: string) {
+  const [y, m, d] = date.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+
+function TaskCard({ task, narrow, onMove, onDelete, onDrag }: { task: Todo; narrow: boolean; onMove: (s: KanbanCol) => void; onDelete: () => void; onDrag: (id: number | null) => void }) {
+  const status = task.kanbanStatus ?? 'todo'
+  const isDone = status === 'done'
+  const today = new Date().toLocaleDateString('en-CA')
+  const overdue = !!task.dueDate && task.dueDate < today && !isDone
   return (
-    <div style={{ background: 'var(--wa-surface)', borderRadius: 10, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,.06)', position: 'relative' }}>
-      <p style={{ fontSize: 13, color: isDone ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: isDone ? 'line-through' : 'none', margin: 0 }}>{task.title}</p>
-      {task.dueDate && (
-        <p style={{ fontSize: 10, color: overdue ? '#E05252' : 'var(--wa-muted)', margin: '4px 0 0' }}>
-          {overdue ? 'Overdue' : 'Due'} {task.dueDate.slice(5).replace('-', '/')}
-        </p>
-      )}
-      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-        {COLUMNS.filter(c => c.key !== task.kanbanStatus).map(c => (
-          <button key={c.key} onClick={() => onMove(c.key)}
-            style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>
-            {c.label}
-          </button>
-        ))}
-        <button onClick={onDelete} style={{ marginLeft: 'auto', background: 'none', border: 'none', fontSize: 14, color: 'var(--wa-muted)', cursor: 'pointer', lineHeight: 1 }}>×</button>
+    <div draggable={!narrow} onDragStart={e => { e.dataTransfer.setData('text/plain', String(task.id)); e.dataTransfer.effectAllowed = 'move'; onDrag(task.id!) }} onDragEnd={() => onDrag(null)}
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'var(--wa-surface)', borderRadius: 12, padding: '14px 14px', boxShadow: '0 1px 3px rgba(0,0,0,.08)', cursor: narrow ? 'default' : 'grab' }}>
+      <button onClick={() => onMove(isDone ? 'todo' : 'done')} aria-label={isDone ? `Mark ${task.title} as not done` : `Mark ${task.title} as done`}
+        style={{ flexShrink: 0, width: 20, height: 20, marginTop: 1, padding: 0, borderRadius: '50%', border: isDone ? 'none' : '1.5px solid var(--wa-ink)', background: isDone ? 'var(--wa-ink)' : 'none', color: 'var(--wa-surface)', fontSize: 11, lineHeight: '20px', cursor: 'pointer' }}>
+        {isDone ? '✓' : ''}
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.35, color: isDone ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: isDone ? 'line-through' : 'none', margin: 0, textWrap: 'pretty' }}>{task.title}</p>
+        {task.dueDate && (
+          <span style={{ display: 'inline-block', marginTop: 6, fontSize: 11, fontWeight: overdue ? 600 : 400, color: overdue ? '#C53030' : 'var(--wa-text-2)', background: overdue ? 'rgba(197,48,48,.1)' : 'var(--wa-fill)', borderRadius: 999, padding: '2px 8px' }}>
+            {overdue ? 'Overdue' : 'Due'} {dueLabel(task.dueDate)}
+          </span>
+        )}
+        {narrow && (
+          <select value={status} aria-label={`Move ${task.title}`} onChange={e => onMove(e.target.value as KanbanCol)}
+            style={{ display: 'block', marginTop: 8, border: 'none', borderRadius: 999, background: 'var(--wa-fill)', padding: '4px 8px', fontSize: 11, color: 'var(--wa-text-2)', fontFamily: 'inherit' }}>
+            {COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        )}
       </div>
+      <button onClick={onDelete} aria-label={`Delete ${task.title}`} style={{ flexShrink: 0, background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--wa-muted)', cursor: 'pointer', lineHeight: 1 }}>×</button>
     </div>
   )
 }
@@ -221,9 +237,13 @@ function AddTaskInline({ projectId, deptId, col, onDone }: { projectId: number; 
 }
 
 function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number }) {
+  const narrow = useNarrow()
   const [addingIn, setAddingIn] = useState<KanbanCol | null>(null)
+  const [dragging, setDragging] = useState<number | null>(null)
+  const [over, setOver] = useState<KanbanCol | null>(null)
   const tasks = useLiveQuery(() => db.todos.where('projectId').equals(projectId).toArray(), [projectId]) ?? []
   const byCol = (c: KanbanCol) => tasks.filter(t => (t.kanbanStatus ?? 'todo') === c)
+  const done = byCol('done').length
 
   async function moveTask(task: Todo, s: KanbanCol) {
     if (task.id == null) return
@@ -233,29 +253,49 @@ function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number
     if (task.id == null) return
     await db.todos.delete(task.id)
   }
+  function drop(col: KanbanCol) {
+    const task = tasks.find(t => t.id === dragging)
+    if (task && (task.kanbanStatus ?? 'todo') !== col) void moveTask(task, col)
+    setDragging(null)
+    setOver(null)
+  }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-      {COLUMNS.map(col => (
-        <div key={col.key}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{col.label}</span>
-            <span style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{byCol(col.key).length}</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: 'var(--wa-fill-2)', borderRadius: 12, padding: 8, minHeight: 60 }}>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+        <h2 style={heading}>Tasks</h2>
+        {tasks.length > 0 && <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>{done} of {tasks.length} done</span>}
+      </div>
+      {tasks.length > 0 && (
+        <div role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={tasks.length} aria-label="Tasks done" style={{ height: 8, borderRadius: 999, background: 'var(--wa-fill)', overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ width: `${done / tasks.length * 100}%`, height: '100%', borderRadius: 999, background: 'var(--accent)' }} />
+        </div>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))', gap: 12, alignItems: 'stretch' }}>
+        {COLUMNS.map(col => (
+          <div key={col.key} onDragOver={e => { if (dragging == null) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOver(col.key) }}
+            onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(o => o === col.key ? null : o) }}
+            onDrop={e => { e.preventDefault(); drop(col.key) }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: narrow ? undefined : 220, borderRadius: 14, borderTop: `4px solid ${COLUMN_RULE[col.key]}`, padding: '12px 12px 10px', background: over === col.key ? 'var(--wa-fill)' : 'var(--wa-fill-2)', outline: over === col.key ? '2px dashed var(--wa-ink)' : 'none', outlineOffset: -2 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '0 2px 4px' }}>
+              <span style={{ fontFamily: 'Recoleta, serif', fontSize: 17, color: 'var(--wa-ink)' }}>{col.label}</span>
+              <span style={{ fontFamily: 'Recoleta, serif', fontSize: 17, color: 'var(--wa-muted)' }}>{byCol(col.key).length}</span>
+            </div>
             {byCol(col.key).map(task => (
-              <TaskCard key={task.id} task={task} onMove={s => void moveTask(task, s)} onDelete={() => void deleteTask(task)} />
+              <TaskCard key={task.id} task={task} narrow={narrow} onMove={s => void moveTask(task, s)} onDelete={() => void deleteTask(task)} onDrag={setDragging} />
             ))}
             {addingIn === col.key && (
               <AddTaskInline projectId={projectId} deptId={deptId} col={col.key} onDone={() => setAddingIn(null)} />
             )}
-            <button onClick={() => setAddingIn(col.key)}
-              style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: '6px 0', textAlign: 'left' }}>
-              + Add task
-            </button>
+            {col.key !== 'done' && addingIn !== col.key && (
+              <button onClick={() => setAddingIn(col.key)}
+                style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', padding: '6px 2px', textAlign: 'left', fontFamily: 'inherit' }}>
+                + Add task
+              </button>
+            )}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
@@ -265,6 +305,7 @@ export function ProjectDetail() {
   const navigate = useNavigate()
   const pid = Number(id)
   const dept = useActiveDept()
+  const narrow = useNarrow()
 
   const project = useLiveQuery(() => db.projects.get(pid), [pid])
   const { acts, multi, mode, name } = usePractice()
@@ -324,13 +365,14 @@ export function ProjectDetail() {
   }
 
   async function deleteProject() {
+    await db.opportunities.filter(o => !!o.projectIds?.includes(pid)).modify(o => { o.projectIds = o.projectIds!.filter(x => x !== pid) })
     await db.projects.delete(pid)
     navigate('/projects', { replace: true })
   }
 
   return (
     <Shell>
-      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '28px 32px' }}>
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '22px 18px' : '30px 36px' }}>
         <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
           ← On My Desk
         </button>
@@ -372,14 +414,21 @@ export function ProjectDetail() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => void saveEdit()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-              <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { setEditing(false); setConfirmDelete(false) }} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+                {confirmDelete ? <>
+                  <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>Delete this project?</span>
+                  <button onClick={() => void deleteProject()} style={{ background: '#C53030', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete</button>
+                  <button onClick={() => setConfirmDelete(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Keep</button>
+                </> : <button onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Delete project</button>}
+              </span>
             </div>
           </div>
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
               <div>
-                <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: 28, fontWeight: 400, margin: '0 0 4px', color: 'var(--wa-ink)' }}>{project.title}</h1>
+                <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: narrow ? 30 : 38, lineHeight: 1.1, fontWeight: 400, margin: '0 0 8px', color: 'var(--wa-ink)', textWrap: 'balance' }}>{project.title}</h1>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   {project.projectType && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{project.projectType}</span>}
                   {multi && mode === 'together' && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--wa-text-2)' }}>{name(practiceOf(acts).project(project))}</span>}
@@ -391,32 +440,20 @@ export function ProjectDetail() {
 
             <ProjectMeta p={project} />
 
-            {project.notes ? (
-              <p style={{ fontSize: 14, color: 'var(--wa-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: '0 0 28px' }}>{project.notes}</p>
-            ) : (
-              <p style={{ fontSize: 13, color: 'var(--wa-muted)', fontStyle: 'italic', margin: '0 0 28px' }}>No notes yet. <button onClick={startEdit} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, fontStyle: 'italic' }}>Add one →</button></p>
-            )}
-
-            {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} style={{ maxWidth: 520, marginBottom: 32 }} />}
-
-            {project.id != null && (
-              <div style={{ marginBottom: 32 }}>
-                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 14px' }}>Tasks</p>
-                <KanbanBoard projectId={project.id} deptId={dept?.id} />
-              </div>
-            )}
-
-            <div style={{ borderTop: '1px solid var(--wa-line)', paddingTop: 20 }}>
-              {!confirmDelete ? (
-                <button onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 10, padding: '8px 14px', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer' }}>Delete project…</button>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>Delete this project?</span>
-                  <button onClick={() => void deleteProject()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete</button>
-                  <button onClick={() => setConfirmDelete(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
+            <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 1.5fr) minmax(0, 1fr)', gap: narrow ? 28 : 40, marginBottom: 36, alignItems: 'start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 28, minWidth: 0 }}>
+                <div>
+                  <h2 style={{ ...heading, marginBottom: 8 }}>Notes</h2>
+                  {project.notes
+                    ? <p style={{ fontSize: 14, color: 'var(--wa-text)', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: 0 }}>{project.notes}</p>
+                    : <button onClick={startEdit} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add notes</button>}
                 </div>
-              )}
+                {project.id != null && <ProjectSubmissions projectId={project.id} deptId={dept?.id} labelStyle={heading} />}
+              </div>
+              {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} />}
             </div>
+
+            {project.id != null && <KanbanBoard projectId={project.id} deptId={dept?.id} />}
           </>
         )}
       </div>

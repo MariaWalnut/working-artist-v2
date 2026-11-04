@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Opportunity } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
@@ -10,7 +11,8 @@ import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
 
 const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Press', 'Commission']
-const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Closed']
+export const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Rejected', 'Closed']
+const FINISHED = ['Won', 'Rejected', 'Closed']
 
 const BADGE: Record<string, string> = {
   Shortlisted: 'bg-[var(--accent)] text-[#111111]',
@@ -18,6 +20,7 @@ const BADGE: Record<string, string> = {
   Applied:     'bg-[var(--wa-fill)] text-[var(--wa-text-2)]',
   Active:      'bg-[var(--wa-fill)] text-[var(--wa-ink)]',
   Draft:       'text-[var(--wa-muted)]',
+  Rejected:    'bg-[var(--wa-fill)] text-[var(--wa-muted)]',
   Closed:      'bg-[var(--wa-fill)] text-[var(--wa-muted)]',
 }
 
@@ -39,10 +42,12 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
   const [status, setStatus] = useState(opp?.status ?? 'Active')
   const [deadline, setDeadline] = useState(opp?.deadline ?? '')
   const [notes, setNotes] = useState(opp?.notes ?? '')
+  const [projectIds, setProjectIds] = useState<number[]>(opp?.projectIds ?? [])
+  const projects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
 
   async function save() {
     if (!title.trim()) return
-    const data = { departmentId: dept?.id, title: title.trim(), opportunityType: type, organisation: org, status, deadline: deadline || undefined, notes, practice }
+    const data = { departmentId: dept?.id, title: title.trim(), opportunityType: type, organisation: org, status, deadline: deadline || undefined, notes, practice, projectIds: projectIds.length ? projectIds : undefined }
     if (opp?.id != null) await db.opportunities.update(opp.id, data)
     else await db.opportunities.add(data)
     onDone()
@@ -63,7 +68,21 @@ function OppForm({ opp, onDone }: { opp: Opportunity | null; onDone: () => void 
         <PracticeSelect value={practice ?? practiceOf(acts).opportunity({ opportunityType: type })} onChange={setPractice} style={{ ...inp, marginBottom: 10 }} />
         <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} style={{ ...inp, marginBottom: 10 }} />
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes" rows={3}
-          style={{ ...inp, resize: 'none', marginBottom: 16 }} />
+          style={{ ...inp, resize: 'none', marginBottom: projects.length ? 12 : 16 }} />
+        {projects.length > 0 && <>
+          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 6px' }}>Projects</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto', marginBottom: 16 }}>
+            {projects.map(p => {
+              const on = projectIds.includes(p.id!)
+              return (
+                <button key={p.id} type="button" onClick={() => setProjectIds(on ? projectIds.filter(x => x !== p.id) : [...projectIds, p.id!])}
+                  style={{ padding: '4px 11px', borderRadius: 999, border: on ? '1px solid transparent' : '1px solid var(--wa-line)', background: on ? 'var(--accent)' : 'transparent', color: on ? '#111111' : 'var(--wa-text)', fontSize: 11, fontWeight: on ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {p.title}
+                </button>
+              )
+            })}
+          </div>
+        </>}
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '8px 16px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>{opp ? 'Save' : 'Add'}</button>
           <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
@@ -170,18 +189,29 @@ export function Opportunities() {
 
   const allOpps = useLiveQuery(() => dept?.id == null ? [] : db.opportunities.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const opps = allOpps.filter(o => keep(practiceOf(acts).opportunity(o)))
+  const projectTitles = new Map((useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []).map(p => [p.id!, p.title]))
+  const forProjects = (o: Opportunity) => (o.projectIds ?? []).map(id => projectTitles.get(id)).filter(Boolean)
+
+  // A link from a project opens that submission (?o=).
+  const [params, setParams] = useSearchParams()
+  const oParam = params.get('o')
+  useEffect(() => {
+    if (!oParam) return
+    const o = allOpps.find(x => x.id === Number(oParam))
+    if (o) { setEditing(o); setParams({}, { replace: true }) }
+  }, [oParam, allOpps.length])
 
   const filtered = opps.filter(o => {
     if (typeFilter && o.opportunityType !== typeFilter) return false
-    if (statusFilter === 'Active') return !['Won', 'Closed'].includes(o.status)
+    if (statusFilter === 'Active') return !FINISHED.includes(o.status)
     if (statusFilter !== 'All') return o.status === statusFilter
     return true
   }).sort((a, b) => (a.deadline ?? '9999').localeCompare(b.deadline ?? '9999'))
 
-  const activeCount = opps.filter(o => !['Won', 'Closed'].includes(o.status)).length
+  const activeCount = opps.filter(o => !FINISHED.includes(o.status)).length
   const wonCount = opps.filter(o => o.status === 'Won').length
   const shortCount = opps.filter(o => o.status === 'Shortlisted').length
-  const closedCount = opps.filter(o => o.status === 'Closed').length
+  const closedCount = opps.filter(o => o.status === 'Closed' || o.status === 'Rejected').length
 
   const sidePanel: React.CSSProperties = { background: 'var(--wa-surface)', borderRadius: 20, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 2 }
   const sectionLabel: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 8px 8px' }
@@ -206,7 +236,7 @@ export function Opportunities() {
           {narrow ? <>
             {/* Filters as rows of chips that scroll sideways */}
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              {['Active', 'Draft', 'Applied', 'Shortlisted', 'All'].map(s => <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
+              {['Active', 'Draft', 'Applied', 'Shortlisted', 'Rejected', 'All'].map(s => <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
             </div>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
               <FilterChip label="All types" active={typeFilter === null} onClick={() => setTypeFilter(null)} />
@@ -223,7 +253,7 @@ export function Opportunities() {
           {/* Status */}
           <div style={sidePanel}>
             <p style={sectionLabel}>Status</p>
-            {['Active', 'Draft', 'Applied', 'Shortlisted', 'All'].map(s => <FilterItem key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
+            {['Active', 'Draft', 'Applied', 'Shortlisted', 'Rejected', 'All'].map(s => <FilterItem key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
           </div>
           </>}
 
@@ -277,7 +307,7 @@ export function Opportunities() {
               <div key={o.id} onClick={() => setEditing(o)} style={{ ...rowStyle, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 14, fontWeight: 500, color: isDraft ? 'var(--wa-text-2)' : 'var(--wa-ink)', margin: '0 0 3px' }}>{o.title}</p>
-                  <p style={{ fontSize: 11, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{[o.opportunityType, o.organisation].filter(Boolean).join(' · ')}</p>
+                  <p style={{ fontSize: 11, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{[o.opportunityType, o.organisation, ...forProjects(o)].filter(Boolean).join(' · ')}</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
                   <span className={badge(o.status)}>{o.status}</span>
@@ -289,7 +319,7 @@ export function Opportunities() {
               <div key={o.id} onClick={() => setEditing(o)} style={{ ...rowStyle, display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', alignItems: 'center' }}>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? 'var(--wa-text-2)' : 'var(--wa-ink)', margin: '0 0 2px' }}>{o.title}</p>
-                  {o.organisation && <p style={{ fontSize: 10, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{o.organisation}</p>}
+                  {(o.organisation || forProjects(o).length > 0) && <p style={{ fontSize: 10, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{[o.organisation, ...forProjects(o)].filter(Boolean).join(' · ')}</p>}
                 </div>
                 <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-text-2)' }}>{o.opportunityType ?? '—'}</span>
                 {deadlineCell}

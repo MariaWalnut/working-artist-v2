@@ -613,7 +613,7 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
   const projectIdsOnDesk = new Set((items ?? []).filter(i => i.itemType === 'project').map(i => i.content))
   const offDesk = (projects ?? []).filter(p => isActive(p) && !projectIdsOnDesk.has(String(p.id)))
   const subIdsOnDesk = new Set((items ?? []).filter(i => i.itemType === 'submission').map(i => i.content))
-  const openSubs = opps.filter(o => !['Won', 'Closed'].includes(o.status) && !subIdsOnDesk.has(String(o.id)))
+  const openSubs = opps.filter(o => !['Won', 'Rejected', 'Closed'].includes(o.status) && !subIdsOnDesk.has(String(o.id)))
 
   async function addBlock(type: DeskType, content = '', extra: Partial<BoardItem> = {}) {
     if (board?.id == null || !items) return
