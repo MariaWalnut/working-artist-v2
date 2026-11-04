@@ -27,6 +27,8 @@ const NARROW = '(max-width: 900px)'
 const INTERACTIVE = 'input,textarea,button,a,label,select,[data-nodrag]'
 const TEXT_TYPES: DeskType[] = ['note', 'quote', 'title']
 const CONFIRM_TYPES: DeskType[] = ['list', 'note', 'quote', 'image', 'title']
+// These boxes only show something kept elsewhere, so removing one loses nothing.
+const LINKED_TYPES: DeskType[] = ['project', 'submission', 'tasks', 'comingup']
 
 const SPAN: Record<DeskType, { span: number; h: number }> = {
   project: { span: 1, h: 176 },
@@ -815,12 +817,10 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
               style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8s2.2-4.2 6-4.2S14 8 14 8s-2.2 4.2-6 4.2S2 8 2 8z" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinejoin="round" /><circle cx="8" cy="8" r="1.8" stroke="var(--wa-muted)" strokeWidth="1.4" /><path d="M3 13L13 3" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinecap="round" /></svg>
             </button>
-            {CONFIRM_TYPES.includes(t) && (
-              <button aria-label="Delete this box" title="Delete" onClick={() => void removeBlock(item)}
-                style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-                <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinecap="round" /></svg>
-              </button>
-            )}
+            <button aria-label={LINKED_TYPES.includes(t) ? 'Remove this box from the desk' : 'Delete this box'} title={LINKED_TYPES.includes(t) ? 'Remove from desk' : 'Delete'} onClick={() => void removeBlock(item)}
+              style={{ width: narrow ? 22 : 24, height: narrow ? 22 : 24, borderRadius: 999, background: 'var(--wa-surface)', border: '1px solid var(--wa-line)', boxShadow: narrow ? 'none' : '0 1px 4px rgba(0,0,0,.10)', opacity: narrow ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+              <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7" stroke="var(--wa-muted)" strokeWidth="1.4" strokeLinecap="round" /></svg>
+            </button>
           </div>
         )}
         {showHandle && (
@@ -887,6 +887,8 @@ export function Desk({ deptId, onNewProject }: { deptId: number; onNewProject: (
               {hiddenItems.map(i => (
                 <div key={i.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderTop: '1px solid var(--wa-line)' }}>
                   <span style={{ fontSize: 13, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{labelOf(i)}</span>
+                  <button onClick={() => { void removeBlock(i); if (hiddenItems.length === 1) setTrayOpen(false) }}
+                    style={{ flexShrink: 0, marginLeft: 'auto', padding: 0, border: 'none', background: 'none', color: 'var(--wa-muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>{LINKED_TYPES.includes(i.itemType as DeskType) ? 'Remove' : 'Delete'}</button>
                   <button onClick={() => { void setHidden(i, false); if (hiddenItems.length === 1) setTrayOpen(false) }}
                     style={{ flexShrink: 0, minHeight: 30, padding: '0 12px', border: 'none', borderRadius: 999, background: 'var(--wa-black)', color: '#FFFFFF', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Show</button>
                 </div>
