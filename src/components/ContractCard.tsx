@@ -49,6 +49,7 @@ function fromDraft(d: Draft): BookContract {
   return out as BookContract
 }
 
+const addBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }
 const quiet: React.CSSProperties = { flexShrink: 0, padding: 0, border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', fontFamily: 'inherit' }
 const label: React.CSSProperties = { fontSize: 9, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 4, display: 'block' }
 
@@ -102,6 +103,8 @@ export function ContractCard({ work }: { work: Work }) {
     ['Author copies', c.authorCopies != null ? count(c.authorCopies) : ''],
   ]
   const shown = rows.filter(([, v]) => v)
+  const hasTerms = shown.length > 0 || !!c.notes
+  const openTerms = () => { setDraft(toDraft(c)); setEditing(true) }
 
   const inp: React.CSSProperties = { borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '7px 10px', fontSize: 12, color: 'var(--wa-ink)', outline: 'none', width: '100%', boxSizing: 'border-box' }
   const field = (k: keyof BookContract, text: string, placeholder?: string, numeric = false) => (
@@ -128,12 +131,7 @@ export function ContractCard({ work }: { work: Work }) {
             <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
             <button onClick={() => void save()} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 12px', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Save</button>
           </div>
-        ) : (
-          <button onClick={() => { setDraft(toDraft(c)); setEditing(true) }}
-            style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>
-            {shown.length ? 'Edit' : '+ Add'}
-          </button>
-        )}
+        ) : hasTerms && <button onClick={openTerms} style={addBtn}>Edit</button>}
       </div>
 
       {editing ? (
@@ -161,8 +159,8 @@ export function ContractCard({ work }: { work: Work }) {
             <textarea value={draft.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Option on next book, reversion clause, ebook and audio terms…" style={{ ...inp, resize: 'vertical' }} />
           </label>
         </div>
-      ) : shown.length === 0 && !c.notes ? (
-        <p style={{ fontSize: 12, color: 'var(--wa-muted)', fontStyle: 'italic', margin: 0 }}>No contract terms yet</p>
+      ) : !hasTerms ? (
+        <button onClick={openTerms} style={addBtn}>+ Add terms</button>
       ) : (
         <>
           {shown.map(([k, v]) => (
@@ -189,7 +187,7 @@ export function ContractCard({ work }: { work: Work }) {
               <button onClick={() => setRemoving(true)} style={quiet}>Remove</button>
             </>}
           </> : (
-            <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 6, padding: '3px 8px', fontSize: 10, color: 'var(--wa-muted)', cursor: 'pointer' }}>+ Add PDF</button>
+            <button onClick={() => fileRef.current?.click()} style={addBtn}>+ Add PDF</button>
           )}
           <input ref={fileRef} type="file" accept="application/pdf,.pdf" hidden aria-label="Contract PDF" onChange={e => { void addPdf(e.target.files?.[0]); e.target.value = '' }} />
         </div>
