@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Project, type Todo } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { Shell } from '../components/layout/Shell'
+import { DateFields } from '../components/DateFields'
 import { PeopleCard } from '../components/PeopleCard'
 import { ProjectMeetings } from '../components/ProjectMeetings'
 import { ProjectSubmissions } from '../components/ProjectSubmissions'
@@ -34,9 +35,7 @@ function EditTypeFields({ type, state, set }: {
     </Field>
   )
   const monthField = (k: string, label: string) => (
-    <Field label={label}>
-      <input type="month" value={s(k)} onChange={e => set(k, e.target.value)} style={inp} />
-    </Field>
+    <div style={{ flex: 1, minWidth: 0 }}><DateFields label={label} value={s(k)} onChange={v => set(k, v)} inp={inp} showDay={false} /></div>
   )
 
   if (type === 'Exhibition') return (
@@ -98,20 +97,11 @@ function EditTypeFields({ type, state, set }: {
   )
 }
 
-function MetaItem({ label, value }: { label: string; value?: string | number | null }) {
-  if (!value) return null
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>{label}</span>
-      <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>{value}</span>
-    </div>
-  )
-}
-
-function ProjectMeta({ p }: { p: Project }) {
+function projectFacts(p: Project): Array<[string, string]> {
   const t = p.projectType
   const fmt = (s: string) => {
     const [y, m] = s.split('-')
+    if (!m) return y
     return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
   }
   const dateRange = p.dateStart && p.dateEnd
@@ -136,14 +126,7 @@ function ProjectMeta({ p }: { p: Project }) {
     items.push(['Institution', p.institution], ['Curator', p.curator], ['Location', p.location], ['Dates', dateRange])
   }
 
-  const filled = items.filter(([, v]) => v)
-  if (!filled.length) return null
-
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 40px', marginTop: 18 }}>
-      {filled.map(([label, value]) => <MetaItem key={label} label={label} value={value} />)}
-    </div>
-  )
+  return items.filter(([, v]) => v).map(([label, value]) => [label, String(value)])
 }
 
 function projectFieldsFromRecord(p: Project): Record<string, string> {
@@ -386,16 +369,14 @@ export function ProjectDetail() {
           </div>
         </div>
       )}
-      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '22px 18px' : '30px 36px' }}>
-        <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
-          ← On My Desk
-        </button>
-
-        {editing ? (
+      {editing && (
+        <div role="dialog" aria-modal="true" aria-label="Edit project" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 14px' }}>Edit project</p>
           <div>
             <div style={{ marginBottom: 10 }}>
               <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Project title"
-                style={{ ...inp, fontSize: 22, fontFamily: 'Recoleta, serif' }} />
+                style={{ ...inp, fontSize: 18, fontFamily: 'Recoleta, serif' }} />
             </div>
             <Row>
               <Field label="Type">
@@ -417,7 +398,7 @@ export function ProjectDetail() {
             <EditTypeFields type={type} state={fields} set={setField} />
             <div style={{ marginBottom: 10 }}>
               <Field label="Status">
-                <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inp, maxWidth: 200 }}>
+                <select value={status} onChange={e => setStatus(e.target.value)} style={inp}>
                   {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </Field>
@@ -438,34 +419,49 @@ export function ProjectDetail() {
               </span>
             </div>
           </div>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
-              <div>
-                <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: narrow ? 30 : 38, lineHeight: 1.1, fontWeight: 400, margin: '0 0 8px', color: 'var(--wa-ink)', textWrap: 'balance' }}>{project.title}</h1>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  {project.projectType && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{project.projectType}</span>}
-                  {multi && mode === 'together' && <span style={{ fontFamily: 'Recoleta, serif', fontStyle: 'italic', fontSize: 14, color: 'var(--wa-text-2)' }}>{name(practiceOf(acts).project(project))}</span>}
-                  <select value={project.status ?? 'Active'} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
-                    style={{ fontSize: 11, background: 'var(--wa-fill)', border: 'none', borderRadius: 999, padding: '3px 8px', color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                  {work
-                    ? <button onClick={() => navigate(`/studio/${work.id}`)} style={plainAdd}>In Works →</button>
-                    : project.status === 'Completed' && <button onClick={() => void addToWorks()} style={plainAdd}>+ Add to Works</button>}
-                </div>
-              </div>
-              <button onClick={startEdit} style={{ background: 'var(--wa-fill)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer', flexShrink: 0, marginLeft: 16 }}>Edit</button>
-            </div>
+          </div>
+        </div>
+      )}
+      <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: narrow ? '22px 18px' : '30px 36px' }}>
+        <button onClick={() => navigate('/projects')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--wa-muted)', cursor: 'pointer', padding: 0, marginBottom: 20, letterSpacing: '0.06em' }}>
+          ← On My Desk
+        </button>
 
-            <ProjectMeta p={project} />
+        <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: narrow ? 30 : 38, lineHeight: 1.1, fontWeight: 400, margin: 0, color: 'var(--wa-ink)', textWrap: 'balance' }}>{project.title}</h1>
+
 
             {/* Tasks beside everything else, so Submissions and People are in view without scrolling */}
-            <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 300px', gap: narrow ? 32 : 36, marginTop: 36, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 300px', gap: narrow ? 32 : 36, marginTop: 28, alignItems: 'start' }}>
               <div style={{ minWidth: 0 }}>
                 {project.id != null && <KanbanBoard projectId={project.id} deptId={dept?.id} />}
               </div>
               <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28, ...(narrow ? { borderTop: '1px solid var(--wa-line)', paddingTop: 28 } : { borderLeft: '1px solid var(--wa-line)', paddingLeft: 32 }) }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <h2 style={heading}>Details</h2>
+                    <button onClick={startEdit} style={plainAdd}>Edit</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr)', gap: '6px 10px', fontSize: 12, alignItems: 'baseline' }}>
+                    <span style={{ color: 'var(--wa-muted)' }}>Status</span>
+                    <select value={project.status ?? 'Active'} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
+                      style={{ justifySelf: 'start', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                    {([
+                      ['Type', project.projectType],
+                      ...(multi && mode === 'together' ? [['Practice', name(practiceOf(acts).project(project))]] : []),
+                      ...projectFacts(project),
+                    ] as Array<[string, string | undefined]>).filter(([, v]) => v).map(([label, value]) => (
+                      <Fragment key={label}>
+                        <span style={{ color: 'var(--wa-muted)' }}>{label}</span>
+                        <span style={{ color: 'var(--wa-ink)', overflowWrap: 'anywhere' }}>{value}</span>
+                      </Fragment>
+                    ))}
+                  </div>
+                  {work
+                    ? <button onClick={() => navigate(`/studio/${work.id}`)} style={{ ...plainAdd, marginTop: 10 }}>In Works →</button>
+                    : project.status === 'Completed' && <button onClick={() => void addToWorks()} style={{ ...plainAdd, marginTop: 10 }}>+ Add to Works</button>}
+                </div>
                 {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
                 {project.id != null && <ProjectMeetings projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
                 {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
@@ -478,8 +474,6 @@ export function ProjectDetail() {
                 </div>
               </div>
             </div>
-          </>
-        )}
       </div>
     </Shell>
   )
