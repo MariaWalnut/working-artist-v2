@@ -12,7 +12,7 @@ const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borde
 const FIRST_TYPE: Partial<Record<Activity, string>> = { filmmaker: 'Film', musician: 'Release', writer: 'Books', picture_book: 'Books' }
 
 // Title and type are all a project needs to start. The rest is filled in on its page.
-export function NewProjectForm({ onDone }: { onDone: () => void }) {
+export function NewProjectForm({ onDone, status = 'Active', from }: { onDone: () => void; status?: string; from?: string }) {
   const dept = useActiveDept()
   const navigate = useNavigate()
   const { acts, multi, start } = usePractice()
@@ -27,9 +27,9 @@ export function NewProjectForm({ onDone }: { onDone: () => void }) {
   async function save() {
     if (!title.trim()) return
     const projectType = type === 'Other' ? (customType.trim() || 'Other') : type
-    const id = await db.projects.add({ departmentId: dept?.id, title: title.trim(), projectType, status: 'Active', practice })
+    const id = await db.projects.add({ departmentId: dept?.id, title: title.trim(), projectType, status, practice })
     onDone()
-    navigate(`/projects/${id}`)
+    navigate(`/projects/${id}`, from ? { state: { from } } : undefined)
   }
 
   return (

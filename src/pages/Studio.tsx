@@ -37,7 +37,7 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
   const [practice, setPractice] = useState<Activity | undefined>(start)
   const [fields, setFields] = useState(() => fieldsFromWork(null))
   const [image, setImage] = useState<string | undefined>()
-  const [stage, setStage] = useState<'completed' | 'progress'>('completed')
+  const [stage, setStage] = useState<'completed' | 'progress' | 'planned'>('completed')
 
   async function save() {
     if (!title.trim()) return
@@ -51,13 +51,13 @@ function NewWorkForm({ defaultKind, defaultCategory = '', onDone }: { defaultKin
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 20 }}>
       <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 28, width: 520, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         <div role="radiogroup" aria-label="Stage" style={{ display: 'inline-flex', padding: 2, borderRadius: 8, background: 'var(--wa-fill)', marginBottom: 16 }}>
-          {([['completed', 'Completed'], ['progress', 'In progress']] as const).map(([v, label]) => (
+          {([['completed', 'Completed'], ['progress', 'In progress'], ['planned', 'Planned']] as const).map(([v, label]) => (
             <button key={v} type="button" role="radio" aria-checked={stage === v} onClick={() => setStage(v)}
               style={{ padding: '5px 14px', border: 'none', borderRadius: 6, background: stage === v ? 'var(--wa-surface)' : 'none', fontSize: 11, fontWeight: stage === v ? 600 : 400, color: stage === v ? 'var(--wa-ink)' : 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>{label}</button>
           ))}
         </div>
-        {stage === 'progress' ? <>
-          <NewProjectForm onDone={() => onDone()} />
+        {stage !== 'completed' ? <>
+          <NewProjectForm key={stage} status={stage === 'planned' ? 'Planned' : 'Active'} from="works" onDone={() => onDone()} />
           <button onClick={() => onDone()} style={{ marginTop: 10, padding: 0, background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
         </> : <>
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" aria-label="Title"
@@ -168,7 +168,7 @@ export function Studio() {
           onPointerDown={e => { if (e.target === e.currentTarget) setAddingProject(false) }}>
           <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width: 420, maxWidth: '100%', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
             <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '0 0 14px' }}>New project</p>
-            <NewProjectForm onDone={() => setAddingProject(false)} />
+            <NewProjectForm from="works" onDone={() => setAddingProject(false)} />
           </div>
         </div>
       )}
