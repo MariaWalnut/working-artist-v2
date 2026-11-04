@@ -14,18 +14,21 @@ const OPP_TYPES = ['Open call', 'Grant', 'Residency', 'Publisher proposal', 'Pre
 export const OPP_STATUSES = ['Active', 'Draft', 'Applied', 'Shortlisted', 'Won', 'Rejected', 'Closed']
 const FINISHED = ['Won', 'Rejected', 'Closed']
 
+// Open submissions stand out; finished ones step back. Won keeps its colour.
 const BADGE: Record<string, string> = {
+  Active:      'bg-[var(--wa-ink)] text-[var(--wa-surface)]',
+  Draft:       'text-[var(--wa-ink)]',
+  Applied:     'bg-[var(--accent)] text-[#111111]',
   Shortlisted: 'bg-[var(--accent)] text-[#111111]',
   Won:         'bg-[var(--accent)] text-[#111111]',
-  Applied:     'bg-[var(--wa-fill)] text-[var(--wa-text-2)]',
-  Active:      'bg-[var(--wa-fill)] text-[var(--wa-ink)]',
-  Draft:       'text-[var(--wa-muted)]',
-  Rejected:    'bg-[var(--wa-fill)] text-[var(--wa-muted)]',
-  Closed:      'bg-[var(--wa-fill)] text-[var(--wa-muted)]',
+  Rejected:    'text-[var(--wa-muted)]',
+  Closed:      'text-[var(--wa-muted)]',
 }
 
 const BADGE_BORDER: Record<string, string> = {
-  Draft: 'border border-dashed border-[var(--wa-line)]',
+  Draft: 'border border-dashed border-[var(--wa-ink)]',
+  Rejected: 'border border-[var(--wa-line)]',
+  Closed: 'border border-[var(--wa-line)]',
 }
 
 function badge(status: string) {
@@ -162,7 +165,7 @@ export function Opportunities() {
   const dept = useActiveDept()
   const narrow = useNarrow()
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState('Active')
+  const [statusFilter, setStatusFilter] = useState('All')
   const [editing, setEditing] = useState<Opportunity | 'new' | null>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
   const importRef = useRef<HTMLInputElement>(null)
@@ -203,10 +206,10 @@ export function Opportunities() {
 
   const filtered = opps.filter(o => {
     if (typeFilter && o.opportunityType !== typeFilter) return false
-    if (statusFilter === 'Active') return !FINISHED.includes(o.status)
+    if (statusFilter === 'Open') return !FINISHED.includes(o.status)
     if (statusFilter !== 'All') return o.status === statusFilter
     return true
-  }).sort((a, b) => (a.deadline ?? '9999').localeCompare(b.deadline ?? '9999'))
+  }).sort((a, b) => Number(FINISHED.includes(a.status)) - Number(FINISHED.includes(b.status)) || (a.deadline ?? '9999').localeCompare(b.deadline ?? '9999'))
 
   const activeCount = opps.filter(o => !FINISHED.includes(o.status)).length
   const wonCount = opps.filter(o => o.status === 'Won').length
@@ -225,7 +228,7 @@ export function Opportunities() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* Stats */}
           <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'grid', gridTemplateColumns: narrow ? 'repeat(4, 1fr)' : '1fr 1fr' }}>
-            {[{ label: 'Active', v: activeCount, muted: false }, { label: 'Won', v: wonCount, muted: false }, { label: 'Shortlisted', v: shortCount, muted: false }, { label: 'Closed', v: closedCount, muted: true }].map((s, i) => (
+            {[{ label: 'Open', v: activeCount, muted: false }, { label: 'Won', v: wonCount, muted: false }, { label: 'Shortlisted', v: shortCount, muted: false }, { label: 'Closed', v: closedCount, muted: true }].map((s, i) => (
               <div key={s.label} style={{ textAlign: 'center', padding: '14px 0', borderTop: !narrow && i >= 2 ? '1px solid var(--wa-line)' : undefined, borderLeft: (narrow ? i > 0 : i % 2 === 1) ? '1px solid var(--wa-line)' : undefined }}>
                 <p style={{ fontFamily: 'Recoleta, serif', fontSize: 26, color: s.muted ? 'var(--wa-muted)' : 'var(--wa-ink)', margin: '0 0 2px', lineHeight: 1.1 }}>{s.v}</p>
                 <p style={{ fontSize: 9, color: s.muted ? 'var(--wa-muted)' : 'var(--wa-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
@@ -236,7 +239,7 @@ export function Opportunities() {
           {narrow ? <>
             {/* Filters as rows of chips that scroll sideways */}
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              {['Active', 'Draft', 'Applied', 'Shortlisted', 'Rejected', 'All'].map(s => <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
+              {['All', 'Open', 'Draft', 'Applied', 'Shortlisted', 'Rejected'].map(s => <FilterChip key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
             </div>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
               <FilterChip label="All types" active={typeFilter === null} onClick={() => setTypeFilter(null)} />
@@ -253,7 +256,7 @@ export function Opportunities() {
           {/* Status */}
           <div style={sidePanel}>
             <p style={sectionLabel}>Status</p>
-            {['Active', 'Draft', 'Applied', 'Shortlisted', 'Rejected', 'All'].map(s => <FilterItem key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
+            {['All', 'Open', 'Draft', 'Applied', 'Shortlisted', 'Rejected'].map(s => <FilterItem key={s} label={s} active={statusFilter === s} onClick={() => setStatusFilter(s)} />)}
           </div>
           </>}
 
@@ -285,6 +288,7 @@ export function Opportunities() {
             const notSent = o.status === 'Active' || o.status === 'Draft'
             const overdue = notSent && !!o.deadline && o.deadline < today
             const isDraft = o.status === 'Draft'
+            const finished = o.status === 'Rejected' || o.status === 'Closed'
             const days = notSent && o.deadline && !overdue
               ? Math.round((new Date(o.deadline).setHours(0,0,0,0) - new Date(today).setHours(0,0,0,0)) / 86400000)
               : null
@@ -306,7 +310,7 @@ export function Opportunities() {
             if (narrow) return (
               <div key={o.id} onClick={() => setEditing(o)} style={{ ...rowStyle, display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: isDraft ? 'var(--wa-text-2)' : 'var(--wa-ink)', margin: '0 0 3px' }}>{o.title}</p>
+                  <p style={{ fontSize: 14, fontWeight: finished ? 400 : 500, color: finished ? 'var(--wa-muted)' : 'var(--wa-ink)', margin: '0 0 3px' }}>{o.title}</p>
                   <p style={{ fontSize: 11, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{[o.opportunityType, o.organisation, ...forProjects(o)].filter(Boolean).join(' · ')}</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
@@ -318,7 +322,7 @@ export function Opportunities() {
             return (
               <div key={o.id} onClick={() => setEditing(o)} style={{ ...rowStyle, display: 'grid', gridTemplateColumns: '1fr 100px 110px 100px 36px', padding: '14px 24px', alignItems: 'center' }}>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: isDraft ? 'var(--wa-text-2)' : 'var(--wa-ink)', margin: '0 0 2px' }}>{o.title}</p>
+                  <p style={{ fontSize: 13, fontWeight: finished ? 400 : 500, color: finished ? 'var(--wa-muted)' : 'var(--wa-ink)', margin: '0 0 2px' }}>{o.title}</p>
                   {(o.organisation || forProjects(o).length > 0) && <p style={{ fontSize: 10, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-muted)', margin: 0 }}>{[o.organisation, ...forProjects(o)].filter(Boolean).join(' · ')}</p>}
                 </div>
                 <span style={{ fontSize: 10, fontWeight: 500, color: isDraft ? 'var(--wa-muted)' : 'var(--wa-text-2)' }}>{o.opportunityType ?? '—'}</span>
