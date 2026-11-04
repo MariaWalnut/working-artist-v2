@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../db/db'
 import { useActiveDept } from '../lib/useDept'
 import { PRACTICE_KIND, practiceOf, usePractice } from '../lib/practice'
-import type { Activity, Work } from '../db/db'
+import type { Activity, Project, Work } from '../db/db'
+import { isActive, projectSubtitle } from '../lib/projects'
 import { PracticeFilter, PracticeSelect } from '../components/Practice'
 import { FrameHeader } from '../components/FrameHeader'
 import { AddButton, BoxHeading, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
@@ -97,6 +98,12 @@ export function Studio() {
     .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
 
   const making = shown.filter(w => w.inProgress)
+  // Projects on the desk count as work in progress too, until they have a work of their own.
+  const allProjects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
+  const ongoing = shelf ? [] : allProjects
+    .filter(p => isActive(p) && keep(practiceOf(acts).project(p)) && !allWorks.some(w => w.id === p.workId || w.projectId === p.id))
+    .sort((a, b) => a.title.localeCompare(b.title))
+  const inProgressCount = making.length + ongoing.length
   const finished = shown.filter(w => !w.inProgress)
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
 
@@ -121,6 +128,20 @@ export function Studio() {
     )
   }
 
+  const projectRow = (p: Project, i: number) => (
+    <button key={`p${p.id}`} data-tour-title={p.title} onClick={() => navigate(`/projects/${p.id}`)}
+      style={{ display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', borderTop: making.length > 0 || i > 0 ? '1px solid var(--wa-line)' : 'none', borderBottom: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', alignItems: 'center', columnGap: 12, fontFamily: 'inherit' }}>
+      <div style={{ width: 34, height: 42, borderRadius: 5, background: 'var(--wa-line)' }} />
+      <div style={{ minWidth: 0 }}>
+        <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</p>
+        <p style={{ fontSize: 10, color: 'var(--wa-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(narrow ? [p.projectType, projectSubtitle(p)].filter(Boolean).join(' · ') : projectSubtitle(p)) || ' '}</p>
+      </div>
+      {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{p.projectType}</span>}
+      {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location ?? ''}</span>}
+      <span />
+    </button>
+  )
+
   return (
     <Shell>
       {adding && <NewWorkForm defaultKind={shelfKind ?? defaultKind} defaultCategory={shelf && !shelfKind ? shelf : ''} onDone={id => { setAdding(false); if (id != null) navigate(`/studio/${id}`) }} />}
@@ -141,13 +162,13 @@ export function Studio() {
         <div data-tour="works-list" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={pageFrame}>
             <FrameHeader right={<AddButton onClick={() => setAdding(true)} />}>
-              <FrameTitle count={shown.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
+              <FrameTitle count={shown.length + ongoing.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
             </FrameHeader>
-            {shown.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
-            {making.length > 0 && <><BoxHeading label="In progress" count={making.length} />{making.map(workRow)}</>}
-            {making.length === 0 && finished.length > 0 && <><BoxHeading label="Finished" count={finished.length} />{finished.map(workRow)}</>}
+            {shown.length + ongoing.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
+            {inProgressCount > 0 && <><BoxHeading label="In progress" count={inProgressCount} />{making.map(workRow)}{ongoing.map(projectRow)}</>}
+            {inProgressCount === 0 && finished.length > 0 && <><BoxHeading label="Finished" count={finished.length} />{finished.map(workRow)}</>}
           </div>
-          {making.length > 0 && finished.length > 0 && (
+          {inProgressCount > 0 && finished.length > 0 && (
             <div style={pageFrame}>
               <BoxHeading label="Finished" count={finished.length} />
               {finished.map(workRow)}
