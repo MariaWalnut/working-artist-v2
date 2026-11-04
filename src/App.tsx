@@ -13,7 +13,7 @@ import { Account } from './pages/Account'
 import { Onboarding } from './pages/Onboarding'
 import { ProjectDetail } from './pages/ProjectDetail'
 import { WorkDetail, LegacyBookRedirect } from './pages/WorkDetail'
-import { Tips } from './pages/Tips'
+import { Report } from './pages/Report'
 import { AllEvents } from './pages/AllEvents'
 import { VisionBoard } from './pages/VisionBoard'
 import { WorldMap } from './pages/WorldMap'
@@ -111,7 +111,8 @@ function AppRoutes() {
       <Route path="/career" element={<Career />} />
       <Route path="/career/map" element={<WorldMap />} />
       <Route path="/career/recognition" element={<Press />} />
-      <Route path="/career/tips" element={tipsEnabled ? <Tips /> : <Navigate to="/career" replace />} />
+      <Route path="/career/report" element={tipsEnabled ? <Report /> : <Navigate to="/career" replace />} />
+      <Route path="/career/tips" element={<Navigate to="/career/report" replace />} />
       <Route path="/press" element={<Navigate to="/career/recognition" replace />} />
       <Route path="/account" element={<Account />} />
       <Route path="/demo/:field" element={<Navigate to="/projects" replace />} />

@@ -42,7 +42,7 @@ function readUserId(): string | null {
 export const demoField = readDemo()
 export const userId = demoField ? null : readUserId()
 
-// Career tips are tried out on one account before anyone else sees them. Local development shows them too.
+// The career report is tried out on one account before anyone else sees them. Local development shows them too.
 const TIPS_TESTER = 'f429069f-c114-4053-b821-0bbd066db0b3'
 export const tipsEnabled = import.meta.env.DEV || userId === TIPS_TESTER
 
