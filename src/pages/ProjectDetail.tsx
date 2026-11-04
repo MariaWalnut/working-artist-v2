@@ -247,7 +247,7 @@ function KanbanBoard({ projectId, deptId }: { projectId: number; deptId?: number
 
   async function moveTask(task: Todo, s: KanbanCol) {
     if (task.id == null) return
-    await db.todos.update(task.id, { kanbanStatus: s, done: s === 'done' })
+    await db.todos.update(task.id, { kanbanStatus: s, done: s === 'done', ticked: s === 'done' || undefined })
   }
   async function deleteTask(task: Todo) {
     if (task.id == null) return

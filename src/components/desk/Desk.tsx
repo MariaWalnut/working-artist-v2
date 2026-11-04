@@ -236,8 +236,10 @@ function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: 
     : box.range === 'today' ? !!t.dueDate && t.dueDate <= today
     : !t.dueDate || t.dueDate <= weekEnd
   const inBox = (t: Todo) => box.projectId != null ? t.projectId === box.projectId : box.list ? t.taskList === box.list : true
-  const open = todos.filter(t => !t.done && inBox(t) && inRange(t)).sort(byDue)
+  // Ticked tasks stay where they are, with a line through them, until cleared.
+  const open = todos.filter(t => (!t.done || t.ticked) && inBox(t) && inRange(t)).sort(byDue)
   const shown = open.slice(0, 8)
+  const ticked = open.filter(t => t.done)
   const save = (next: Partial<TaskBox>) => db.boardItems.update(item.id!, { content: JSON.stringify({ ...box, ...next }) })
 
   async function add() {
@@ -273,11 +275,15 @@ function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: 
           : t.taskList ? lists[t.taskList] : undefined
         return (
           <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(0,0,0,.1)' }}>
-            <input id={`task-${item.id}-${t.id}`} type="checkbox" checked={false}
-              onChange={() => { void db.todos.update(t.id!, { done: true, kanbanStatus: 'done' }); window.dispatchEvent(new Event('wa:task-done')) }}
+            <input id={`task-${item.id}-${t.id}`} type="checkbox" checked={t.done}
+              onChange={() => {
+                if (t.done) { void db.todos.update(t.id!, { done: false, kanbanStatus: 'todo', ticked: undefined }); return }
+                void db.todos.update(t.id!, { done: true, kanbanStatus: 'done', ticked: true })
+                window.dispatchEvent(new Event('wa:task-done'))
+              }}
               style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: '2px 0 0', flexShrink: 0, cursor: 'pointer' }} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-              <label htmlFor={`task-${item.id}-${t.id}`} style={{ fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer' }}>{t.title}</label>
+              <label htmlFor={`task-${item.id}-${t.id}`} style={{ fontSize: 12, color: t.done ? 'rgba(0,0,0,.62)' : 'var(--wa-ink)', textDecoration: t.done ? 'line-through' : undefined, cursor: 'pointer' }}>{t.title}</label>
               <span style={{ fontSize: 10, color: 'rgba(0,0,0,.62)' }}>
                 {where && `${where} · `}<DueDate task={t} />
               </span>
@@ -286,6 +292,10 @@ function TasksBlock({ item, todos, projects, lists, deptId, practice }: { item: 
         )
       })}
       {open.length > shown.length && <p style={{ fontSize: 10, color: 'rgba(0,0,0,.55)', margin: '8px 0 0' }}>{open.length - shown.length} more</p>}
+      {ticked.length > 0 && (
+        <button onClick={() => void db.todos.where('id').anyOf(ticked.map(t => t.id!)).modify({ ticked: undefined })}
+          style={{ ...plainBtn, display: 'block', fontSize: 11, color: 'rgba(0,0,0,.7)', marginTop: 8 }}>Clear completed</button>
+      )}
       {box.range !== 'overdue' && (
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void add() }}
           placeholder="+ Add task" aria-label="Add task"
@@ -328,6 +338,10 @@ function ListBlock({ item }: { item: BoardItem }) {
       <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addItem() }}
         placeholder={data.tasks ? '+ Add task' : '+ Add item'} aria-label={data.tasks ? 'Add task' : 'Add item'}
         style={{ ...bareInput, fontSize: 11.5, marginTop: 8 }} />
+      {data.items.some(it => it.done) && (
+        <button onClick={() => void save({ ...data, items: data.items.filter(it => !it.done) })}
+          style={{ ...plainBtn, display: 'block', fontSize: 11, color: data.tasks ? 'rgba(0,0,0,.7)' : 'var(--wa-text-2)', marginTop: 8 }}>Clear completed</button>
+      )}
     </div>
   )
 }

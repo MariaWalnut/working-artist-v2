@@ -230,6 +230,7 @@ export interface Todo {
   kanbanStatus?: 'todo' | 'in-progress' | 'done'
   dueDate?: string // yyyy-MM-dd
   notes?: string
+  ticked?: boolean // just done: stays on the desk with a line through it until cleared
 }
 
 export interface Board {
