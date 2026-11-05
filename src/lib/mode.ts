@@ -28,19 +28,42 @@ function readDemo(): DemoField | null {
   }
 }
 
-// The signed-in user's id, read from the session Supabase keeps in localStorage.
-function readUserId(): string | null {
+const TOKEN_KEY = `sb-${SUPABASE_REF}-auth-token`
+const ACCOUNT_KEY = 'wa-account'
+
+type Account = { id: string; email?: string }
+const readAccountFrom = (raw: string | null, pick: (v: { user?: Account } & Account) => Account | undefined) => {
+  const account = raw ? pick(JSON.parse(raw) as { user?: Account } & Account) : undefined
+  return typeof account?.id === 'string' ? account : null
+}
+
+// Who is signed in. Supabase's session says so first, and it is remembered here too: the studio lives in
+// this browser and needs no server, so a session that lapses or fails to renew must not end it.
+// Only Sign out does that.
+function readAccount(): Account | null {
   try {
-    const raw = localStorage.getItem(`sb-${SUPABASE_REF}-auth-token`)
-    const id = raw ? (JSON.parse(raw) as { user?: { id?: unknown } }).user?.id : null
-    return typeof id === 'string' ? id : null
+    const session = readAccountFrom(localStorage.getItem(TOKEN_KEY), v => v.user)
+    if (session) {
+      localStorage.setItem(ACCOUNT_KEY, JSON.stringify({ id: session.id, email: session.email }))
+      return session
+    }
+    return readAccountFrom(localStorage.getItem(ACCOUNT_KEY), v => v)
   } catch {
     return null
   }
 }
 
+export function forgetAccount() {
+  try {
+    localStorage.removeItem(ACCOUNT_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+  } catch { /* private mode */ }
+}
+
 export const demoField = readDemo()
-export const userId = demoField ? null : readUserId()
+const account = demoField ? null : readAccount()
+export const userId = account?.id ?? null
+export const accountEmail = account?.email ?? ''
 
 // The career report is tried out on one account before anyone else sees them. Local development shows them too.
 const TIPS_TESTER = 'f429069f-c114-4053-b821-0bbd066db0b3'

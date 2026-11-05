@@ -43,7 +43,7 @@ function LoginScreen() {
   async function signIn(e: FormEvent) {
     e.preventDefault()
     setBusy(true); setErr(null); setInfo(null)
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    const { error } = await supabase().auth.signInWithPassword({ email: email.trim(), password })
     if (error) {
       setBusy(false)
       setErr(error.status === 400 ? 'Email or password not recognised.' : 'Could not reach the server. Try again in a moment.')
@@ -56,7 +56,7 @@ function LoginScreen() {
     setErr(null); setInfo(null)
     if (!email.trim()) { setErr('Enter your email first.'); return }
     setBusy(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/` })
+    const { error } = await supabase().auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/` })
     setBusy(false)
     if (error) setErr('Could not send the email. Try again in a moment.')
     else setInfo('If that address has an account, a link to set a new password is on its way.')
@@ -87,8 +87,8 @@ function SetPasswordScreen() {
   // The link in the email signs the person in; wait for that before asking for a password.
   useEffect(() => {
     const fallback = setTimeout(() => setReady(r => r ?? false), 8000)
-    void supabase.auth.getSession().then(({ data }) => { if (data.session) { clearTimeout(fallback); setReady(true) } })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (s) { clearTimeout(fallback); setReady(true) } })
+    void supabase().auth.getSession().then(({ data }) => { if (data.session) { clearTimeout(fallback); setReady(true) } })
+    const { data: sub } = supabase().auth.onAuthStateChange((_e, s) => { if (s) { clearTimeout(fallback); setReady(true) } })
     return () => { clearTimeout(fallback); sub.subscription.unsubscribe() }
   }, [])
 
@@ -96,7 +96,7 @@ function SetPasswordScreen() {
     e.preventDefault()
     if (password.length < 8) { setErr('Use at least 8 characters.'); return }
     setBusy(true); setErr(null)
-    const { error } = await supabase.auth.updateUser({ password })
+    const { error } = await supabase().auth.updateUser({ password })
     if (error) { setBusy(false); setErr(error.message); return }
     location.replace('/')
   }

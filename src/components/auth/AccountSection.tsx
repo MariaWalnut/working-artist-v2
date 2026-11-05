@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
-import { DEMO_NAME, demoField, exitDemo } from '../../lib/mode'
+import { DEMO_NAME, accountEmail, demoField, exitDemo, forgetAccount } from '../../lib/mode'
 import { seedDemo } from '../../lib/demoSeed'
 
 const quiet: React.CSSProperties = { background: 'var(--wa-fill)', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }
@@ -31,7 +31,6 @@ function DemoCard() {
 }
 
 function SignedInCard() {
-  const [email, setEmail] = useState('')
   const [leaving, setLeaving] = useState(false)
   const [changing, setChanging] = useState(false)
   const [pw, setPw] = useState('')
@@ -39,16 +38,15 @@ function SignedInCard() {
 
   async function savePassword() {
     if (pw.length < 8) { setPwMsg('Use at least 8 characters'); setChanging(false); return }
-    const { error } = await supabase.auth.updateUser({ password: pw })
+    const { error } = await supabase().auth.updateUser({ password: pw })
     setChanging(false)
-    setPwMsg(error ? 'Could not change it' : 'Changed')
+    setPwMsg(error ? 'Could not change it. Sign out and in, then try again.' : 'Changed')
   }
-
-  useEffect(() => { void supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user.email ?? '')) }, [])
 
   async function signOut() {
     setLeaving(true)
-    await supabase.auth.signOut()
+    await supabase().auth.signOut().catch(() => undefined)
+    forgetAccount()
     location.replace('/')
   }
 
@@ -56,7 +54,7 @@ function SignedInCard() {
     <Card title="Account">
       <div style={row}>
         <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Email</span>
-        <span style={{ fontSize: 13, color: 'var(--wa-ink)' }}>{email}</span>
+        <span style={{ fontSize: 13, color: 'var(--wa-ink)' }}>{accountEmail}</span>
       </div>
       <div style={row}>
         <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>Studio</span>

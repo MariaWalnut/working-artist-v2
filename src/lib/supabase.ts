@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 // Sign-in lives in the same Supabase project as v1. Studios are never sent here: they stay in the browser.
 // The publishable key is the public browser key.
@@ -18,4 +18,8 @@ function readAuthLinkType(): string | null {
 export const authLinkType = readAuthLinkType()
 export const needsPassword = authLinkType === 'invite' || authLinkType === 'recovery'
 
-export const supabase = createClient(url, key)
+// Started only when signing in, signing out or changing a password. Once started, the client checks and renews
+// its session by itself, and tabs renewing at the same time look like a stolen token to Supabase, which then
+// cancels the session. A signed-in studio needs none of that, so it never starts the client.
+let client: SupabaseClient | undefined
+export const supabase = () => (client ??= createClient(url, key, { auth: { autoRefreshToken: false } }))
