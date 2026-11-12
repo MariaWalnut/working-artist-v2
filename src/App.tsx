@@ -1,6 +1,7 @@
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Analytics } from '@vercel/analytics/react'
 import { db } from './db/db'
 import { demoField, tipsEnabled, userId } from './lib/mode'
 import { needsPassword } from './lib/supabase'
@@ -159,6 +160,7 @@ export default function App() {
       <PageErrorBoundary>
         {needsPassword || (!demoField && !userId) ? <AuthScreens /> : <AppRoutes />}
       </PageErrorBoundary>
+      <Analytics />
     </BrowserRouter>
   )
 }
