@@ -1,12 +1,13 @@
 import { db, type Activity, type BoardItem, type EventEntry, type Opportunity, type PressEntry, type Project, type Work } from '../db/db'
 import type { DemoField } from './mode'
+import { PRACTICE_NAME } from './practice'
 import { DEMO_CONTACTS } from './demoContacts'
 
 // Sample studios for the open demos. Everyone and everything here is invented.
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-04a'
+export const DEMO_VERSION = '2026-11-13b'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -28,6 +29,16 @@ interface Seed {
   press: Array<Omit<PressEntry, 'departmentId'>>
   desk: Desk | Desk[]
   board: Vision
+  profile: Profile
+}
+
+// The Career › Profile page of a sample studio: where it works from, how to reach it,
+// and the texts it sends out, each named in that practice's own words.
+interface Profile {
+  basedIn: string
+  since: number
+  links: Array<[label: string, value: string]>
+  texts: Array<[title: string, kind: string, body: string]>
 }
 
 // The free boxes on the desk. A studio with several practices has a set for each.
@@ -48,6 +59,11 @@ interface Vision {
   goals: [string, string, string]
   refs: [string, string, string]
   tags: string[]
+}
+
+// What a practice is called inside a text's title, where two practices share one.
+const PRACTICE_WORD: Partial<Record<Activity, string>> = {
+  musician: 'music', photographer: 'photography', picture_book: 'illustration', visual_artist: 'painting',
 }
 
 const P = (title: string, type: string, extra: Partial<Project>, todos: Todo[]) =>
@@ -71,11 +87,16 @@ function combine(mode: 'together' | 'separate', parts: Array<[Activity, Seed]>, 
     name: 'Working Artist', activities: parts.map(([a]) => a), practiceMode: mode,
     practiceNames: Object.assign({}, ...parts.map(([, s]) => s.practiceNames)),
     works: [], projects: [], events: [], opportunities: [], press: [], desk: [], board,
+    profile: { ...parts[0][1].profile, links: [], texts: [] },
   }
   const desks: Desk[] = []
   const projects: Array<Seed['projects']> = []
+  const texts: Array<[Activity, Profile['texts'][number]]> = []
   for (const [practice, s] of parts) {
     const w = seed.works.length, o = seed.opportunities.length
+    // Both practices keep their texts; a link one of them already has is not repeated.
+    seed.profile.links.push(...s.profile.links.filter(([label]) => !seed.profile.links.some(([had]) => had === label)))
+    texts.push(...s.profile.texts.map(t => [practice, t] as [Activity, Profile['texts'][number]]))
     seed.works.push(...s.works.map(x => ({ ...x, practice })))
     projects.push(s.projects.filter(p => !leaveOut.includes(p.project.title)).map(p => ({ ...p, project: { ...p.project, practice } })))
     seed.events.push(...s.events.map(e => ({ ...e, practice, workIds: e.workIds?.map(i => i + w) })))
@@ -83,6 +104,12 @@ function combine(mode: 'together' | 'separate', parts: Array<[Activity, Seed]>, 
     seed.press.push(...s.press.map(x => ({ ...x, practice, workId: x.workId == null ? undefined : x.workId + w })))
     desks.push(...[s.desk].flat().map(d => ({ ...d, practice, submission: d.submission + o })))
   }
+  // Both practices write a short bio, so a title two of them share says which one it belongs to.
+  const seen = new Map<string, number>()
+  for (const [, [title]] of texts) seen.set(title, (seen.get(title) ?? 0) + 1)
+  seed.profile.texts = texts.map(([practice, [title, kind, body]]) =>
+    [(seen.get(title) ?? 0) > 1 ? `${title}, ${PRACTICE_WORD[practice] ?? PRACTICE_NAME[practice].toLowerCase()}` : title, kind, body])
+
   if (mode === 'separate') return { ...seed, projects: projects.flat(), desk: desks }
   // Together: projects take turns, and one set of desk boxes mixes the practices.
   const turns = Math.max(...projects.map(p => p.length))
@@ -122,6 +149,15 @@ const SEEDS: Record<DemoField, () => Seed> = {
   musician: () => ({
     name: 'Working Artist',
     activities: ['musician'],
+    profile: {
+      basedIn: 'Berlin', since: 2019,
+      links: [['Website', 'workingartist.example'], ['Instagram', '@workingartist'], ['Spotify', 'spotify.example/workingartist'], ['Bandcamp', 'workingartist.bandcamp.example'], ['Booking', 'booking@workingartist.example']],
+      texts: [
+        ['Short bio', 'Bio', 'A five-piece from Berlin, playing somewhere between folk and something harder to name. Two albums on Northbound Records, an EP of their own, and most of last year on the road.'],
+        ['Low Tide, for press', 'Press release', 'Low Tide was recorded over eleven days in a barn outside Rostock, mostly live and mostly at night. It is the first record the band made with nobody producing it.'],
+        ['Festival pitch', 'Pitch', 'Forty-five minutes, four of us on stage, and we travel light. Two albums out, a third in March. Happy to talk about a slot on the smaller stage.'],
+      ],
+    },
     works: [
       { title: 'Low Tide', category: 'Albums', kind: 'Release', format: 'Album', label: 'Northbound Records', year: 2025, month: 3, location: 'Berlin' },
       { title: 'Paper Lanterns', category: 'EPs', kind: 'Release', format: 'EP', label: 'Self-released', year: 2023, month: 9, location: 'Lisbon' },
@@ -198,6 +234,15 @@ const SEEDS: Record<DemoField, () => Seed> = {
   painter: () => ({
     name: 'Working Artist',
     activities: ['visual_artist'],
+    profile: {
+      basedIn: 'Lisbon', since: 2016,
+      links: [['Website', 'workingartist.example'], ['Instagram', '@workingartist'], ['Gallery', 'galeriaazul.example']],
+      texts: [
+        ['Short bio', 'Bio', 'A painter working between Lisbon and Berlin. Oil on linen, mostly interiors and the light that gets into them. Shown in Lisbon, Berlin and Vienna since 2021.'],
+        ['Statement', 'Artist statement', 'The paintings begin with a room I have sat in for a long time. What interests me is the hour when the light stops describing the room and starts rearranging it.'],
+        ['Salt Flats, wall text', 'Exhibition text', 'Salt Flats I and II were painted in the same week, from the same window, at two hours of the day. Hung together they are less a pair than an argument.'],
+      ],
+    },
     practiceNames: { visual_artist: 'Painter' },
     works: [
       { title: 'Salt Flats I', category: 'Paintings', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection' },
@@ -274,6 +319,15 @@ const SEEDS: Record<DemoField, () => Seed> = {
   illustrator: () => ({
     name: 'Working Artist',
     activities: ['picture_book'],
+    profile: {
+      basedIn: 'Paris', since: 2017,
+      links: [['Website', 'workingartist.example'], ['Instagram', '@workingartist'], ['Agent', 'agent@brightline.example']],
+      texts: [
+        ['Short bio', 'Bio', 'An illustrator in Paris, working in gouache and coloured pencil, mostly for books. Four books published, two of them written as well as drawn.'],
+        ['Statement', 'Statement', 'I draw slowly, and I like a book to have one quiet page in the middle where almost nothing happens.'],
+        ['The Lantern Fox, blurb', 'Book blurb', 'A fox finds a lantern in the snow and decides it belongs to the moon. A book about giving things back, for readers of four and up.'],
+      ],
+    },
     works: [
       { title: 'The Fox Who Kept the Moon', category: 'Picture books', kind: 'Book', publisher: 'Little Lantern Books', publishedDate: '2024-09', year: 2024, month: 9, language: 'English',
         credits: 'Text by Mara Holt, illustrated by Ines Okafor', pages: 32, dimensions: '24 × 30 cm', technique: 'Gouache, pencil', location: 'London',
@@ -358,6 +412,15 @@ const SEEDS: Record<DemoField, () => Seed> = {
   writer: () => ({
     name: 'Working Artist',
     activities: ['writer'],
+    profile: {
+      basedIn: 'London', since: 2015,
+      links: [['Website', 'workingartist.example'], ['Publisher', 'harrowpress.example'], ['Agent', 'agent@brightline.example']],
+      texts: [
+        ['Short bio', 'Bio', 'A writer in London. Two novels and a collection of stories, translated into German and Dutch. Shortlisted for the Harrow Prize in 2024.'],
+        ['Statement', 'Statement', 'I write about houses people leave and the weather they remember afterwards. The books are short because that is how long I can hold a voice.'],
+        ['The Summer House, blurb', 'Book blurb', 'Three siblings come back to a house on the Kent coast to sell it, and find it has been lived in all along. A novel about inheritance, in every sense.'],
+      ],
+    },
     works: [
       { title: 'The Summer House', category: 'Novels', kind: 'Book', subtitle: 'A novel', publisher: 'Harbour Press', publishedDate: '2023-04', year: 2023, month: 4, language: 'English', pages: 280, location: 'London',
         contract: { currency: '€', price: 20, binding: 'Hardcover', printRun: 5000, advance: 8000, advancePaid: 'full', royaltyRate: 10, royaltyBase: 'retail', royaltySteps: '12.5% from 10,000 copies', territory: 'World, English language', signed: '2021-11', agent: 'Ruth Adler', agentCommission: 15 },
@@ -438,6 +501,15 @@ const SEEDS: Record<DemoField, () => Seed> = {
   fineart: () => ({
     name: 'Working Artist',
     activities: ['visual_artist'],
+    profile: {
+      basedIn: 'Rotterdam', since: 2014,
+      links: [['Website', 'workingartist.example'], ['Instagram', '@workingartist'], ['Gallery', 'galeriaazul.example']],
+      texts: [
+        ['Short bio', 'Bio', 'Works in installation and moving image, between Rotterdam and Berlin. Recent projects take the tide as a measure of time.'],
+        ['Statement', 'Artist statement', 'The work collects what water does when nobody is counting. Archives, tide tables, borrowed instruments. It is slow on purpose.'],
+        ['Tidal Archive, wall text', 'Exhibition text', 'Tidal Archive gathers eleven years of harbour readings from three ports. The sound in the room is that data, played at the speed of the sea.'],
+      ],
+    },
     practiceNames: { visual_artist: 'Artist' },
     works: [
       { title: 'Tidal Archive', category: 'Installations', kind: 'Artwork', medium: 'Installation: salt, glass and sound', dimensions: 'Room, 6 × 9 m', year: 2024, month: 4, location: 'Rotterdam' },
@@ -510,6 +582,16 @@ const SEEDS: Record<DemoField, () => Seed> = {
   filmmaker: () => ({
     name: 'Working Artist',
     activities: ['filmmaker'],
+    profile: {
+      basedIn: 'Berlin', since: 2017,
+      links: [['Website', 'workingartist.example'], ['Vimeo', 'vimeo.example/workingartist'], ['IMDb', 'imdb.example/workingartist']],
+      texts: [
+        ['Short bio', 'Bio', 'A director working between Berlin and Lisbon. Three shorts and a feature documentary, shown at Rotterdam, Clermont-Ferrand and Locarno.'],
+        ['Salt Road, logline', 'Logline', 'A salt harvester and her son spend one summer deciding whether to sell the pans four generations of their family have worked.'],
+        ['Salt Road, synopsis', 'Synopsis', 'Over one summer on the Portuguese coast, Marta works the salt pans alone while her son finishes school in Lisbon. A buyer arrives in August. The film stays with the work: the raking, the weather, the waiting.'],
+        ['Why this film', "Director's statement", 'I grew up near these flats and never once thought of them as beautiful. The film is an attempt to look again, at the work rather than the light.'],
+      ],
+    },
     works: [
       { title: 'Salt Road', category: 'Documentaries', kind: 'Film', format: 'Short documentary', runtime: '24 min', production: 'Northlight Films', credits: 'Written and directed by the artist', language: 'Portuguese, English', publishedDate: '2025-02', year: 2025, month: 2, location: 'Lisbon' },
       { title: 'The Quiet Hour', category: 'Shorts', kind: 'Film', format: 'Short fiction', runtime: '14 min', production: 'Self-produced', credits: 'Written and directed by the artist', language: 'English', publishedDate: '2023-06', year: 2023, month: 6, location: 'London' },
@@ -580,6 +662,15 @@ const SEEDS: Record<DemoField, () => Seed> = {
   photographer: () => ({
     name: 'Working Artist',
     activities: ['photographer'],
+    profile: {
+      basedIn: 'Rotterdam', since: 2016,
+      links: [['Website', 'workingartist.example'], ['Instagram', '@workingartist'], ['Portfolio', 'workingartist.example/work']],
+      texts: [
+        ['Short bio', 'Bio', 'A photographer in Rotterdam, working on long series about water and the people who work beside it. Two photobooks, the second out this year.'],
+        ['Statement', 'Statement', 'I photograph at the hour when the harbour is neither working nor closed. The series take years because the light I want comes maybe twelve times a winter.'],
+        ['Low Water, series text', 'Series text', 'Low Water was made over three winters in the Maas estuary, always at the lowest tide of the month, always from the same four places.'],
+      ],
+    },
     works: [
       { title: 'Low Water', category: 'Series', kind: 'Artwork', medium: 'Archival pigment print, edition of 5', dimensions: '100 × 125 cm', year: 2024, month: 3, location: 'Rotterdam', collection: 'Harbour Photo Museum' },
       { title: 'Saltpans, Aveiro', category: 'Series', kind: 'Artwork', medium: 'C-type print, edition of 7', dimensions: '80 × 100 cm', year: 2023, month: 8, location: 'Lisbon', collection: 'Private collection' },
@@ -679,7 +770,14 @@ export async function seedDemo(field: DemoField) {
     const departmentId = await db.departments.add({
       name: s.name, discipline: field === 'musician' ? 'music' : field === 'illustrator' ? 'picture_books' : 'painter',
       activities: s.activities, practiceMode: s.practiceMode, practiceNames: s.practiceNames, createdAt: now,
+      basedIn: s.profile.basedIn, establishedYear: s.profile.since,
+      profileLinks: s.profile.links.map(([label, value], i) => ({ id: `link-${i}`, label, value })),
     }) as number
+
+    // The texts on the profile, newest first in the order they are written here.
+    for (const [i, [title, kind, body]] of s.profile.texts.entries()) {
+      await db.texts.add({ departmentId, title, kind, body, createdAt: now - i, updatedAt: now - i })
+    }
 
     const workIds: number[] = []
     for (const w of s.works) workIds.push(await db.works.add({ ...w, departmentId }) as number)
