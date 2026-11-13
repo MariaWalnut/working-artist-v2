@@ -18,6 +18,7 @@ import { VisionBoard } from './pages/VisionBoard'
 import { WorldMap } from './pages/WorldMap'
 import { Career } from './pages/Career'
 import { Press } from './pages/Press'
+import { Profile } from './pages/Profile'
 import { Contacts } from './pages/Contacts'
 
 // Shown instead of a blank page if the local database can't be opened (e.g. an upgrade fails).
@@ -108,6 +109,7 @@ function AppRoutes() {
       <Route path="/studio/books/:id" element={<LegacyBookRedirect />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
       <Route path="/career" element={<Career />} />
+      <Route path="/career/profile" element={<Profile />} />
       <Route path="/career/map" element={<WorldMap />} />
       <Route path="/career/recognition" element={<Press />} />
       <Route path="/career/report" element={<Navigate to="/career" replace />} />

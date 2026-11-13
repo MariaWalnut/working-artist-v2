@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { FrameHeader, FrameTabs } from './FrameHeader'
 
 const TABS = [
+  { key: 'profile', label: 'Profile', to: '/career/profile' },
   { key: 'timeline', label: 'Timeline', to: '/career' },
   { key: 'map', label: 'Map', to: '/career/map' },
   { key: 'recognition', label: 'Recognition', to: '/career/recognition' },
@@ -10,7 +11,7 @@ const TABS = [
 
 type CareerTab = typeof TABS[number]['key']
 
-// One white frame for each Career view, with the three views as titles in its header.
+// One white frame for each Career view, with the views as titles in its header.
 export function CareerFrame({ active, right, children }: { active: CareerTab; right?: ReactNode; children: ReactNode }) {
   const navigate = useNavigate()
   return (

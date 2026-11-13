@@ -18,6 +18,28 @@ export interface Department {
   practiceMode?: 'together' | 'separate' // with several practices: all mixed, or one at a time
   practiceNames?: Partial<Record<Activity, string>> // how a practice reads after the name, e.g. Painter for visual_artist
   places?: Record<string, { name: string; coords: [number, number] }> // locations placed by hand on the career map
+  // The artist profile, on Career › Profile
+  profilePhoto?: string // data URL: the portrait at the top of the profile
+  basedIn?: string // the city the profile reads under the name
+  profileLinks?: ProfileLink[] // website, Instagram, Spotify, press email…
+}
+
+// One line of the profile's contact block: a label and the address behind it.
+export interface ProfileLink {
+  id: string
+  label: string // Website, Instagram, Spotify, Bandcamp, Press contact…
+  value: string
+}
+
+// A piece of writing kept to be sent out: a bio in two lengths, a statement, a blurb, a pitch.
+export interface TextEntry {
+  id?: number
+  departmentId?: number
+  title: string
+  kind?: string // Bio / Statement / Blurb / Pitch / Release note / Other
+  body: string
+  createdAt: number
+  updatedAt: number
 }
 
 export interface Project {
@@ -321,6 +343,7 @@ export class AppDB extends Dexie {
   eventEntries!: Table<EventEntry>
   contacts!: Table<Contact>
   contactLists!: Table<ContactList>
+  texts!: Table<TextEntry>
 
   constructor(name: string) {
     super(name)
@@ -458,6 +481,23 @@ export class AppDB extends Dexie {
       eventEntries: '++id, departmentId',
       contacts: '++id, departmentId',
       contactLists: '++id, departmentId',
+    })
+    this.version(11).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
+      eventEntries: '++id, departmentId',
+      contacts: '++id, departmentId',
+      contactLists: '++id, departmentId',
+      texts: '++id, departmentId',
     })
   }
 }
