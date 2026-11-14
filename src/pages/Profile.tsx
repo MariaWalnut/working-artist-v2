@@ -306,7 +306,7 @@ export function Profile() {
     <Shell>
       {editing != null && <TextForm entry={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />}
 
-      <CareerFrame active="profile" right={<AddButton onClick={() => setEditing('new')} label="+ Add text" />}>
+      <CareerFrame title="Profile" right={<AddButton onClick={() => setEditing('new')} label="+ Add text" />}>
         <Identity />
 
         {sorted.length === 0 ? (

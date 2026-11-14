@@ -17,6 +17,7 @@ import { AllEvents } from './pages/AllEvents'
 import { VisionBoard } from './pages/VisionBoard'
 import { WorldMap } from './pages/WorldMap'
 import { Career } from './pages/Career'
+import { CareerBoard } from './pages/CareerBoard'
 import { Press } from './pages/Press'
 import { Profile } from './pages/Profile'
 import { Contacts } from './pages/Contacts'
@@ -108,7 +109,8 @@ function AppRoutes() {
       <Route path="/studio/boards" element={<Navigate to="/manifest" replace />} />
       <Route path="/studio/books/:id" element={<LegacyBookRedirect />} />
       <Route path="/studio/:id" element={<WorkDetail />} />
-      <Route path="/career" element={<Career />} />
+      <Route path="/career" element={<CareerBoard />} />
+      <Route path="/career/timeline" element={<Career />} />
       <Route path="/career/profile" element={<Profile />} />
       <Route path="/career/map" element={<WorldMap />} />
       <Route path="/career/recognition" element={<Press />} />

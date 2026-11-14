@@ -342,7 +342,7 @@ export function Press() {
         onDrop={e => void onDrop(e)}
         style={{ minHeight: '70vh' }}>
 
-      <CareerFrame active="recognition" right={
+      <CareerFrame title="Recognition" right={
         <div style={{ display: 'flex', gap: 8 }}>
           {entries.length === 0 && (
             <button onClick={() => void handleImportV1()}

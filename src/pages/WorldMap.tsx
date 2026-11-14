@@ -55,7 +55,8 @@ function Pin({ city, items, selected, scale, onClick }: { city: string; items: C
   )
 }
 
-export function WorldMapPanel() {
+// `compact` is the Career box: only the map, filling the box, and a small card for the chosen city.
+export function WorldMapPanel({ compact = false }: { compact?: boolean } = {}) {
   const dept = useActiveDept()
   const navigate = useNavigate()
   const { acts, keep } = usePractice()
@@ -141,15 +142,17 @@ export function WorldMapPanel() {
   )
 
   return (
-    <div style={{ background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 540 }}>
+    <div style={compact
+      ? { height: '100%', position: 'relative', overflow: 'hidden' }
+      : { background: 'var(--wa-surface)', borderRadius: 20, display: 'flex', flexWrap: 'wrap', overflow: 'hidden', minHeight: 540 }}>
       {/* Map; the city list drops below it on narrow screens */}
-      <div style={{ flex: '999 1 420px', minWidth: 0, position: 'relative' }}>
+      <div style={compact ? { height: '100%', position: 'relative' } : { flex: '999 1 420px', minWidth: 0, position: 'relative' }}>
         <ComposableMap
           width={MAP_W}
           height={MAP_H}
           projectionConfig={{ scale: 140 }}
           preserveAspectRatio="xMidYMid slice"
-          style={{ width: '100%', height: '100%', minHeight: 540, display: 'block', cursor: 'grab' }}
+          style={{ width: '100%', height: '100%', minHeight: compact ? 0 : 540, display: 'block', cursor: 'grab' }}
         >
           <ZoomableGroup
             center={view.center}
@@ -186,7 +189,7 @@ export function WorldMapPanel() {
           </ZoomableGroup>
         </ComposableMap>
 
-        {years.length > 0 && (
+        {!compact && years.length > 0 && (
           <div style={{ position: 'absolute', top: 12, left: 12, right: 60, display: 'flex', gap: 6, overflowX: 'auto', padding: 2 }}>
             {yearChip('All', null)}
             {years.map(y => yearChip(String(y), y))}
@@ -201,13 +204,28 @@ export function WorldMapPanel() {
         </div>
 
         <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', gap: 10, fontSize: 9, color: 'var(--wa-text-2)' }}>
-          <span>{located.length} {located.length === 1 ? 'city' : 'cities'} · {total} {total === 1 ? 'item' : 'items'}</span>
+          {!compact && <span>{located.length} {located.length === 1 ? 'city' : 'cities'} · {total} {total === 1 ? 'item' : 'items'}</span>}
           <a href="https://www.geonames.org" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Cities: GeoNames</a>
         </div>
       </div>
 
+      {compact && open && (
+        <div style={{ position: 'absolute', left: 12, right: 12, bottom: 32, maxHeight: '60%', overflowY: 'auto', background: 'var(--wa-surface)', borderRadius: 14, boxShadow: '0 6px 24px rgba(0,0,0,.14)', padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontFamily: 'Recoleta, serif', fontSize: 17, color: 'var(--wa-ink)' }}>{open.city}</span>
+            <button aria-label="Close" onClick={() => setSelected(null)} style={{ ...plainBtn, width: 'auto', fontSize: 16, lineHeight: 1, color: 'var(--wa-text-2)' }}>×</button>
+          </div>
+          {[...open.items].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).map(i => (
+            <button key={i.key} onClick={() => navigate(i.to)} style={{ ...plainBtn, padding: '7px 0', borderTop: '1px solid var(--wa-line)', marginTop: 6 }}>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--wa-ink)' }}>{i.title}</span>
+              <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-text-2)', marginTop: 1 }}>{[i.kind, formatAnyDate(i.date)].filter(Boolean).join(' · ')}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Right panel */}
-      <div style={{ flex: '1 1 240px', borderLeft: '1px solid var(--wa-line)', borderTop: '1px solid var(--wa-line)', padding: '20px 18px', overflowY: 'auto', maxHeight: 620, boxSizing: 'border-box' }}>
+      {!compact && <div style={{ flex: '1 1 240px', borderLeft: '1px solid var(--wa-line)', borderTop: '1px solid var(--wa-line)', padding: '20px 18px', overflowY: 'auto', maxHeight: 620, boxSizing: 'border-box' }}>
         {open ? <>
           <button onClick={() => setSelected(null)} style={{ ...plainBtn, fontSize: 11, color: 'var(--wa-text-2)', marginBottom: 12 }}>← All cities</button>
           <h2 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 24, color: 'var(--wa-ink)', margin: '0 0 12px' }}>{open.city}</h2>
@@ -244,7 +262,7 @@ export function WorldMapPanel() {
             ))}
           </>}
         </>}
-      </div>
+      </div>}
     </div>
   )
 }
@@ -252,7 +270,7 @@ export function WorldMapPanel() {
 export function WorldMap() {
   return (
     <Shell>
-      <CareerFrame active="map">
+      <CareerFrame title="Map">
         <WorldMapPanel />
       </CareerFrame>
     </Shell>

@@ -1,24 +1,17 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FrameHeader, FrameTabs } from './FrameHeader'
+import { FrameHeader } from './FrameHeader'
+import { FrameTitle } from './PageFrame'
 
-const TABS = [
-  { key: 'profile', label: 'Profile', to: '/career/profile' },
-  { key: 'timeline', label: 'Timeline', to: '/career' },
-  { key: 'map', label: 'Map', to: '/career/map' },
-  { key: 'recognition', label: 'Recognition', to: '/career/recognition' },
-] as const
-
-type CareerTab = typeof TABS[number]['key']
-
-// One white frame for each Career view, with the views as titles in its header.
-export function CareerFrame({ active, right, children }: { active: CareerTab; right?: ReactNode; children: ReactNode }) {
+// The full view of one Career box: a white frame, with the way back to Career beside its title.
+export function CareerFrame({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
   const navigate = useNavigate()
   return (
     <div data-tour="career" style={{ background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden' }}>
       <FrameHeader right={right}>
-        <FrameTabs label="Career" tabs={TABS.map(t => ({ key: t.key, label: t.label }))} active={active}
-          onSelect={k => navigate(TABS.find(t => t.key === k)!.to)} />
+        <button onClick={() => navigate('/career')}
+          style={{ padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit', marginRight: 6 }}>← Career</button>
+        <FrameTitle>{title}</FrameTitle>
       </FrameHeader>
       {children}
     </div>

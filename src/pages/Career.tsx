@@ -247,7 +247,11 @@ function EventPopup({ e, onClose }: { e: CareerEvent; onClose: () => void }) {
 
 // ─── Career page ─────────────────────────────────────────────────────────────
 
-export function Career() {
+const ALL_KINDS: Record<EventKind, boolean> = { project: true, event: true, work: true, rights: true, press: true, award: true }
+
+// The timeline itself, on its own page and in the Career box. In a box narrower than the month grid needs,
+// each year becomes a plain list, as on a phone.
+export function TimelineView({ show = ALL_KINDS, compact = false }: { show?: Record<EventKind, boolean>; compact?: boolean }) {
   const dept = useActiveDept()
   const deptId = dept?.id
 
@@ -263,11 +267,12 @@ export function Career() {
   const press = allPress.filter(p => keep(of.press(p)))
 
   const narrow = useNarrow()
-  const [show, setShow] = useState<Record<EventKind, boolean>>({ project: true, event: true, work: true, rights: true, press: true, award: true })
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set())
   const [selected, setSelected] = useState<CareerEvent | null>(null)
   const [chartW, setChartW] = useState(0)
   const observer = useRef<ResizeObserver | null>(null)
+  const [boxW, setBoxW] = useState(0)
+  const boxObserver = useRef<ResizeObserver | null>(null)
 
   // Measured whenever the timeline appears (it mounts only after data loads) and on resize.
   const chartRef = useCallback((el: HTMLDivElement | null) => {
@@ -277,6 +282,14 @@ export function Career() {
     observer.current = new ResizeObserver(() => setChartW(el.clientWidth))
     observer.current.observe(el)
   }, [])
+  const boxRef = useCallback((el: HTMLDivElement | null) => {
+    boxObserver.current?.disconnect()
+    if (!el) return
+    setBoxW(el.clientWidth)
+    boxObserver.current = new ResizeObserver(() => setBoxW(el.clientWidth))
+    boxObserver.current.observe(el)
+  }, [])
+  const asList = narrow || (compact && boxW > 0 && boxW < 600)
 
   const minGap = chartW > 0 ? Math.min(500, (LABEL_W_PX / chartW) * 1000) : DEFAULT_GAP
 
@@ -350,30 +363,17 @@ export function Career() {
   const currentYear = new Date().getFullYear()
   const years = [...new Set([...all.map(e => e.year), currentYear])].sort((a, b) => b - a)
 
-  const toggleKind = (k: EventKind) => setShow(s => ({ ...s, [k]: !s[k] }))
   const toggleYear = (y: number) => setCollapsed(prev => { const next = new Set(prev); next.has(y) ? next.delete(y) : next.add(y); return next })
 
   const isEmpty = all.length === 0
 
   return (
-    <Shell>
-      <CareerFrame active="timeline" right={
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {(Object.keys(KIND_LABELS) as EventKind[]).map(k => (
-            <button key={k} onClick={() => toggleKind(k)} aria-pressed={show[k]}
-              style={{ padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 11,
-                background: show[k] ? 'var(--wa-ink)' : 'var(--wa-fill)', color: show[k] ? 'var(--wa-surface)' : 'var(--wa-text-2)', fontWeight: show[k] ? 600 : 400 }}>
-              {KIND_LABELS[k]}
-            </button>
-          ))}
-        </div>
-      }>
-
+    <div ref={boxRef}>
       {isEmpty ? (
-        <div style={{ padding: '64px 20px', textAlign: 'center', color: 'var(--wa-muted)', fontSize: 13, fontStyle: 'italic' }}>
+        <div style={{ padding: compact ? '32px 16px' : '64px 20px', textAlign: 'center', color: 'var(--wa-muted)', fontSize: 13, fontStyle: 'italic' }}>
           Add dated projects, events, works, press or awards to build your career timeline.
         </div>
-      ) : narrow ? (
+      ) : asList ? (
         <div style={{ paddingBottom: 8 }}>
           {years.filter(y => all.some(e => e.year === y)).map(year => (
             <YearList key={year} year={year} events={all.filter(e => e.year === year)} onSelect={setSelected} />
@@ -396,10 +396,30 @@ export function Career() {
           ))}
         </div>
       )}
-      </CareerFrame>
-
       {selected && <EventPopup e={selected} onClose={() => setSelected(null)} />}
+    </div>
+  )
+}
 
+// The full timeline, with a switch for each kind of entry.
+export function Career() {
+  const [show, setShow] = useState<Record<EventKind, boolean>>(ALL_KINDS)
+  const toggleKind = (k: EventKind) => setShow(s => ({ ...s, [k]: !s[k] }))
+  return (
+    <Shell>
+      <CareerFrame title="Timeline" right={
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {(Object.keys(KIND_LABELS) as EventKind[]).map(k => (
+            <button key={k} onClick={() => toggleKind(k)} aria-pressed={show[k]}
+              style={{ padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 11,
+                background: show[k] ? 'var(--wa-ink)' : 'var(--wa-fill)', color: show[k] ? 'var(--wa-surface)' : 'var(--wa-text-2)', fontWeight: show[k] ? 600 : 400 }}>
+              {KIND_LABELS[k]}
+            </button>
+          ))}
+        </div>
+      }>
+        <TimelineView show={show} />
+      </CareerFrame>
     </Shell>
   )
 }

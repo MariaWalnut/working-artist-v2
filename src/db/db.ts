@@ -284,6 +284,7 @@ export interface BoardItem {
   boardId: number
   itemType: 'text' | 'note' | 'color' | 'quote' | 'tag' | 'image' | 'arrow' | 'title'
     | 'project' | 'tasks' | 'list' | 'submission' | 'comingup'
+    | 'timeline' | 'map' | 'recognition' | 'rights' // Career boxes
   content: string
   x: number
   y: number
