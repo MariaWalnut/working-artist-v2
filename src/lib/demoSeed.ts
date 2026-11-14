@@ -7,7 +7,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-14'
+export const DEMO_VERSION = '2026-11-14b'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -171,7 +171,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
     projects: [
       P('Second album', 'Release', { label: 'Northbound Records', notes: 'Twelve songs demoed. Choosing nine.' },
         [['Finish lyrics for Harbour', 2], ['Book mixing engineer for January', 5], ['Choose the nine songs', 12], ['Send demos to label', null, true]]),
-      P('Spring tour 2027', 'Tour', { location: 'Vienna, Copenhagen, Amsterdam', institution: 'Tokyo Live Tours', dateStart: inDays(140).slice(0, 7), dateEnd: inDays(160).slice(0, 7), fee: '€9,000 guaranteed' },
+      P('Spring tour 2027', 'Tour', { location: 'Vienna, Copenhagen, Amsterdam', institution: 'Harbour Booking', dateStart: inDays(125).slice(0, 7), dateEnd: inDays(175).slice(0, 7), fee: '€9,000 guaranteed' },
         [['Confirm Vienna venue', 3], ['Draft tour budget', 9], ['Ask Copenhagen promoter for dates', 16], ['Book the van', null, true]]),
       P('Theatre score: The Orchard', 'Commission', { client: 'Kleines Haus Ensemble', fee: '€6,000' },
         [['Record piano sketches', 1], ['Deliver cue list', 20], ['Read the script twice', null, true]]),

@@ -193,8 +193,8 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
       ))}
     </div>
     {sales.length > 0 && (
-      <div style={{ marginTop: 6 }}>
-        <span style={{ ...label, marginBottom: 8 }}>Sales</span>
+      <div style={{ marginTop: 8, paddingTop: 14, borderTop: '1px solid var(--wa-line)' }}>
+        <span style={{ ...label, fontWeight: 600, letterSpacing: '0.16em', marginBottom: 10 }}>Sales</span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
           {sales.map(f => (
             <label key={f.key}>

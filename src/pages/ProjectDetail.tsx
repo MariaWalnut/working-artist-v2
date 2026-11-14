@@ -132,7 +132,7 @@ function projectFacts(p: Project): Array<[string, string]> {
     if (!m) return y
     return new Date(Number(y), Number(m) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
   }
-  const dateRange = p.dateStart && p.dateEnd
+  const dateRange = p.dateStart && p.dateEnd && fmt(p.dateStart) !== fmt(p.dateEnd)
     ? `${fmt(p.dateStart)} – ${fmt(p.dateEnd)}`
     : p.dateStart ? fmt(p.dateStart)
     : p.dateEnd ? fmt(p.dateEnd)
