@@ -6,7 +6,7 @@ import { useActiveDept } from '../lib/useDept'
 import { useNarrow } from '../lib/useNarrow'
 import { Shell } from '../components/layout/Shell'
 import { AddButton, FrameTitle } from '../components/PageFrame'
-import { RecognitionList, RightsList } from '../components/CareerLists'
+import { AwardsList, PressList, RightsList } from '../components/CareerLists'
 import { TimelineView } from './Career'
 import { WorldMapPanel } from './WorldMap'
 
@@ -14,13 +14,14 @@ import { WorldMapPanel } from './WorldMap'
 // Each studio keeps its own arrangement, in a board of type 'career'. A box stores its column in x,
 // its width in columns in w, its height in px in h, and its place in the stacking order in y.
 
-type BoxType = 'timeline' | 'map' | 'recognition' | 'rights'
+type BoxType = 'timeline' | 'map' | 'recognition' | 'awards' | 'rights'
 
 const BOXES: Record<BoxType, { title: string; full?: string; x: number; y: number; w: number; h: number }> = {
   timeline: { title: 'Timeline', full: '/career/timeline', x: 0, y: 0, w: 4, h: 384 },
   map: { title: 'Map', full: '/career/map', x: 0, y: 1, w: 2, h: 408 },
-  recognition: { title: 'Recognition', full: '/career/recognition', x: 2, y: 1, w: 1, h: 408 },
-  rights: { title: 'Rights sold', x: 3, y: 1, w: 1, h: 408 },
+  recognition: { title: 'Press', full: '/career/recognition', x: 2, y: 1, w: 1, h: 408 },
+  awards: { title: 'Awards', full: '/career/recognition?show=awards', x: 3, y: 1, w: 1, h: 192 },
+  rights: { title: 'Rights sold', x: 3, y: 2, w: 1, h: 204 },
 }
 const ORDER = Object.keys(BOXES) as BoxType[]
 
@@ -51,7 +52,8 @@ interface Drag extends Geo { id: number; mode: 'move' | 'resize'; sx: number; sy
 function content(t: BoxType): ReactNode {
   if (t === 'timeline') return <TimelineView compact />
   if (t === 'map') return <WorldMapPanel compact />
-  if (t === 'recognition') return <RecognitionList />
+  if (t === 'recognition') return <PressList />
+  if (t === 'awards') return <AwardsList />
   return <RightsList />
 }
 
@@ -73,11 +75,26 @@ export function CareerBoard() {
     if (board !== null || deptId == null) return
     void db.transaction('rw', db.boards, db.boardItems, async () => {
       if (await db.boards.where('departmentId').equals(deptId).filter(b => b.boardType === 'career').first()) return
-      const id = await db.boards.add({ departmentId: deptId, name: 'Career', boardType: 'career', createdAt: Date.now() }) as number
+      const id = await db.boards.add({ departmentId: deptId, name: 'Career', boardType: 'career', createdAt: Date.now(), careerBoxes: ORDER }) as number
       const now = Date.now()
       await db.boardItems.bulkAdd(ORDER.map(t => ({ boardId: id, itemType: t, content: '', x: BOXES[t].x, y: BOXES[t].y, w: BOXES[t].w, h: BOXES[t].h, createdAt: now })))
     })
   }, [board, deptId])
+
+  // A board made before a box existed gets it once, at the bottom of the right column. Removed later, it stays removed.
+  useEffect(() => {
+    if (!board?.id || !items) return
+    const given = board.careerBoxes ?? ['timeline', 'map', 'recognition', 'rights']
+    const fresh = ORDER.filter(t => !given.includes(t))
+    if (!fresh.length) return
+    const below = Math.max(0, ...items.map(i => i.y)) + 1
+    void db.transaction('rw', db.boards, db.boardItems, async () => {
+      const b = await db.boards.get(board.id!)
+      if (!b || ORDER.every(t => (b.careerBoxes ?? given).includes(t))) return
+      await db.boardItems.bulkAdd(fresh.map((t, i) => ({ boardId: b.id!, itemType: t, content: '', x: 3, y: below + i, w: 1, h: 288, createdAt: Date.now() })))
+      await db.boards.update(b.id!, { careerBoxes: ORDER })
+    })
+  }, [board, items])
 
   const boxes = (items ?? []).filter(i => (ORDER as string[]).includes(i.itemType))
   const missing = ORDER.filter(t => !boxes.some(i => i.itemType === t))

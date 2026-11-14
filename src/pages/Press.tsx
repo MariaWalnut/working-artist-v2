@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useSearchParams } from 'react-router-dom'
 import { db, type Activity, type PressEntry, type Work } from '../db/db'
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
@@ -241,7 +242,8 @@ export function Press() {
   const works = allWorks.filter(w => keep(of.work(w)))
 
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
-  const [section, setSection] = useState<Section>('press')
+  const [params] = useSearchParams()
+  const [section, setSection] = useState<Section>(params.get('show') === 'awards' ? 'award' : 'press')
   const [editing, setEditing] = useState<PressEntry | null | 'new'>(null)
   const [newClipping, setNewClipping] = useState<Clipping | null>(null)
   const [viewing, setViewing] = useState<PressEntry | null>(null)

@@ -291,6 +291,7 @@ export interface Board {
   boardType?: string
   createdAt: number
   hiddenProjectIds?: number[] // desk only: projects the user took off the desk
+  careerBoxes?: string[] // career only: every box it has been given, so a removed one is not added again
 }
 
 export interface BoardItem {
@@ -298,7 +299,7 @@ export interface BoardItem {
   boardId: number
   itemType: 'text' | 'note' | 'color' | 'quote' | 'tag' | 'image' | 'arrow' | 'title'
     | 'project' | 'tasks' | 'list' | 'submission' | 'comingup'
-    | 'timeline' | 'map' | 'recognition' | 'rights' // Career boxes
+    | 'timeline' | 'map' | 'recognition' | 'awards' | 'rights' // Career boxes ('recognition' is the press box)
   content: string
   x: number
   y: number
