@@ -109,7 +109,14 @@ export function CareerBoard() {
       ? { id, col: colAt(left, i.w), span: i.w, key: top, h: height }
       : { id: i.id!, col: i.x, span: i.w, key: rest.get(i.id!) ?? 0, h: i.h }))
   const liveBox = live ? boxes.find(i => i.id === live.id) : undefined
-  const tops = live?.mode === 'move' && liveBox ? dropTops(live.id, live.left, live.top, live.height) : rest
+  // While a box is being resized, the others make room for its new size as it changes.
+  const resizeTops = (id: number, width: number, height: number) =>
+    pack(boxes.map(i => i.id === id
+      ? { id, col: i.x, span: spanFor(width, i.x), key: rest.get(id) ?? 0, h: Math.max(MIN_H, snap(height)) }
+      : { id: i.id!, col: i.x, span: i.w, key: rest.get(i.id!) ?? 0, h: i.h }))
+  const tops = !live || !liveBox ? rest
+    : live.mode === 'move' ? dropTops(live.id, live.left, live.top, live.height)
+    : resizeTops(live.id, live.width, live.height)
   const canvasH = Math.max(320, ...boxes.map(i => (tops.get(i.id!) ?? 0) + (live && live.id === i.id && live.mode === 'resize' ? live.height : i.h))) + GAP
 
   function start(e: React.PointerEvent<HTMLElement>, item: BoardItem, mode: 'move' | 'resize') {
@@ -168,7 +175,7 @@ export function CareerBoard() {
 
   const preview = live && liveBox ? (live.mode === 'move'
     ? { left: colLeft(colAt(live.left, liveBox.w)), top: tops.get(liveBox.id!) ?? 0, width: spanWidth(liveBox.w), height: live.height }
-    : { left: live.left, top: live.top, width: spanWidth(spanFor(live.width, liveBox.x)), height: Math.max(MIN_H, snap(live.height)) }) : null
+    : { left: live.left, top: tops.get(liveBox.id!) ?? live.top, width: spanWidth(spanFor(live.width, liveBox.x)), height: Math.max(MIN_H, snap(live.height)) }) : null
 
   const smallBtn: React.CSSProperties = { padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }
 
@@ -181,6 +188,7 @@ export function CareerBoard() {
       : {
           position: 'absolute', left: mine ? mine.left : colLeft(item.x), top: mine ? mine.top : tops.get(item.id!) ?? 0,
           width: mine ? mine.width : spanWidth(item.w), height: mine ? mine.height : item.h, zIndex: mine ? 30 : 1,
+          transition: mine ? 'none' : 'top .18s ease, left .18s ease, width .18s ease, height .18s ease',
         }
     return (
       <div key={item.id} data-career-box={t} style={{ ...style, display: 'flex', flexDirection: 'column', background: 'var(--wa-surface)', borderRadius: 20, overflow: 'hidden', boxShadow: mine ? '0 14px 36px rgba(0,0,0,.16)' : 'none' }}
