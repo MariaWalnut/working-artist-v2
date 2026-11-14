@@ -197,14 +197,14 @@ export function CareerBoard() {
           style={{ height: HEAD, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px', borderBottom: '1px solid var(--wa-line)', cursor: narrow ? 'default' : mine ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' }}>
           <span style={{ fontFamily: 'Recoleta, serif', fontSize: 16, color: 'var(--wa-ink)' }}>{def.title}</span>
           <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-            {def.full && <button onClick={() => navigate(def.full!)} aria-label={`Full view of ${def.title}`} title="Full view" style={{ ...smallBtn, display: 'flex', padding: 2 }}>
+            {(hovered === item.id || narrow) && !mine && (
+              <button aria-label={`Remove ${def.title}`} title="Remove" onClick={() => void db.boardItems.delete(item.id!)} style={{ ...smallBtn, fontSize: 16, lineHeight: 1 }}>×</button>
+            )}
+            {def.full &&<button onClick={() => navigate(def.full!)} aria-label={`Full view of ${def.title}`} title="Full view" style={{ ...smallBtn, display: 'flex', padding: 2 }}>
               <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="none" stroke="var(--wa-text-2)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M8.5 1.5h4v4M12.5 1.5L8 6M5.5 12.5h-4v-4M1.5 12.5L6 8" />
               </svg>
             </button>}
-            {(hovered === item.id || narrow) && !mine && (
-              <button aria-label={`Remove ${def.title}`} title="Remove" onClick={() => void db.boardItems.delete(item.id!)} style={{ ...smallBtn, fontSize: 16, lineHeight: 1 }}>×</button>
-            )}
           </span>
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: t === 'map' ? 'hidden' : 'auto' }}>{content(t)}</div>
