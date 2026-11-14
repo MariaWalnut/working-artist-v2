@@ -443,49 +443,47 @@ export function ProjectDetail() {
         <h1 style={{ fontFamily: 'Recoleta, serif', fontSize: narrow ? 30 : 38, lineHeight: 1.1, fontWeight: 400, margin: 0, color: 'var(--wa-ink)', textWrap: 'balance' }}>{project.title}</h1>
 
 
-            {/* Tasks beside everything else, so Submissions and People are in view without scrolling */}
-            <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 300px', gap: narrow ? 32 : 36, marginTop: 28, alignItems: 'start' }}>
-              <div style={{ minWidth: 0 }}>
-                {project.id != null && <KanbanBoard projectId={project.id} deptId={dept?.id} />}
-              </div>
-              <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 28, ...(narrow ? { borderTop: '1px solid var(--wa-line)', paddingTop: 28 } : { borderLeft: '1px solid var(--wa-line)', paddingLeft: 32 }) }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <h2 style={heading}>Details</h2>
-                    <button onClick={startEdit} style={plainAdd}>Edit</button>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr)', gap: '6px 10px', fontSize: 12, alignItems: 'baseline' }}>
-                    <span style={{ color: 'var(--wa-muted)' }}>Status</span>
-                    <select value={statusOf(project)} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
-                      style={{ justifySelf: 'start', padding: 0, border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-ink)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                      {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
-                    </select>
-                    {([
-                      ['Type', project.projectType],
-                      ...(multi && mode === 'together' ? [['Practice', name(practiceOf(acts).project(project))]] : []),
-                      ...projectFacts(project),
-                    ] as Array<[string, string | undefined]>).filter(([, v]) => v).map(([label, value]) => (
-                      <Fragment key={label}>
-                        <span style={{ color: 'var(--wa-muted)' }}>{label}</span>
-                        <span style={{ color: 'var(--wa-ink)', overflowWrap: 'anywhere' }}>{value}</span>
-                      </Fragment>
-                    ))}
-                  </div>
-                  {work && !work.inProgress && <button onClick={() => navigate(`/studio/${work.id}`)} style={{ ...plainAdd, marginTop: 10 }}>In Works →</button>}
-                  {!work && project.status === 'Completed' && <button onClick={() => void addToWorks()} style={{ ...plainAdd, marginTop: 10 }}>+ Add to Works</button>}
-                </div>
-                {project.id != null && <ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
-                {project.id != null && <ProjectMeetings projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
-                {project.id != null && <PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} />}
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <h2 style={heading}>Notes</h2>
-                    {!project.notes && <button onClick={startEdit} style={plainAdd}>+ Add</button>}
-                  </div>
-                  {project.notes && <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>{project.notes}</p>}
-                </div>
-              </div>
-            </div>
+        {/* The facts in one line under the title; hovering a value names it */}
+        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 10, rowGap: 4, marginTop: 12, fontSize: 13, color: 'var(--wa-text-2)' }}>
+          <select value={statusOf(project)} aria-label="Status" onChange={e => void changeStatus(e.target.value)}
+            style={{ padding: 0, border: 'none', background: 'none', fontSize: 13, fontWeight: 600, color: 'var(--wa-ink)', cursor: 'pointer', fontFamily: 'inherit' }}>
+            {PROJECT_STATUSES.map(s => <option key={s}>{s}</option>)}
+          </select>
+          {([
+            ['Type', project.projectType],
+            ...(multi && mode === 'together' ? [['Practice', name(practiceOf(acts).project(project))]] : []),
+            ...projectFacts(project),
+          ] as Array<[string, string | undefined]>).filter(([, v]) => v).map(([label, value]) => (
+            <Fragment key={label}>
+              <span aria-hidden="true">·</span>
+              <span title={label} style={{ overflowWrap: 'anywhere' }}>{value}</span>
+            </Fragment>
+          ))}
+          <button onClick={startEdit} style={{ ...plainAdd, marginLeft: 6 }}>Edit</button>
+          {work && !work.inProgress && <button onClick={() => navigate(`/studio/${work.id}`)} style={plainAdd}>In Works →</button>}
+          {!work && project.status === 'Completed' && <button onClick={() => void addToWorks()} style={plainAdd}>+ Add to Works</button>}
+        </div>
+
+        <div style={{ marginTop: 28 }}>
+          {project.id != null && <KanbanBoard projectId={project.id} deptId={dept?.id} />}
+        </div>
+
+        {/* Everything around the tasks, side by side under them */}
+        {project.id != null && (
+          <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))', gap: narrow ? 28 : 36, marginTop: 36, paddingTop: 28, borderTop: '1px solid var(--wa-line)', alignItems: 'start' }}>
+            <div style={{ minWidth: 0 }}><ProjectSubmissions project={project} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} /></div>
+            <div style={{ minWidth: 0 }}><ProjectMeetings projectId={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} /></div>
+            <div style={{ minWidth: 0 }}><PeopleCard kind="project" id={project.id} deptId={dept?.id} labelStyle={heading} addStyle={plainAdd} /></div>
+          </div>
+        )}
+
+        <div style={{ marginTop: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
+            <h2 style={heading}>Notes</h2>
+            {!project.notes && <button onClick={startEdit} style={plainAdd}>+ Add</button>}
+          </div>
+          {project.notes && <p style={{ fontSize: 13, color: 'var(--wa-text)', lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0, maxWidth: 680 }}>{project.notes}</p>}
+        </div>
       </div>
     </Shell>
   )
