@@ -21,12 +21,12 @@ interface Bundle { contacts: DemoContact[]; lists: DemoList[] }
 const SINGLE = {
   musician: {
     contacts: [
-      C('Jonas Weber', 'Client', 'Northbound Records', 'Label manager', { phone: '+49 30 5550 1820', website: 'northboundrecords.example', address: 'Northbound Records\nLinienstraße 41\n10119 Berlin\nGermany', tags: ['label'], note: 'Prefers calls before noon.', works: ['Low Tide', 'Glass Hour'], projects: ['Second album'] }),
+      C('Jonas Weber', 'Label', 'Northbound Records', 'Label manager', { phone: '+49 30 5550 1820', website: 'northboundrecords.example', address: 'Northbound Records\nLinienstraße 41\n10119 Berlin\nGermany', tags: ['label'], note: 'Prefers calls before noon.', works: ['Low Tide', 'Glass Hour'], projects: ['Second album'] }),
       C('Mira Lund', 'Press', 'Nordic Sound Magazine', 'Music editor', { address: 'Vesterbrogade 12\n1620 Copenhagen\nDenmark', tags: ['press', 'Copenhagen'], works: ['Northern Lights (Live)'] }),
-      C('Pedro Alves', 'Institution', 'Lisbon Music Hall', 'Booker', { phone: '+351 21 555 0144', address: 'Rua das Flores 88\n1200-195 Lisbon\nPortugal', tags: ['venue'], events: ['Paper Lanterns tour'], projects: ['Spring tour 2027'] }),
+      C('Pedro Alves', 'Venue', 'Lisbon Music Hall', 'Booker', { phone: '+351 21 555 0144', address: 'Rua das Flores 88\n1200-195 Lisbon\nPortugal', tags: ['venue'], events: ['Paper Lanterns tour'], projects: ['Spring tour 2027'] }),
       C('Hanna Gruber', 'Client', 'Kleines Haus Ensemble', 'Artistic director', { address: 'Kleines Haus\nGumpendorfer Straße 9\n1060 Vienna\nAustria', note: 'Met at the Small Hours show.', projects: ['Theatre score: The Orchard'], events: ['Small Hours release show'] }),
-      C('Sam Okafor', 'Artist', 'Studio Okafor', 'Mixing engineer', { phone: '+44 20 5550 3391', website: 'okafor.example', address: '14 Lark Lane\nLondon E8 3QS\nUnited Kingdom', tags: ['studio'], projects: ['Second album'] }),
-      C('Yuki Mori', 'Institution', 'Tokyo Live Tours', 'Promoter', { address: '2-4-1 Shibuya\nTokyo 150-0002\nJapan', tags: ['touring'], events: ['Japan tour'] }),
+      C('Sam Okafor', 'Collaborator', 'Studio Okafor', 'Mixing engineer', { phone: '+44 20 5550 3391', website: 'okafor.example', address: '14 Lark Lane\nLondon E8 3QS\nUnited Kingdom', tags: ['studio'], projects: ['Second album'] }),
+      C('Yuki Mori', 'Venue', 'Tokyo Live Tours', 'Promoter', { address: '2-4-1 Shibuya\nTokyo 150-0002\nJapan', tags: ['touring'], events: ['Japan tour'] }),
       C('Clara Visser', 'Curator', 'Amsterdam Song Festival', 'Programmer', { address: 'Prinsengracht 300\n1016 HX Amsterdam\nNetherlands', events: ['Spring tour: Amsterdam'] }),
     ],
     lists: [
@@ -67,8 +67,8 @@ const SINGLE = {
   writer: {
     contacts: [
       C('Helen Marsh', 'Publisher', 'Harbour Press', 'Editor', { phone: '+44 131 555 0192', website: 'harbourpress.example', address: 'Harbour Press\n4 Leith Walk\nEdinburgh EH6 8RQ\nUnited Kingdom', tags: ['editor'], works: ['The Summer House', 'Small Weather'], projects: ['Novel two: The Lighthouse Keepers'] }),
-      C('Jakob Stein', 'Publisher', 'Verlag am See', 'Translator', { address: 'Seestraße 5\n8002 Zurich\nSwitzerland', tags: ['translation', 'German'], works: ['Das Sommerhaus'], projects: ['German edition edits'] }),
-      C('Rachel Adler', 'Client', 'Adler Literary', 'Agent', { phone: '+44 20 5550 4471', address: 'Adler Literary\n31 Bedford Square\nLondon WC1B 3EG\nUnited Kingdom', note: 'Call before any contract.', projects: ['Novel two: The Lighthouse Keepers'] }),
+      C('Jakob Stein', 'Collaborator', 'Verlag am See', 'Translator', { address: 'Seestraße 5\n8002 Zurich\nSwitzerland', tags: ['translation', 'German'], works: ['Das Sommerhaus'], projects: ['German edition edits'] }),
+      C('Rachel Adler', 'Agent', 'Adler Literary', 'Agent', { phone: '+44 20 5550 4471', address: 'Adler Literary\n31 Bedford Square\nLondon WC1B 3EG\nUnited Kingdom', note: 'Call before any contract.', projects: ['Novel two: The Lighthouse Keepers'] }),
       C('Marta Silva', 'Curator', 'Lisbon Literature Festival', 'Programmer', { address: 'Largo do Carmo 2\n1200-092 Lisbon\nPortugal', events: ['Literature festival reading'], projects: ['Festival season'] }),
       C('Owen Price', 'Press', 'The Weekend Review', 'Books editor', { address: '8 Fleet Street\nLondon EC4Y 1AA\nUnited Kingdom', tags: ['press'], works: ['Letters from Lisbon'] }),
       C('Ana Ruiz', 'Institution', 'City Library Dublin', 'Events', { address: '138 Pearse Street\nDublin D02 HE37\nIreland', events: ['Library talk'] }),
@@ -96,12 +96,12 @@ const SINGLE = {
   },
   filmmaker: {
     contacts: [
-      C('Anouk Visser', 'Client', 'Northlight Films', 'Producer', { phone: '+31 10 555 0418', website: 'northlightfilms.example', address: 'Northlight Films\nWitte de Withstraat 50\n3012 BR Rotterdam\nNetherlands', tags: ['producer'], note: 'Prefers voice notes to long emails.', works: ['Salt Road', 'Tidewater'], projects: ['Tidewater', 'Salt Road festival run'] }),
+      C('Anouk Visser', 'Producer', 'Northlight Films', 'Producer', { phone: '+31 10 555 0418', website: 'northlightfilms.example', address: 'Northlight Films\nWitte de Withstraat 50\n3012 BR Rotterdam\nNetherlands', tags: ['producer'], note: 'Prefers voice notes to long emails.', works: ['Salt Road', 'Tidewater'], projects: ['Tidewater', 'Salt Road festival run'] }),
       C('Laurent Petit', 'Institution', 'Arte Kurzfilm', 'Commissioning editor', { address: 'Arte Kurzfilm\n8 Rue de la Fonderie\n67080 Strasbourg\nFrance', tags: ['broadcaster'], works: ['Borrowed Rooms'], projects: ['Borrowed Rooms, episode 3'] }),
       C('Greta Holm', 'Curator', 'Rotterdam Shorts', 'Programmer', { address: 'Rotterdam Shorts\nSchouwburgplein 25\n3012 CL Rotterdam\nNetherlands', tags: ['festival'], events: ['Short film festival'], works: ['The Quiet Hour'] }),
-      C('Matteo Ricci', 'Client', 'Lumen Sales', 'Sales agent', { phone: '+39 06 555 0193', address: 'Lumen Sales\nVia Margutta 33\n00187 Rome\nItaly', tags: ['sales'], note: 'Met at Clermont-Ferrand. Wants to see Tidewater early.', events: ['Salt Road at Clermont-Ferrand'] }),
-      C('Jonas Weber', 'Client', 'Northbound Records', 'Label manager', { address: 'Northbound Records\nLinienstraße 41\n10119 Berlin\nGermany', works: ['Harbour Lights'], projects: ['Music video: Glass Hour'] }),
-      C('Rita Gomes', 'Artist', 'Studio Gomes', 'Editor', { phone: '+351 21 555 0281', address: 'Rua do Século 40\n1200-433 Lisbon\nPortugal', tags: ['crew', 'edit'], works: ['Salt Road'], projects: ['Borrowed Rooms, episode 3'] }),
+      C('Matteo Ricci', 'Agent', 'Lumen Sales', 'Sales agent', { phone: '+39 06 555 0193', address: 'Lumen Sales\nVia Margutta 33\n00187 Rome\nItaly', tags: ['sales'], note: 'Met at Clermont-Ferrand. Wants to see Tidewater early.', events: ['Salt Road at Clermont-Ferrand'] }),
+      C('Jonas Weber', 'Label', 'Northbound Records', 'Label manager', { address: 'Northbound Records\nLinienstraße 41\n10119 Berlin\nGermany', works: ['Harbour Lights'], projects: ['Music video: Glass Hour'] }),
+      C('Rita Gomes', 'Collaborator', 'Studio Gomes', 'Editor', { phone: '+351 21 555 0281', address: 'Rua do Século 40\n1200-433 Lisbon\nPortugal', tags: ['crew', 'edit'], works: ['Salt Road'], projects: ['Borrowed Rooms, episode 3'] }),
       C('Ben Archer', 'Press', 'Screen Notes', 'Critic', { address: '17 Old Compton Street\nLondon W1D 5JU\nUnited Kingdom', tags: ['press'], works: ['Salt Road'] }),
     ],
     lists: [
@@ -114,9 +114,9 @@ const SINGLE = {
       C('Karin Albers', 'Gallery', 'Galerie Kontakt', 'Director', { phone: '+49 30 5550 4417', website: 'galeriekontakt.example', address: 'Galerie Kontakt\nPotsdamer Straße 81\n10785 Berlin\nGermany', tags: ['Berlin'], note: 'Prefers prints to PDFs.', projects: ['Solo show: Glasshouse'], events: ['Glasshouse opening'], works: ['Glasshouse'] }),
       C('Joost de Wit', 'Curator', 'Harbour Photo Museum', 'Curator of photography', { address: 'Harbour Photo Museum\nHavenstraat 12\n3024 TH Rotterdam\nNetherlands', tags: ['museum'], works: ['Low Water'], events: ['Low Water at the Photo Museum'] }),
       C('Henrik Dahl', 'Publisher', 'Harbour Editions', 'Publisher', { phone: '+45 33 55 50 21', address: 'Harbour Editions\nStrandgade 30\n1401 Copenhagen\nDenmark', tags: ['photobooks'], works: ['Borrowed Light'], projects: ['Second photobook'] }),
-      C('Lotte Brandt', 'Artist', '', 'Writer', { email: 'lotte.brandt@mail.example', address: 'Kollwitzstraße 50\n10405 Berlin\nGermany', note: 'Wrote the essay for Borrowed Light.', works: ['Borrowed Light'], projects: ['Second photobook'] }),
+      C('Lotte Brandt', 'Collaborator', '', 'Writer', { email: 'lotte.brandt@mail.example', address: 'Kollwitzstraße 50\n10405 Berlin\nGermany', note: 'Wrote the essay for Borrowed Light.', works: ['Borrowed Light'], projects: ['Second photobook'] }),
       C('Amira Haddad', 'Client', 'Weekend Magazine', 'Photo editor', { phone: '+44 20 5550 8812', address: 'Weekend Magazine\n31 Hoxton Square\nLondon N1 6NN\nUnited Kingdom', tags: ['editorial'], projects: ['Editorial commission: coastal towns'] }),
-      C('Marek Nowak', 'Artist', 'Studio Fine Print', 'Printer', { address: 'Studio Fine Print\nWiener Straße 18\n10999 Berlin\nGermany', tags: ['print'], note: 'Prints every edition. Book a week ahead.', projects: ['Solo show: Glasshouse', 'Archive and editions'] }),
+      C('Marek Nowak', 'Printer', 'Studio Fine Print', 'Printer', { address: 'Studio Fine Print\nWiener Straße 18\n10999 Berlin\nGermany', tags: ['print'], note: 'Prints every edition. Book a week ahead.', projects: ['Solo show: Glasshouse', 'Archive and editions'] }),
       C('Sigrún Jónsdóttir', 'Institution', 'North Light Residency', 'Director', { address: 'Laugavegur 70\n101 Reykjavík\nIceland', tags: ['residency'], projects: ['Residency: Reykjavík'] }),
       C('Paul Lambert', 'Collector', '', '', { email: 'paul.lambert@mail.example', address: '18 Rue de Bretagne\n75003 Paris\nFrance', tags: ['collector', 'Paris'], note: 'Bought Saltpans, Aveiro, number 2 of 7.', works: ['Saltpans, Aveiro'] }),
     ],

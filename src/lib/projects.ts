@@ -22,6 +22,7 @@ export function projectSubtitle(p: Project) {
   if (t === 'Award') return p.organisation
   if (t === 'Commission') return p.client
   if (t === 'Film') return [p.client, p.location].filter(Boolean).join(' · ')
+  if (t === 'Art fair') return [p.organisation, p.location].filter(Boolean).join(' · ')
   return [p.location, p.institution].filter(Boolean).join(' · ')
 }
 
@@ -40,7 +41,7 @@ export function projectDate(p: Project) {
   return `${fmt(start)} – ${fmt(end)}`
 }
 
-export const PROJECT_TYPES = ['Exhibition', 'Residency', 'Release', 'Film', 'Award', 'Commission', 'Books', 'Publications', 'Other']
+export const PROJECT_TYPES = ['Exhibition', 'Art fair', 'Residency', 'Release', 'Tour', 'Film', 'Award', 'Commission', 'Teaching', 'Books', 'Publications', 'Other']
 
 const WORK_KIND: Record<string, string> = { Books: 'Book', Publications: 'Book', Release: 'Release', Film: 'Film', Commission: 'Artwork' }
 

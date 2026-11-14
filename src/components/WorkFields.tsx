@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Activity, Work } from '../db/db'
 import { useCustomCategories } from '../lib/categories'
 import { PRACTICE_CATEGORIES, usePractice } from '../lib/practice'
-import { KIND_FIELDS, NUMERIC_FIELDS, WORK_KINDS, usesPublishedDate, type WorkField, type WorkKind } from '../lib/works'
+import { EDITION_FIELDS, KIND_FIELDS, NUMERIC_FIELDS, WORK_KINDS, kindOf, usesPublishedDate, type FieldSpec, type WorkField, type WorkKind } from '../lib/works'
 import { normalizeDate } from '../lib/eventDates'
 import { DateFields } from './DateFields'
 
@@ -10,11 +10,15 @@ export type FieldValues = Record<WorkField, string>
 
 const ALL_FIELDS: WorkField[] = [
   'year', 'month', 'medium', 'dimensions', 'location', 'collection', 'subtitle', 'publisher', 'publishedDate',
-  'isbn', 'language', 'credits', 'pages', 'technique', 'format', 'label', 'runtime', 'production',
+  'isbn', 'language', 'credits', 'pages', 'technique', 'format', 'label', 'runtime', 'production', 'tracklist', 'link',
+  'price', 'availability', 'whereNow', 'soldTo', 'editionSize', 'artistProofs', 'editionsSold',
 ]
 
 export function fieldsFromWork(w: Partial<Work> | null): FieldValues {
-  return Object.fromEntries(ALL_FIELDS.map(k => [k, w?.[k] != null ? String(w[k]) : ''])) as FieldValues
+  const v = Object.fromEntries(ALL_FIELDS.map(k => [k, w?.[k] != null ? String(w[k]) : ''])) as FieldValues
+  // A kind dated by its publication, saved before it was: its year and month start the date.
+  if (w && !v.publishedDate && w.year && usesPublishedDate(kindOf(w))) v.publishedDate = w.month ? `${w.year}-${String(w.month).padStart(2, '0')}` : String(w.year)
+  return v
 }
 
 // Every field is written back, so details from a previous kind survive a kind change.
@@ -117,6 +121,10 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
   columns?: number
 }) {
   const [lookup, setLookup] = useState<'idle' | 'loading' | 'notfound' | 'error'>('idle')
+  const [edition, setEdition] = useState(() => EDITION_FIELDS.some(k => values[k]))
+  const specs = KIND_FIELDS[kind]
+  const main = specs.filter(s => !s.group)
+  const sales = specs.filter(s => s.group === 'sales' && (edition || !EDITION_FIELDS.includes(s.key)))
   const isbnReady = values.isbn.replace(/[^0-9Xx]/g, '').length >= 10
 
   async function runLookup() {
@@ -135,9 +143,22 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
     }
   }
 
+  const plain = (f: FieldSpec) => f.options ? (
+    <select value={values[f.key]} onChange={e => onChange({ ...values, [f.key]: e.target.value })} style={{ ...inp, color: values[f.key] ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
+      <option value="">Choose…</option>
+      {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  ) : f.multiline ? (
+    <textarea value={values[f.key]} onChange={e => onChange({ ...values, [f.key]: e.target.value })} placeholder={f.placeholder} rows={5} style={{ ...inp, resize: 'vertical' }} />
+  ) : (
+    <input value={values[f.key]} onChange={e => onChange({ ...values, [f.key]: e.target.value })}
+      placeholder={f.placeholder} inputMode={NUMERIC_FIELDS.includes(f.key) ? 'numeric' : undefined} style={inp} />
+  )
+
   return (
+    <>
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 10 }}>
-      {KIND_FIELDS[kind].map(f => f.key === 'year' ? (
+      {main.map(f => f.key === 'year' ? (
         <div key={f.key} style={{ gridColumn: '1 / -1' }}>
           <DateFields label={f.label} showDay={false} inp={inp}
             value={values.year ? (values.month ? `${values.year}-${values.month.padStart(2, '0')}` : values.year) : ''}
@@ -167,12 +188,26 @@ export function WorkFields({ kind, values, onChange, onIsbnFound, inp, columns =
                 {lookup === 'loading' ? '…' : lookup === 'notfound' ? 'Not found' : lookup === 'error' ? 'Error' : 'Look up'}
               </button>
             </div>
-          ) : (
-            <input value={values[f.key]} onChange={e => onChange({ ...values, [f.key]: e.target.value })}
-              placeholder={f.placeholder} inputMode={NUMERIC_FIELDS.includes(f.key) ? 'numeric' : undefined} style={inp} />
-          )}
+          ) : plain(f)}
         </label>
       ))}
     </div>
+    {sales.length > 0 && (
+      <div style={{ marginTop: 6 }}>
+        <span style={{ ...label, marginBottom: 8 }}>Sales</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+          {sales.map(f => (
+            <label key={f.key}>
+              <span style={label}>{f.label}</span>
+              {plain(f)}
+            </label>
+          ))}
+        </div>
+        {!edition && (
+          <button type="button" onClick={() => setEdition(true)} style={{ marginTop: 10, padding: 0, border: 'none', background: 'none', fontSize: 11, color: 'var(--wa-text-2)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Edition</button>
+        )}
+      </div>
+    )}
+    </>
   )
 }

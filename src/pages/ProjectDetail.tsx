@@ -92,6 +92,28 @@ function EditTypeFields({ type, state, set }: {
     </>
   )
 
+  if (type === 'Art fair') return (
+    <>
+      <Row>{field('organisation', 'Fair')}{field('location', 'City')}</Row>
+      <Row>{field('institution', 'Gallery / Booth')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+
+  if (type === 'Tour') return (
+    <>
+      <Row>{field('location', 'Vienna, Amsterdam, Tokyo', 'Cities')}{field('institution', 'Booking agency')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+
+  if (type === 'Teaching') return (
+    <>
+      <Row>{field('institution', 'School / Institution')}{field('location', 'City')}</Row>
+      <Row>{monthField('dateStart', 'Start')}{monthField('dateEnd', 'End')}</Row>
+    </>
+  )
+
   return (
     <>
       <Row>{field('location', 'City / Venue')}</Row>
@@ -99,6 +121,9 @@ function EditTypeFields({ type, state, set }: {
     </>
   )
 }
+
+// What the money a project brings is called. Books keep theirs in the contract on the work.
+const feeLabel = (t?: string) => t === 'Award' ? 'Prize money' : t === 'Residency' ? 'Fee or grant' : t === 'Release' || t === 'Film' ? 'Budget or fee' : 'Fee'
 
 function projectFacts(p: Project): Array<[string, string]> {
   const t = p.projectType
@@ -125,10 +150,17 @@ function projectFacts(p: Project): Array<[string, string]> {
     items.push(['Organisation', p.organisation], ['Year', p.awardYear], ['City', p.location])
   } else if (t === 'Commission') {
     items.push(['Client', p.client], ['Location', p.location], ['Dates', dateRange])
+  } else if (t === 'Art fair') {
+    items.push(['Fair', p.organisation], ['Gallery', p.institution], ['City', p.location], ['Dates', dateRange])
+  } else if (t === 'Tour') {
+    items.push(['Cities', p.location], ['Booking agency', p.institution], ['Dates', dateRange])
+  } else if (t === 'Teaching') {
+    items.push(['Institution', p.institution], ['City', p.location], ['Dates', dateRange])
   } else {
     items.push(['Institution', p.institution], ['Curator', p.curator], ['Location', p.location], ['Dates', dateRange])
   }
 
+  items.push([feeLabel(t), p.fee])
   return items.filter(([, v]) => v).map(([label, value]) => [label, String(value)])
 }
 
@@ -151,6 +183,7 @@ function projectFieldsFromRecord(p: Project): Record<string, string> {
     organisation: p.organisation ?? '',
     awardYear: p.awardYear ?? '',
     client: p.client ?? '',
+    fee: p.fee ?? '',
   }
 }
 
@@ -338,6 +371,7 @@ export function ProjectDetail() {
       organisation: f.organisation || undefined,
       awardYear: f.awardYear || undefined,
       client: f.client || undefined,
+      fee: f.fee?.trim() || undefined,
     })
     setEditing(false)
     if (project!.status !== status) completed(status)
@@ -409,6 +443,13 @@ export function ProjectDetail() {
               )}
             </Row>
             <EditTypeFields type={type} state={fields} set={setField} />
+            {type !== 'Books' && type !== 'Publications' && (
+              <Row>
+                <Field label={feeLabel(type)}>
+                  <input value={fields.fee ?? ''} onChange={e => setField('fee', e.target.value)} placeholder="€3,000" style={inp} />
+                </Field>
+              </Row>
+            )}
             <div style={{ marginBottom: 10 }}>
               <Field label="Status">
                 <select value={status} onChange={e => setStatus(e.target.value)} style={inp}>

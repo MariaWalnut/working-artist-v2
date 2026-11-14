@@ -2,7 +2,7 @@ import type { Table } from 'dexie'
 import type { Book, PressEntry, Release, Work } from '../db/db'
 import { formatAnyDate, normalizeDate } from './eventDates'
 
-export const WORK_KINDS = ['Artwork', 'Illustration', 'Book', 'Release', 'Film', 'Other'] as const
+export const WORK_KINDS = ['Artwork', 'Illustration', 'Book', 'Text', 'Release', 'Film', 'Show', 'Design', 'Other'] as const
 export type WorkKind = typeof WORK_KINDS[number]
 
 export const kindOf = (w: Pick<Work, 'kind'>): WorkKind =>
@@ -14,9 +14,12 @@ export const shelfOf = (w: Pick<Work, 'kind' | 'category'>): string => w.categor
 export type WorkField =
   | 'year' | 'month' | 'medium' | 'dimensions' | 'location' | 'collection'
   | 'subtitle' | 'publisher' | 'publishedDate' | 'isbn' | 'language' | 'credits' | 'pages' | 'technique'
-  | 'format' | 'label' | 'runtime' | 'production'
+  | 'format' | 'label' | 'runtime' | 'production' | 'tracklist' | 'link'
+  | 'price' | 'availability' | 'whereNow' | 'soldTo' | 'editionSize' | 'artistProofs' | 'editionsSold'
 
-export const NUMERIC_FIELDS: WorkField[] = ['year', 'month', 'pages']
+export const NUMERIC_FIELDS: WorkField[] = ['year', 'month', 'pages', 'editionSize', 'artistProofs', 'editionsSold']
+
+export const AVAILABILITY = ['Available', 'Reserved', 'Sold', 'On loan', 'Not for sale']
 
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -30,19 +33,28 @@ export function fieldDisplay(key: WorkField, value: unknown, w?: Work) {
 // Kinds dated by their publication: their year and month always follow that date.
 export const usesPublishedDate = (kind: WorkKind) => KIND_FIELDS[kind].some(f => f.key === 'publishedDate')
 
-interface FieldSpec { key: WorkField; label: string; placeholder?: string }
+export interface FieldSpec { key: WorkField; label: string; placeholder?: string; options?: string[]; multiline?: boolean; group?: 'sales' }
 
-const f = (key: WorkField, label: string, placeholder?: string): FieldSpec => ({ key, label, placeholder })
+const f = (key: WorkField, label: string, placeholder?: string, more: Partial<FieldSpec> = {}): FieldSpec => ({ key, label, placeholder, ...more })
+
+// What a piece costs and where it is now, for anything that can be sold as an object. Editions count prints.
+const SALES: FieldSpec[] = [
+  f('price', 'Price', '€4,500', { group: 'sales' }), f('availability', 'Status', undefined, { group: 'sales', options: AVAILABILITY }),
+  f('whereNow', 'Where it is', 'Studio, Galerie Nordlicht', { group: 'sales' }), f('soldTo', 'Sold to', 'Name', { group: 'sales' }),
+  f('editionSize', 'Edition size', '5', { group: 'sales' }), f('artistProofs', "Artist's proofs", '2', { group: 'sales' }),
+  f('editionsSold', 'Sold from the edition', '3', { group: 'sales' }),
+]
+export const EDITION_FIELDS: WorkField[] = ['editionSize', 'artistProofs', 'editionsSold']
 
 // Which details each kind of work asks for, in display order.
 export const KIND_FIELDS: Record<WorkKind, FieldSpec[]> = {
   Artwork: [
     f('year', 'Date'), f('medium', 'Medium', 'Oil on linen'), f('dimensions', 'Dimensions', '120 × 90 cm'),
-    f('location', 'Location', 'City or venue'), f('collection', 'Collection', 'Private collection'),
+    f('location', 'Location', 'City or venue'), f('collection', 'Collection', 'Private collection'), ...SALES,
   ],
   Illustration: [
     f('publishedDate', 'Date'), f('publisher', 'Client or publication', 'The New Yorker'),
-    f('medium', 'Medium', 'Gouache, digital'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City'),
+    f('medium', 'Medium', 'Gouache, digital'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City'), ...SALES,
   ],
   Book: [
     f('subtitle', 'Subtitle'), f('publisher', 'Publisher'), f('publishedDate', 'Published'),
@@ -50,16 +62,29 @@ export const KIND_FIELDS: Record<WorkKind, FieldSpec[]> = {
     f('pages', 'Pages', '32'), f('dimensions', 'Size', '24 × 30 cm'), f('technique', 'Technique', 'Gouache, pencil'),
     f('location', 'Location', 'City'),
   ],
+  Text: [
+    f('publishedDate', 'Published'), f('publisher', 'Published in', 'City Review'), f('language', 'Language', 'English'),
+    f('credits', 'Credits', 'Translated by…'), f('link', 'Link', 'https://…'),
+  ],
   Release: [
-    f('year', 'Date'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
+    f('publishedDate', 'Released'), f('format', 'Format', 'Album, EP, single'), f('label', 'Label'), f('location', 'Location', 'City'),
+    f('tracklist', 'Tracks', 'One per line', { multiline: true }), f('link', 'Listen', 'https://…'),
   ],
   Film: [
     f('publishedDate', 'Premiere'), f('format', 'Format', 'Short, feature, documentary'), f('runtime', 'Runtime', '14 min'),
     f('production', 'Production', 'Production company'), f('credits', 'Credits', 'Written and directed by…'),
-    f('language', 'Language'), f('location', 'Location', 'Where it was shot'),
+    f('language', 'Language'), f('location', 'Location', 'Where it was shot'), f('link', 'Watch', 'https://…'),
+  ],
+  Show: [
+    f('publishedDate', 'Premiere'), f('location', 'Venue', 'Venue and city'), f('runtime', 'Runtime', '60 min'),
+    f('production', 'Production', 'Company or commissioner'), f('credits', 'Cast and credits', 'With…'), f('link', 'Link', 'https://…'),
+  ],
+  Design: [
+    f('year', 'Date'), f('publisher', 'Client'), f('format', 'Format', 'Identity, poster, website'),
+    f('credits', 'Team', 'With…'), f('location', 'Location', 'City'), f('link', 'Link', 'https://…'),
   ],
   Other: [
-    f('year', 'Date'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'),
+    f('year', 'Date'), f('medium', 'Medium'), f('dimensions', 'Dimensions'), f('location', 'Location', 'City or venue'), ...SALES,
   ],
 }
 
@@ -68,6 +93,9 @@ export function workSubtitle(w: Work) {
   switch (kindOf(w)) {
     case 'Book': return [w.subtitle, w.publisher].filter(Boolean).join(' · ')
     case 'Illustration': return [w.publisher, w.medium].filter(Boolean).join(' · ')
+    case 'Text': return w.publisher ?? ''
+    case 'Show': return [w.production, w.runtime].filter(Boolean).join(' · ')
+    case 'Design': return [w.format, w.publisher].filter(Boolean).join(' · ')
     case 'Release': return [w.format, w.label].filter(Boolean).join(' · ')
     case 'Film': return [w.format, w.runtime].filter(Boolean).join(' · ')
     default: return [w.medium, w.dimensions].filter(Boolean).join(' · ')

@@ -29,6 +29,8 @@ export const PRACTICE_KIND: Partial<Record<Activity, WorkKind>> = {
   musician: 'Release',
   filmmaker: 'Film',
   writer: 'Book',
+  designer: 'Design',
+  performer: 'Show',
 }
 
 // Categories offered for a work in each practice. People can type their own.
@@ -49,6 +51,9 @@ const BY_KIND: Record<string, Activity[]> = {
   Release: ['musician', 'performer'],
   Film: ['filmmaker'],
   Book: ['writer', 'picture_book'],
+  Text: ['writer', 'picture_book'],
+  Show: ['performer', 'musician'],
+  Design: ['designer', 'picture_book', 'visual_artist'],
   Illustration: ['picture_book', 'designer', 'visual_artist'],
   Artwork: ['visual_artist', 'photographer', 'designer', 'picture_book'],
 }
@@ -58,6 +63,8 @@ const BY_PROJECT_TYPE: Record<string, Activity[]> = {
   Books: ['writer', 'picture_book'],
   Publications: ['writer', 'picture_book'],
   Exhibition: ['visual_artist', 'photographer', 'picture_book'],
+  'Art fair': ['visual_artist', 'photographer', 'picture_book'],
+  Tour: ['musician', 'performer'],
 }
 const BY_EVENT_TYPE: Record<string, Activity[]> = {
   Reading: ['writer', 'picture_book'],
@@ -66,6 +73,8 @@ const BY_EVENT_TYPE: Record<string, Activity[]> = {
   Performance: ['musician', 'performer'],
   Screening: ['filmmaker'],
   Festival: ['filmmaker', 'musician'],
+  Broadcast: ['filmmaker', 'musician'],
+  'Open studio': ['visual_artist', 'photographer'],
 }
 const BY_OPP_TYPE: Record<string, Activity[]> = {
   'Publisher proposal': ['writer', 'picture_book'],

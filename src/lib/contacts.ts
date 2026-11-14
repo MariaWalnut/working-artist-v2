@@ -1,6 +1,6 @@
 import { db, type Contact, type ContactList, type Department } from '../db/db'
 
-export const PRESET_CATEGORIES = ['Gallery', 'Publisher', 'Curator', 'Collector', 'Press', 'Client', 'Institution', 'Artist', 'Other']
+export const PRESET_CATEGORIES = ['Gallery', 'Publisher', 'Label', 'Agent', 'Curator', 'Venue', 'Producer', 'Collector', 'Press', 'Client', 'Institution', 'Collaborator', 'Printer', 'Artist', 'Other']
 
 // Presets first, then the studio's own categories and any still used by a contact.
 export function categoriesFor(dept: Department | undefined, contacts: Contact[]) {

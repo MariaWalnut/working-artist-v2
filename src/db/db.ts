@@ -72,6 +72,7 @@ export interface Project {
   awardYear?: string
   // Commission
   client?: string
+  fee?: string // what it pays, as typed: "€3,000"
   workId?: number // the work it became, once finished
 }
 
@@ -94,7 +95,7 @@ export interface Work {
   departmentId?: number
   practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
-  kind?: string // Artwork (default) / Illustration / Book / Release / Film / Other
+  kind?: string // Artwork (default) / Illustration / Book / Text / Release / Film / Show / Design / Other
   category?: string // the artist's own shelf: Paintings, Works on paper, Singles…
   medium?: string
   dimensions?: string
@@ -122,6 +123,17 @@ export interface Work {
   // films
   runtime?: string // e.g. 14 min
   production?: string // production company
+  // releases: one track per line
+  tracklist?: string
+  link?: string // where to listen, watch or read it
+  // selling the piece itself (artworks, illustrations, prints)
+  price?: string // as typed: "€4,500"
+  availability?: string // Available / Reserved / Sold / On loan / Not for sale
+  whereNow?: string // studio, a gallery, a lender
+  soldTo?: string
+  editionSize?: number
+  artistProofs?: number
+  editionsSold?: number
   contract?: BookContract
   contractFile?: string // data URL of the contract itself, a PDF
   contractFileName?: string
@@ -181,6 +193,8 @@ export interface EventEntry {
   projectIds?: number[] // the projects a meeting is about
   onTimeline?: boolean // shown on the career timeline; older events have no value and count as shown
   maybe?: boolean // discussed but not confirmed: kept apart from everything else until it is
+  fee?: string // what it pays, as typed: "€400"
+  premiere?: string // for a festival or screening: World premiere, International premiere…
 }
 
 export interface PressEntry {

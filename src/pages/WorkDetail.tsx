@@ -8,7 +8,7 @@ import { CategoryField, KindSelect, WorkFields, fieldsFromWork, fieldsToPatch, t
 import { PracticeSelect } from '../components/Practice'
 import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity } from '../db/db'
-import { KIND_FIELDS, fieldDisplay, kindOf, shelfOf, type WorkKind } from '../lib/works'
+import { KIND_FIELDS, fieldDisplay, kindOf, shelfOf, usesPublishedDate, type WorkKind } from '../lib/works'
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
@@ -21,6 +21,16 @@ const PRESS_TYPES = ['Interview', 'Feature', 'Selection', 'Review', 'Mention', '
 const NARROW = '(max-width: 900px)'
 
 function uid() { return Math.random().toString(36).slice(2) }
+
+// What a right is called in each kind of work: a book sells editions, a film territories, an image or a song a use.
+interface RightWords { title: string; what: string; who: string; city: string; advance: string; royalty: string; copies?: boolean }
+const RIGHT_WORDS: Partial<Record<WorkKind, RightWords>> = {
+  Book: { title: 'Rights', what: 'Language / edition', who: 'Publisher', city: "Publisher's city, for the map", advance: 'Advance', royalty: 'Royalty %', copies: true },
+  Text: { title: 'Rights', what: 'Language / edition', who: 'Publisher', city: "Publisher's city, for the map", advance: 'Fee', royalty: 'Royalty %' },
+  Film: { title: 'Rights', what: 'Territory', who: 'Distributor or broadcaster', city: 'Their city, for the map', advance: 'Minimum guarantee', royalty: 'Share %' },
+  Release: { title: 'Licences', what: 'Use, e.g. Sync: coffee advert', who: 'Licensee', city: 'Their city, for the map', advance: 'Fee', royalty: 'Share %' },
+}
+const LICENCE_WORDS: RightWords = { title: 'Licences', what: 'Use, e.g. Book cover, 5 years, world', who: 'Client', city: 'Their city, for the map', advance: 'Fee', royalty: 'Share %' }
 
 const RIGHT_BADGE: Record<string, React.CSSProperties> = {
   live:    { background: 'var(--accent)', color: '#111111' },
@@ -118,7 +128,15 @@ export function WorkDetail() {
     if (!ev) return
     await db.eventEntries.update(eventId, { workIds: (ev.workIds ?? []).filter(id => id !== wid) } as Partial<typeof ev>)
   }
-  const shownFields = KIND_FIELDS[wKind].filter(f => f.key !== 'subtitle' && w[f.key] != null && w[f.key] !== '')
+  // A kind dated by its publication but saved with only a year still shows that year.
+  const dateOnly = usesPublishedDate(wKind) && !w.publishedDate && w.year ? { ...w, publishedDate: w.month ? `${w.year}-${String(w.month).padStart(2, '0')}` : String(w.year) } : w
+  const shownFields = KIND_FIELDS[wKind].filter(f => !f.group && f.key !== 'subtitle' && dateOnly[f.key] != null && dateOnly[f.key] !== '')
+  const salesRows: Array<[string, string]> = [
+    ['Price', w.price], ['Status', w.availability], ['Where it is', w.whereNow], ['Sold to', w.soldTo],
+    ['Edition', w.editionSize ? [`${w.editionSize}${w.artistProofs ? ` + ${w.artistProofs} AP` : ''}`, w.editionsSold != null ? `${w.editionsSold} sold` : ''].filter(Boolean).join(' · ') : undefined],
+  ].filter((r): r is [string, string] => !!r[1])
+  const hasSales = KIND_FIELDS[wKind].some(f => f.group === 'sales')
+  const rw = RIGHT_WORDS[wKind] ?? LICENCE_WORDS
 
   function startEdit() {
     setTitle(w.title)
@@ -261,7 +279,8 @@ export function WorkDetail() {
     ...(!showShown && linkable.length > 0 ? [['Shown at', () => setLinkingEvent(true)] as [string, () => void]] : []),
     ...(!showPeople ? [[peopleCount > 0 ? `People (${peopleCount})` : 'People', () => setAddingPeople(true)] as [string, () => void]] : []),
     ...(!showPress ? [['Press', () => setAddingPress(true)] as [string, () => void]] : []),
-    ...(!showRights ? [['Rights', () => setAddingRight(true)] as [string, () => void]] : []),
+    ...(hasSales && salesRows.length === 0 && !editing ? [['Sales', startEdit] as [string, () => void]] : []),
+    ...(!showRights ? [[rw.title, () => setAddingRight(true)] as [string, () => void]] : []),
     ...(!w.notes && !editing ? [['Notes', () => { startEdit(); setTimeout(() => notesRef.current?.focus(), 0) }] as [string, () => void]] : []),
   ]
 
@@ -365,7 +384,11 @@ export function WorkDetail() {
                 shownFields.map((f, i) => (
                   <div key={f.key} style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr)', gap: 12, padding: '9px 0', borderTop: i ? '1px solid var(--wa-line)' : 'none' }}>
                     <div style={{ fontSize: 10, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', paddingTop: 2 }}>{f.label}</div>
-                    <div style={{ fontSize: 13, color: 'var(--wa-ink)' }}>{fieldDisplay(f.key, w[f.key], w)}</div>
+                    <div style={{ fontSize: 13, color: 'var(--wa-ink)', whiteSpace: f.multiline ? 'pre-wrap' : undefined, overflowWrap: 'anywhere' }}>
+                      {f.key === 'link'
+                        ? <a href={/^https?:\/\//i.test(w.link!) ? w.link : `https://${w.link}`} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', borderBottom: '1px solid var(--accent)', textDecoration: 'none' }}>{w.link!.replace(/^https?:\/\/(www\.)?/i, '')}</a>
+                        : fieldDisplay(f.key, dateOnly[f.key], dateOnly)}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -373,10 +396,22 @@ export function WorkDetail() {
               )}
             </div>
 
+            {!editing && salesRows.length > 0 && (
+              <div style={{ ...card }}>
+                {sectionLabel('Sales')}
+                {salesRows.map(([k, v], i) => (
+                  <div key={k} style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr)', gap: 12, padding: '9px 0', borderTop: i ? '1px solid var(--wa-line)' : 'none' }}>
+                    <div style={{ fontSize: 10, color: 'var(--wa-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', paddingTop: 2 }}>{k}</div>
+                    <div style={{ fontSize: 13, color: 'var(--wa-ink)' }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {showShown && (
               <div data-tour="work-shown" style={{ ...card }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  {sectionLabel('Shown at')}
+                  {sectionLabel(wKind === 'Film' ? 'Festival run' : wKind === 'Release' || wKind === 'Show' ? 'Played at' : 'Shown at')}
                   {linkable.length > 0 && <button onClick={() => setLinkingEvent(v => !v)} style={addBtn}>+ Add</button>}
                 </div>
                 {linkingEvent && (
@@ -389,7 +424,7 @@ export function WorkDetail() {
                   <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--wa-line)' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--wa-ink)' }}>{e.title}</div>
-                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 2 }}>{[e.type, e.location, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')}</div>
+                      <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 2 }}>{[e.premiere ?? e.type, e.location, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')}</div>
                     </div>
                     <button onClick={() => void unlinkEvent(e.id!)} aria-label={`Unlink ${e.title}`} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer', flexShrink: 0 }}>×</button>
                   </div>
@@ -440,13 +475,13 @@ export function WorkDetail() {
             {showRights && (
               <div style={{ ...card }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  {sectionLabel('Rights')}
+                  {sectionLabel(rw.title)}
                   <button onClick={() => { if (addingRight) closeRight(); else setAddingRight(true) }} style={addBtn}>+ Add</button>
                 </div>
                 {addingRight && (
                   <div style={{ background: 'var(--wa-fill-2)', borderRadius: 10, padding: 12, marginBottom: 12 }}>
-                    <input autoFocus value={rightLang} onChange={e => setRightLang(e.target.value)} placeholder="Language / edition" style={{ ...inp, marginBottom: 6 }} />
-                    <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder="Publisher" style={{ ...inp, marginBottom: 6 }} />
+                    <input autoFocus value={rightLang} onChange={e => setRightLang(e.target.value)} placeholder={rw.what} aria-label={rw.what} style={{ ...inp, marginBottom: 6 }} />
+                    <input value={rightPub} onChange={e => setRightPub(e.target.value)} placeholder={rw.who} aria-label={rw.who} style={{ ...inp, marginBottom: 6 }} />
                     <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                       <select value={rightMonth} onChange={e => setRightMonth(e.target.value)} aria-label="Month" style={{ ...inp, flex: 2, color: rightMonth ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
                         <option value="">Month…</option>
@@ -454,12 +489,12 @@ export function WorkDetail() {
                       </select>
                       <input type="number" value={rightYear} onChange={e => setRightYear(e.target.value)} placeholder="Year" aria-label="Year" style={{ ...inp, flex: 1 }} />
                     </div>
-                    <input value={rightCity} onChange={e => setRightCity(e.target.value)} placeholder="Publisher's city, for the map" aria-label="Publisher's city" style={{ ...inp, marginBottom: 6 }} />
+                    <input value={rightCity} onChange={e => setRightCity(e.target.value)} placeholder={rw.city} aria-label={rw.city} style={{ ...inp, marginBottom: 6 }} />
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
-                      <input value={rightAdvance} onChange={e => setRightAdvance(e.target.value)} placeholder="Advance" aria-label="Advance" inputMode="decimal" style={inp} />
-                      <input value={rightRoyalty} onChange={e => setRightRoyalty(e.target.value)} placeholder="Royalty %" aria-label="Royalty %" inputMode="decimal" style={inp} />
-                      <input value={rightRun} onChange={e => setRightRun(e.target.value)} placeholder="Print run" aria-label="Print run" inputMode="numeric" style={inp} />
-                      <input value={rightPrice} onChange={e => setRightPrice(e.target.value)} placeholder="Price" aria-label="Price" inputMode="decimal" style={inp} />
+                      <input value={rightAdvance} onChange={e => setRightAdvance(e.target.value)} placeholder={rw.advance} aria-label={rw.advance} inputMode="decimal" style={inp} />
+                      <input value={rightRoyalty} onChange={e => setRightRoyalty(e.target.value)} placeholder={rw.royalty} aria-label={rw.royalty} inputMode="decimal" style={inp} />
+                      {(rw.copies || rightRun) && <input value={rightRun} onChange={e => setRightRun(e.target.value)} placeholder="Print run" aria-label="Print run" inputMode="numeric" style={inp} />}
+                      {(rw.copies || rightPrice) && <input value={rightPrice} onChange={e => setRightPrice(e.target.value)} placeholder="Price" aria-label="Price" inputMode="decimal" style={inp} />}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                       {rightFile ? <>
@@ -486,7 +521,7 @@ export function WorkDetail() {
                       <div style={{ fontSize: 10, color: 'var(--wa-muted)', marginTop: 1 }}>{[r.publisher, r.location, r.year && r.month ? new Date(r.year, r.month - 1).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : r.year, r.contractFile ? 'Contract' : ''].filter(Boolean).join(' · ')}</div>
                       {(r.advance != null || r.royaltyRate != null || r.printRun != null || r.price != null) && (
                         <div style={{ fontSize: 10, color: 'var(--wa-text-2)', marginTop: 2 }}>
-                          {[r.advance != null ? `Advance ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}
+                          {[r.advance != null ? `${rw.advance} ${money(r.advance, w.contract?.currency)}` : '', r.royaltyRate != null ? `${r.royaltyRate}%` : '', r.printRun != null ? `${r.printRun.toLocaleString('en-GB')} copies` : '', r.price != null ? money(r.price, w.contract?.currency) : ''].filter(Boolean).join(' · ')}
                         </div>
                       )}
                     </div>

@@ -16,7 +16,9 @@ import { practiceOf, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
 
 
-const EVENT_TYPES = ['Meeting', 'Reading', 'Exhibition', 'Book Fair', 'Market', 'Talk', 'Performance', 'Screening', 'Festival', 'Award', 'Residency', 'Other']
+const EVENT_TYPES = ['Meeting', 'Reading', 'Exhibition', 'Launch', 'Book Fair', 'Market', 'Open studio', 'Talk', 'Workshop', 'Performance', 'Screening', 'Festival', 'Broadcast', 'Award', 'Residency', 'Other']
+const PREMIERES = ['World premiere', 'International premiere', 'European premiere', 'National premiere']
+const HAS_PREMIERE = ['Screening', 'Festival', 'Performance']
 
 const TYPE_DOT: Record<string, string> = {
   Meeting:     'var(--accent)',
@@ -28,6 +30,10 @@ const TYPE_DOT: Record<string, string> = {
   Performance: '#D4A8C8',
   Screening:   '#A8B4D4',
   Festival:    '#E0A030',
+  Launch:      '#E8A890',
+  Workshop:    '#98BC9C',
+  'Open studio': '#C8B48C',
+  Broadcast:   '#8CA8C8',
   Award:       'var(--accent)',
   Residency:   'var(--wa-muted)',
   Other:       'var(--wa-line-strong)',
@@ -78,6 +84,8 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
   const meeting = type === 'Meeting'
   const [maybe, setMaybe] = useState(entry?.maybe ?? draft?.maybe ?? false)
   const [url, setUrl] = useState(entry?.url ?? '')
+  const [fee, setFee] = useState(entry?.fee ?? '')
+  const [premiere, setPremiere] = useState(entry?.premiere ?? '')
   const [notes, setNotes] = useState(entry?.notes ?? '')
   const [goals, setGoals] = useState(entry?.goals ?? '')
   const [workIds, setWorkIds] = useState<number[]>(entry?.workIds ?? [])
@@ -109,6 +117,8 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
       projectIds: meeting && projectIds.length ? projectIds : undefined,
       onTimeline: meeting || maybe ? false : timeline,
       maybe: maybe || undefined,
+      fee: !meeting && fee.trim() ? fee.trim() : undefined,
+      premiere: HAS_PREMIERE.includes(type) && premiere ? premiere : undefined,
     }
     if (entry?.id != null) await db.eventEntries.update(entry.id, data as Partial<EventEntry>)
     else {
@@ -183,6 +193,17 @@ function EventForm({ entry, draft, works, allWorks, onDone }: {
           </label>
         )}
 
+        {!meeting && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            {HAS_PREMIERE.includes(type) && (
+              <select aria-label="Premiere" value={premiere} onChange={e => setPremiere(e.target.value)} style={{ ...inp, flex: 1, color: premiere ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>
+                <option value="">Premiere…</option>
+                {PREMIERES.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            )}
+            <input value={fee} onChange={e => setFee(e.target.value)} placeholder="Fee, e.g. €400" aria-label="Fee" style={{ ...inp, flex: 1 }} />
+          </div>
+        )}
         <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" aria-label="Link" style={{ ...inp, marginBottom: 10 }} />
 
         {(upcoming || goals) && (
@@ -335,8 +356,8 @@ export function AllEvents() {
                   <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: TYPE_DOT[e.type ?? ''] ?? 'var(--wa-line)' }} />
                   <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--wa-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
                 </div>
-                {narrow && (e.location || e.type) && (
-                  <span style={{ paddingLeft: 14, fontSize: 10, color: 'var(--wa-muted)' }}>{[e.location, e.type].filter(Boolean).join(' · ')}</span>
+                {(narrow ? (e.location || e.type || e.premiere || e.fee) : (e.premiere || e.fee)) && (
+                  <span style={{ paddingLeft: 14, fontSize: 10, color: 'var(--wa-muted)' }}>{[...(narrow ? [e.location, e.type] : []), e.premiere, e.fee].filter(Boolean).join(' · ')}</span>
                 )}
                 {e.workIds && e.workIds.length > 0 && (
                   <div style={{ paddingLeft: 14, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
