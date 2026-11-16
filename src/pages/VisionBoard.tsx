@@ -282,8 +282,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
   const items = allItems.filter(i => i.itemType !== 'arrow')
   const arrows = allItems.filter(i => i.itemType === 'arrow')
 
-  // A board wider than the screen shrinks to fit. On a phone it stops at a readable size,
-  // and the empty board can be swiped to see the rest.
+  // A board wider than the screen shrinks to fit. On a phone two fingers zoom in, and a zoomed board swipes.
   const narrow = useNarrow()
   const [canvasW, setCanvasW] = useState(0)
   useEffect(() => {
@@ -294,8 +293,12 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
   }, [])
   const extentW = items.reduce((m, i) => Math.max(m, i.x + i.w), 0) + 24
   const extentH = items.reduce((m, i) => Math.max(m, i.y + (i.h || 80)), 0) + 24
-  const scale = canvasW && extentW > canvasW ? Math.max(narrow ? 0.6 : 0, canvasW / extentW) : 1
+  const fit = canvasW && extentW > canvasW ? canvasW / extentW : 1
+  const [zoom, setZoom] = useState(1)
+  const scale = fit * (narrow ? zoom : 1)
   const pans = extentW * scale > canvasW + 1
+  const scaleRef = useRef(scale); scaleRef.current = scale
+  const zoomRef = useRef(zoom); zoomRef.current = zoom
 
   const [mode, setMode]             = useState<Mode>('select')
   const [arrowSrc, setArrowSrc]     = useState<number | null>(null)
@@ -317,6 +320,46 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
   const overlayDragCountRef = useRef(0)
   const markerId    = `ah-${board.id}`
 
+  // Pinch to zoom on a phone. The point between the fingers stays where it is.
+  const pinchRef  = useRef<{ d0: number; z0: number; cx: number; cy: number } | null>(null)
+  const anchorRef = useRef<{ cx: number; cy: number; mx: number; my: number } | null>(null)
+  useEffect(() => {
+    const el = canvasRef.current; if (!el || !narrow) return
+    const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+    const mid = (t: TouchList) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 })
+    const start = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return
+      e.preventDefault(); setDrag(null); setResizing(null)
+      const r = el.getBoundingClientRect(), m = mid(e.touches), sc = scaleRef.current
+      pinchRef.current = { d0: dist(e.touches), z0: zoomRef.current, cx: (el.scrollLeft + m.x - r.left) / sc, cy: (el.scrollTop + m.y - r.top) / sc }
+    }
+    const move = (e: TouchEvent) => {
+      const p = pinchRef.current; if (!p || e.touches.length !== 2) return
+      e.preventDefault()
+      const r = el.getBoundingClientRect(), m = mid(e.touches)
+      anchorRef.current = { cx: p.cx, cy: p.cy, mx: m.x - r.left, my: m.y - r.top }
+      setZoom(Math.min(5, Math.max(1, p.z0 * dist(e.touches) / p.d0)))
+    }
+    const end = (e: TouchEvent) => { if (e.touches.length < 2) pinchRef.current = null }
+    el.addEventListener('touchstart', start, { passive: false })
+    el.addEventListener('touchmove', move, { passive: false })
+    el.addEventListener('touchend', end)
+    el.addEventListener('touchcancel', end)
+    return () => {
+      el.removeEventListener('touchstart', start)
+      el.removeEventListener('touchmove', move)
+      el.removeEventListener('touchend', end)
+      el.removeEventListener('touchcancel', end)
+    }
+  }, [narrow])
+  useLayoutEffect(() => {
+    const a = anchorRef.current, el = canvasRef.current
+    if (!a || !el) return
+    el.scrollLeft = a.cx * scale - a.mx
+    el.scrollTop = a.cy * scale - a.my
+    anchorRef.current = null
+  }, [scale])
+
   const editingItem     = editingId != null ? allItems.find(i => i.id === editingId) : undefined
   const capturedRef     = useRef<BoardItem | null>(null)
   if (editingItem && capturedRef.current?.id !== editingId) capturedRef.current = { ...editingItem }
@@ -326,7 +369,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
     if (!content.trim()) return
     const { w, h } = DEFAULTS[type] ?? { w: 180, h: 72 }
     const el = canvasRef.current
-    const pos = scatter(el ? el.clientWidth / 2 : 300, el ? el.clientHeight / 2 : 200, w, h)
+    const pos = scatter(el ? (el.scrollLeft + el.clientWidth / 2) / scale : 300, el ? (el.scrollTop + el.clientHeight / 2) / scale : 200, w, h)
     await db.boardItems.add({ boardId: board.id!, itemType: type, content: content.trim(), ...pos, w, h, color, createdAt: Date.now() })
     setAddText(''); setAdding(null)
   }
@@ -496,11 +539,11 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div data-tour="manifest-board" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500, background: 'var(--wa-surface)', borderRadius: 20 }}>
+    <div data-tour="manifest-board" style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 500, background: 'var(--wa-surface)', borderRadius: 20 }}>
 
       {/* Header: board names on the left, toolbar on the right */}
       <FrameHeader right={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
           {(['text', 'note', 'quote', 'tag'] as const).map(t => (
             <button key={t} onClick={() => { setMode('select'); setAdding(p => p === t ? null : t) }}
               style={{ padding: '5px 11px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 500,
@@ -579,7 +622,7 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         style={{
-          flex: 1, position: 'relative', overflow: pans ? 'auto' : 'visible',
+          flex: 1, position: 'relative', overflow: pans ? 'auto' : 'visible', touchAction: narrow ? 'pan-x pan-y' : undefined,
           background: dropOver ? '#EFF7FF' : 'var(--wa-fill-2)',
           borderRadius: '0 0 20px 20px', border: dropOver ? '2px dashed #78AECB' : 'none',
           cursor: resizing ? 'nwse-resize' : drag ? 'grabbing' : mode === 'arrow' ? 'crosshair' : 'default',
@@ -753,6 +796,12 @@ function BoardCanvas({ board, tabs }: { board: Board; tabs: React.ReactNode }) {
           </div>
         )}
       </div>
+      {narrow && zoom > 1 && (
+        <button onClick={() => setZoom(1)}
+          style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 40, padding: '8px 16px', borderRadius: 999, border: 'none', background: 'var(--wa-ink)', color: 'var(--wa-page)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 10px rgba(0,0,0,.15)' }}>
+          Fit
+        </button>
+      )}
     </div>
   )
 }
