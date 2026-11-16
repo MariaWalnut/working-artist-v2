@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventEntry } from '../db/db'
@@ -12,7 +12,7 @@ import { Hint } from '../components/Hint'
 import { FrameHeader } from '../components/FrameHeader'
 import { AddButton, BoxHeading, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { PracticeFilter, PracticePicker } from '../components/Practice'
-import { practiceOf, usePractice } from '../lib/practice'
+import { practiceOf, setLens, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
 
 
@@ -304,7 +304,8 @@ export function AllEvents() {
   const [view, setView] = useState<'list' | 'calendar'>('list')
   const addEvent = (d?: Draft) => { setDraft(d); setEditing('new') }
 
-  const { acts, keep } = usePractice({ filter: true })
+  const { acts, keep, multi, mode, current, name } = usePractice({ filter: true })
+  const [filterOpen, setFilterOpen] = useState(false)
   const allEntries = useLiveQuery(() => dept?.id == null ? [] : db.eventEntries.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   // A link from the map opens that event (?e=).
@@ -346,6 +347,20 @@ export function AllEvents() {
   const pastShown = showAll ? past : past.slice(0, PAGE_SIZE)
   const someDay = yearFilter ? [] : inPractice.filter(e => (e.maybe || !e.date) && (!typeFilter || e.type === typeFilter) && (!cityFilter || e.location === cityFilter)).sort((a, b) => a.title.localeCompare(b.title))
 
+  // On a phone the groups sit in the filter sheet as wrapping chips under a heading.
+  const group = (title: string, children: ReactNode) => narrow
+    ? <SheetGroup title={title}><div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>{children}</div></SheetGroup>
+    : <SidePanel title={title} narrow={false}>{children}</SidePanel>
+  const yearPanel = years.length > 0 && group('Year', <>
+    <SideItem label="All" active={yearFilter === null} narrow={narrow} onClick={() => setYearFilter(null)} />
+    {years.map(y => <SideItem key={y} label={String(y)} count={sorted.filter(e => toYear(e.date) === y).length} active={yearFilter === y} narrow={narrow} onClick={() => setYearFilter(yearFilter === y ? null : y)} />)}
+  </>)
+  const typePanel = types.length > 0 && group('Type', types.map(t => <SideItem key={t} label={t} dot={TYPE_DOT[t] ?? 'var(--wa-line)'} count={sorted.filter(e => e.type === t).length} active={typeFilter === t} narrow={narrow} onClick={() => setTypeFilter(typeFilter === t ? null : t)} />))
+  const cityPanel = cities.length > 0 && group('City', (narrow ? cities : cities.slice(0, 8)).map(c => <SideItem key={c} label={c} count={sorted.filter(e => e.location === c).length} active={cityFilter === c} narrow={narrow} onClick={() => setCityFilter(cityFilter === c ? null : c)} />))
+  const showPractice = multi && mode === 'together'
+  const activeCount = [current, yearFilter, typeFilter, cityFilter].filter(x => x != null).length
+  const clearFilters = () => { setYearFilter(null); setTypeFilter(null); setCityFilter(null); setLens(null) }
+
   const eventRow = (e: EventEntry, i: number, all: EventEntry[]) => (
             <div key={e.id} data-tour-title={e.title} onClick={() => setEditing(e)}
               style={{ display: 'grid', gridTemplateColumns: narrow ? '76px 1fr' : '110px 1fr 130px 110px', columnGap: narrow ? 12 : 16, padding: narrow ? '13px 16px' : '13px 20px', borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none', alignItems: 'center', cursor: 'pointer' }}>
@@ -383,26 +398,48 @@ export function AllEvents() {
 
       <div style={pageGrid(narrow)}>
 
-        {/* Filters */}
+        {/* Filters: a side column on wide screens, one button and a sheet on a phone */}
+        {narrow ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <button onClick={() => setFilterOpen(true)} aria-haspopup="dialog"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0, padding: '9px 14px', borderRadius: 999, border: 'none', background: 'var(--wa-surface)', color: 'var(--wa-ink)', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true"><path d="M1 1h12M3.5 5h7M6 9h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+              Filter{activeCount > 0 && <span style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{activeCount}</span>}
+            </button>
+            {activeCount > 0 && (
+              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12, color: 'var(--wa-text-2)' }}>
+                {[current ? name(current) : null, yearFilter, typeFilter, cityFilter].filter(Boolean).join(' · ')}
+              </span>
+            )}
+          </div>
+        ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           <PracticeFilter narrow={narrow} />
-          {years.length > 0 && (
-            <SidePanel title="Year" narrow={narrow}>
-              <SideItem label="All" active={yearFilter === null} narrow={narrow} onClick={() => setYearFilter(null)} />
-              {years.map(y => <SideItem key={y} label={String(y)} count={sorted.filter(e => toYear(e.date) === y).length} active={yearFilter === y} narrow={narrow} onClick={() => setYearFilter(yearFilter === y ? null : y)} />)}
-            </SidePanel>
-          )}
-          {types.length > 0 && (
-            <SidePanel title="Type" narrow={narrow}>
-              {types.map(t => <SideItem key={t} label={t} dot={TYPE_DOT[t] ?? 'var(--wa-line)'} count={sorted.filter(e => e.type === t).length} active={typeFilter === t} narrow={narrow} onClick={() => setTypeFilter(typeFilter === t ? null : t)} />)}
-            </SidePanel>
-          )}
-          {cities.length > 0 && (
-            <SidePanel title="City" narrow={narrow}>
-              {cities.slice(0, 8).map(c => <SideItem key={c} label={c} count={sorted.filter(e => e.location === c).length} active={cityFilter === c} narrow={narrow} onClick={() => setCityFilter(cityFilter === c ? null : c)} />)}
-            </SidePanel>
-          )}
+          {yearPanel}
+          {typePanel}
+          {cityPanel}
         </div>
+        )}
+
+        {filterOpen && (
+          <div role="dialog" aria-modal="true" aria-label="Filter events" onClick={() => setFilterOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(17,17,17,.45)', display: 'flex', alignItems: 'flex-end' }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ width: '100%', maxHeight: '85vh', overflowY: 'auto', background: 'var(--wa-page)', borderRadius: '20px 20px 0 0', padding: '20px 16px calc(20px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 4px' }}>
+                <span style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: 'var(--wa-ink)' }}>Filter</span>
+                <button onClick={() => setFilterOpen(false)} style={{ padding: '9px 18px', borderRadius: 999, border: 'none', background: 'var(--wa-ink)', color: 'var(--wa-page)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
+              </div>
+              {showPractice && <SheetGroup title="Practice"><PracticeFilter narrow plain /></SheetGroup>}
+              {yearPanel}
+              {typePanel}
+              {cityPanel}
+              {activeCount > 0 && (
+                <button onClick={clearFilters} style={{ alignSelf: 'flex-start', padding: '8px 4px', border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear filters</button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div data-tour="events-list" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={pageFrame}>
@@ -449,5 +486,14 @@ export function AllEvents() {
         </div>
       </div>
     </Shell>
+  )
+}
+
+function SheetGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div role="group" aria-label={title} style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '14px 10px 10px' }}>
+      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 10px 6px', margin: 0 }}>{title}</p>
+      {children}
+    </div>
   )
 }

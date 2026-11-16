@@ -39,7 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="mx-auto flex min-h-screen max-w-[1280px] flex-col px-5 pb-16 pt-6 sm:px-9 sm:pt-8">
       <WaitlistBar />
       {/* Top bar */}
-      <header className="mb-8 flex items-baseline justify-between">
+      <header className="mb-8 flex items-center justify-between lg:items-baseline">
         <span style={{ display: 'inline-flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
           <button
             onClick={() => navigate('/today')}
@@ -79,7 +79,7 @@ export function Shell({ children }: { children: ReactNode }) {
           aria-label={menuOpen ? 'Close menu' : 'Menu'}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(v => !v)}
-          style={{ width: 44, height: 44, marginRight: -12, alignSelf: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
+          style={{ width: 44, height: 44, marginRight: -12, marginBlock: -10, background: 'none', border: 'none', cursor: 'pointer' }}
         >
           <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
             {menuOpen
