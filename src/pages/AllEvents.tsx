@@ -12,6 +12,7 @@ import { Hint } from '../components/Hint'
 import { FrameHeader } from '../components/FrameHeader'
 import { AddButton, BoxHeading, FrameTitle, SideItem, SidePanel, pageFrame, pageGrid } from '../components/PageFrame'
 import { PracticeFilter, PracticePicker } from '../components/Practice'
+import { FilterButton, FilterSheet, SheetGroup } from '../components/FilterSheet'
 import { practiceOf, setLens, usePractice } from '../lib/practice'
 import type { Activity, Work } from '../db/db'
 
@@ -349,7 +350,7 @@ export function AllEvents() {
 
   // On a phone the groups sit in the filter sheet as wrapping chips under a heading.
   const group = (title: string, children: ReactNode) => narrow
-    ? <SheetGroup title={title}><div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>{children}</div></SheetGroup>
+    ? <SheetGroup title={title}>{children}</SheetGroup>
     : <SidePanel title={title} narrow={false}>{children}</SidePanel>
   const yearPanel = years.length > 0 && group('Year', <>
     <SideItem label="All" active={yearFilter === null} narrow={narrow} onClick={() => setYearFilter(null)} />
@@ -400,18 +401,7 @@ export function AllEvents() {
 
         {/* Filters: a side column on wide screens, one button and a sheet on a phone */}
         {narrow ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <button onClick={() => setFilterOpen(true)} aria-haspopup="dialog"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0, padding: '9px 14px', borderRadius: 999, border: 'none', background: 'var(--wa-surface)', color: 'var(--wa-ink)', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-              <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true"><path d="M1 1h12M3.5 5h7M6 9h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
-              Filter{activeCount > 0 && <span style={{ fontSize: 10, color: 'var(--wa-muted)' }}>{activeCount}</span>}
-            </button>
-            {activeCount > 0 && (
-              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12, color: 'var(--wa-text-2)' }}>
-                {[current ? name(current) : null, yearFilter, typeFilter, cityFilter].filter(Boolean).join(' · ')}
-              </span>
-            )}
-          </div>
+          <FilterButton count={activeCount} summary={[current ? name(current) : null, yearFilter, typeFilter, cityFilter].filter(Boolean).join(' · ')} onClick={() => setFilterOpen(true)} />
         ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           <PracticeFilter narrow={narrow} />
@@ -422,23 +412,12 @@ export function AllEvents() {
         )}
 
         {filterOpen && (
-          <div role="dialog" aria-modal="true" aria-label="Filter events" onClick={() => setFilterOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(17,17,17,.45)', display: 'flex', alignItems: 'flex-end' }}>
-            <div onClick={e => e.stopPropagation()}
-              style={{ width: '100%', maxHeight: '85vh', overflowY: 'auto', background: 'var(--wa-page)', borderRadius: '20px 20px 0 0', padding: '20px 16px calc(20px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 4px' }}>
-                <span style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: 'var(--wa-ink)' }}>Filter</span>
-                <button onClick={() => setFilterOpen(false)} style={{ padding: '9px 18px', borderRadius: 999, border: 'none', background: 'var(--wa-ink)', color: 'var(--wa-page)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
-              </div>
-              {showPractice && <SheetGroup title="Practice"><PracticeFilter narrow plain /></SheetGroup>}
-              {yearPanel}
-              {typePanel}
-              {cityPanel}
-              {activeCount > 0 && (
-                <button onClick={clearFilters} style={{ alignSelf: 'flex-start', padding: '8px 4px', border: 'none', background: 'none', fontSize: 12, color: 'var(--wa-text-2)', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear filters</button>
-              )}
-            </div>
-          </div>
+          <FilterSheet label="Filter events" onClose={() => setFilterOpen(false)} onClear={activeCount > 0 ? clearFilters : undefined}>
+            {showPractice && <SheetGroup title="Practice"><PracticeFilter narrow plain /></SheetGroup>}
+            {yearPanel}
+            {typePanel}
+            {cityPanel}
+          </FilterSheet>
         )}
 
         <div data-tour="events-list" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -489,11 +468,3 @@ export function AllEvents() {
   )
 }
 
-function SheetGroup({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div role="group" aria-label={title} style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '14px 10px 10px' }}>
-      <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', padding: '0 10px 6px', margin: 0 }}>{title}</p>
-      {children}
-    </div>
-  )
-}

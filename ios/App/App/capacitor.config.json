@@ -1,0 +1,17 @@
+{
+	"appId": "app.workingartist",
+	"appName": "Working Artist",
+	"webDir": "dist",
+	"plugins": {
+		"Keyboard": {
+			"resize": "native"
+		}
+	},
+	"ios": {
+		"backgroundColor": "#F5F5F5",
+		"contentInset": "always"
+	},
+	"packageClassList": [
+		"KeyboardPlugin"
+	]
+}
