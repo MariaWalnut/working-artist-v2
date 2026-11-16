@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase, needsPassword } from '../../lib/supabase'
+import { DEMO_FIELDS, DEMO_NAME } from '../../lib/mode'
 
 const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 10, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '11px 14px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', fontFamily: 'inherit' }
 const btn: React.CSSProperties = { width: '100%', background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '13px 16px', fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#111111', cursor: 'pointer', fontFamily: 'inherit' }
@@ -20,15 +22,29 @@ function Frame({ children, below }: { children: ReactNode; below?: ReactNode }) 
 }
 
 // For people who aren't testers yet: the welcome page has the demos and the invite form.
+// The iPhone app has no welcome page: it lists the demos here and opens the waiting list on the website.
+const native = Capacitor.isNativePlatform()
+
 function NewHere() {
-  const a: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: '0 18px', borderRadius: 999, fontSize: 12, fontWeight: 600, textDecoration: 'none', flex: 1 }
+  const [demos, setDemos] = useState(false)
+  const a: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, padding: '0 18px', borderRadius: 999, fontSize: 12, fontWeight: 600, textDecoration: 'none', flex: 1, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }
+  const field = (f: string) => f.charAt(0).toUpperCase() + f.slice(1)
   return (
     <div style={{ marginTop: 28, textAlign: 'center' }}>
       <p style={{ fontFamily: 'Recoleta, serif', fontSize: 18, color: 'var(--wa-ink)', margin: '0 0 12px' }}>New here?</p>
       <div style={{ display: 'flex', gap: 8 }}>
-        <a href="/welcome#demos" style={{ ...a, background: 'var(--wa-black)', color: '#FFFFFF' }}>Try a demo</a>
-        <a href="/welcome#waitlist" style={{ ...a, background: 'var(--wa-surface)', color: 'var(--wa-ink)', border: '1px solid var(--wa-line)' }}>Join the waiting list</a>
+        {native
+          ? <button type="button" onClick={() => setDemos(v => !v)} aria-expanded={demos} style={{ ...a, background: 'var(--wa-black)', color: '#FFFFFF' }}>Try a demo</button>
+          : <a href="/welcome#demos" style={{ ...a, background: 'var(--wa-black)', color: '#FFFFFF' }}>Try a demo</a>}
+        <a href={native ? 'https://www.workingartist.app/welcome#waitlist' : '/welcome#waitlist'} style={{ ...a, background: 'var(--wa-surface)', color: 'var(--wa-ink)', border: '1px solid var(--wa-line)' }}>Join the waiting list</a>
       </div>
+      {demos && (
+        <div style={{ marginTop: 12, background: 'var(--wa-surface)', borderRadius: 16, overflow: 'hidden', textAlign: 'left' }}>
+          {DEMO_FIELDS.map((f, i) => (
+            <a key={f} href={`/demo/${f}`} style={{ display: 'block', padding: '13px 18px', fontSize: 13, color: 'var(--wa-ink)', textDecoration: 'none', borderTop: i ? '1px solid var(--wa-line)' : 'none' }}>{field(DEMO_NAME[f])}</a>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

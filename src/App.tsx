@@ -21,6 +21,9 @@ import { CareerBoard } from './pages/CareerBoard'
 import { Press } from './pages/Press'
 import { Profile } from './pages/Profile'
 import { Contacts } from './pages/Contacts'
+import { Capacitor } from '@capacitor/core'
+
+const isNative = Capacitor.isNativePlatform()
 
 // Shown instead of a blank page if the local database can't be opened (e.g. an upgrade fails).
 function DataError({ detail }: { detail: string }) {
@@ -152,7 +155,8 @@ class PageErrorBoundary extends Component<{ children: ReactNode }, { error: Erro
 // Links from sign-in emails carry their token in the address and must reach the sign-in screen.
 const signedOut = !needsPassword && !demoField && !userId
 const fromAuthEmail = /access_token|error_description/.test(location.hash) || /[?&]code=/.test(location.search)
-const toWelcome = signedOut && !fromAuthEmail && location.pathname !== '/signin' && !location.pathname.startsWith('/welcome')
+// The iPhone app has no welcome page: it opens on sign-in.
+const toWelcome = signedOut && !isNative && !fromAuthEmail && location.pathname !== '/signin' && !location.pathname.startsWith('/welcome')
 if (toWelcome) location.replace('/welcome')
 
 export default function App() {
