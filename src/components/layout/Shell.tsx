@@ -90,7 +90,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       {menuOpen && (
-        <nav className="lg:hidden" style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '8px 20px', marginTop: -16 }}>
+        <nav className="lg:hidden" style={{ marginTop: -16, borderTop: '1px solid var(--wa-line)' }}>
           {NAV.map((item, i) => {
             const active = isActive(item.to)
             return (
