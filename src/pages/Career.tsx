@@ -180,27 +180,50 @@ function YearRow({ year, events, minGap, measureRef, collapsed, last, onToggle, 
   )
 }
 
-// ─── Year list (phones) ──────────────────────────────────────────────────────
-// The month grid needs a wide screen; on a phone each year is a plain list, newest first.
+// ─── Year spine (phones) ─────────────────────────────────────────────────────
+// On a phone the timeline turns upright: one line runs down through the twelve months,
+// quiet months stay short, and each entry sits on its month as a dot.
 
-function YearList({ year, events, onSelect }: { year: number; events: CareerEvent[]; onSelect: (e: CareerEvent) => void }) {
-  const sorted = [...events].sort((a, b) => b.month - a.month)
+const SPINE_X = 46 // where the line runs, from the left of the year
+
+function YearSpine({ year, events, collapsed, onToggle, onSelect }: {
+  year: number; events: CareerEvent[]; collapsed: boolean; onToggle: () => void; onSelect: (e: CareerEvent) => void
+}) {
+  const byMonth = (m: number) => events.filter(e => e.month === m).sort((a, b) => a.label.localeCompare(b.label))
+  const undated = byMonth(0)
+  const months = Array.from({ length: 12 }, (_, i) => i + 1)
+  const line: React.CSSProperties = { position: 'absolute', left: SPINE_X, top: 0, bottom: 0, width: 1, background: 'var(--wa-line-strong)' }
+  const entry = (e: CareerEvent) => (
+    <button key={e.key} data-tour-title={e.label} onClick={() => onSelect(e)}
+      style={{ position: 'relative', display: 'block', width: '100%', padding: '7px 0 7px', paddingLeft: SPINE_X + 16, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+      <span style={{ position: 'absolute', left: SPINE_X - 4, top: 12, width: 9, height: 9, borderRadius: '50%', background: KIND_DOT[e.kind], boxShadow: '0 0 0 3px var(--wa-surface)' }} />
+      <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--wa-ink)', lineHeight: 1.3 }}>{e.label}</span>
+      <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-muted)', marginTop: 1 }}>{e.sub}</span>
+    </button>
+  )
   return (
-    <section style={{ padding: '18px 16px 8px', borderTop: '1px solid var(--wa-line)' }}>
-      <h3 style={{ fontFamily: 'Recoleta, serif', fontWeight: 400, fontSize: 22, color: 'var(--wa-ink)', margin: '0 0 6px' }}>{year}</h3>
-      {sorted.map(e => (
-        <button key={e.key} data-tour-title={e.label} onClick={() => onSelect(e)}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%', background: 'none', border: 'none', borderBottom: '1px solid var(--wa-line)', padding: '11px 0', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
-          <span style={{ width: 34, flexShrink: 0, paddingTop: 2, fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>
-            {e.month > 0 ? new Date(year, e.month - 1).toLocaleDateString('en-GB', { month: 'short' }) : ''}
-          </span>
-          <span style={{ width: 8, height: 8, flexShrink: 0, marginTop: 5, borderRadius: '50%', background: KIND_DOT[e.kind] }} />
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--wa-ink)', lineHeight: 1.3 }}>{e.label}</span>
-            <span style={{ display: 'block', fontSize: 11, color: 'var(--wa-muted)', marginTop: 2 }}>{e.sub}</span>
-          </span>
-        </button>
-      ))}
+    <section style={{ borderTop: '1px solid var(--wa-line)', padding: '14px 16px 12px' }}>
+      <button onClick={events.length ? onToggle : undefined} aria-expanded={!collapsed}
+        style={{ display: 'flex', alignItems: 'baseline', gap: 8, background: 'none', border: 'none', padding: 0, cursor: events.length ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+        <span style={{ fontFamily: 'Recoleta, serif', fontSize: 22, color: events.length ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{year}</span>
+        {events.length > 0 && <span style={{ fontSize: 11, color: 'var(--wa-muted)' }}>{events.length}</span>}
+      </button>
+      {!collapsed && events.length > 0 && (
+        <div style={{ position: 'relative', marginTop: 10 }}>
+          <span aria-hidden="true" style={line} />
+          {undated.length > 0 && <div>{undated.map(entry)}</div>}
+          {months.map(m => {
+            const here = byMonth(m)
+            return (
+              <div key={m} style={{ position: 'relative', minHeight: 18 }}>
+                <span style={{ position: 'absolute', left: 0, top: here.length ? 9 : 3, width: SPINE_X - 12, fontSize: 9, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: here.length ? 'var(--wa-ink)' : 'var(--wa-muted)' }}>{MONTHS[m - 1]}</span>
+                {here.length === 0 && <span aria-hidden="true" style={{ position: 'absolute', left: SPINE_X - 3, top: 8, width: 7, height: 1, background: 'var(--wa-line-strong)' }} />}
+                {here.map(entry)}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </section>
   )
 }
@@ -376,7 +399,7 @@ export function TimelineView({ show = ALL_KINDS, compact = false }: { show?: Rec
       ) : asList ? (
         <div style={{ paddingBottom: 8 }}>
           {years.filter(y => all.some(e => e.year === y)).map(year => (
-            <YearList key={year} year={year} events={all.filter(e => e.year === year)} onSelect={setSelected} />
+            <YearSpine key={year} year={year} events={all.filter(e => e.year === year)} collapsed={collapsed.has(year)} onToggle={() => toggleYear(year)} onSelect={setSelected} />
           ))}
         </div>
       ) : (

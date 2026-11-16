@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Working Artist keeps your projects, submissions, events, works and contacts in one place, and draws your career from them. Made by an artist, for artists.">
+<link rel="canonical" href="https://www.workingartist.app/welcome">
+<title>Working Artist</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'Recoleta'; src: url('/fonts/Recoleta-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; }
+body { margin: 0; background: #F5F5F5; }
+a { color: #111111; } a:hover { color: #444444; }
+h1, h2, h3, p { text-wrap: balance; }
+</style>
+<style>html { scroll-behavior: smooth; }
+.band { display: grid; height: clamp(340px, 62vw, 920px); }
+.band.tall { height: clamp(300px, 56vw, 820px); }
+.shot { position: relative; overflow: hidden; cursor: zoom-in; background: #F5F5F5; }
+.shot.on-white { outline: 1px solid #E2E2E2; }
+.shot.on-yellow { outline: 1px solid rgba(17, 17, 17, 0.14); }
+.shot img { display: block; width: 100%; height: auto; transition: transform 0.3s ease; }
+.shot img[hidden] { display: none; }
+.shot.on { cursor: zoom-out; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field span { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #CFCFCF; }
+.field input, .field select { min-height: 52px; padding: 0 16px; border: 1px solid #444444; border-radius: 12px; background: #1E1E1E; color: #FFFFFF; font: inherit; font-size: 16px; }
+.field input::placeholder { color: #8A8A8A; }
+.field input:focus, .field select:focus { outline: 2px solid #F5E642; outline-offset: 1px; border-color: #F5E642; }
+.pledge { padding-top: 22px; border-top: 2px solid #111111; }
+.views { margin-top: 36px; border-top: 1px solid #E5E5E5; }
+.views button { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 14px 0; border: none; border-bottom: 1px solid #E5E5E5; background: none; text-align: left; cursor: pointer; font-family: inherit; }
+.views button span { font-family: Recoleta, serif; font-size: 22px; line-height: 1.1; color: #6E6E6E; padding: 0 4px; margin-left: -4px; }
+.views button small { font-size: 13px; color: #6E6E6E; }
+.views button:hover span { color: #111111; }
+.views button[aria-selected="true"] span { color: #111111; background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); }
+.shot.on img { transform: scale(1.8); }
+.band img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; }
+@media (max-width: 640px) { .band { height: 340px; } }
+/* Demos: one practice in white, two practices in black. Rows of 4, 3 and 2 fill the width. */
+.demos { margin-top: 48px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+.demo { grid-column: span 3; display: flex; flex-direction: column; gap: 6px; padding: 18px 20px 20px; background: #FFFFFF; color: #111111; text-decoration: none; }
+.demo:nth-child(n+5) { grid-column: span 4; }
+.demo.two { grid-column: span 6; background: #111111; color: #FFFFFF; }
+.demo b { display: flex; align-items: center; gap: 10px; font-family: Recoleta, serif; font-size: 22px; font-weight: 400; line-height: 1.2; }
+.demo b svg { flex-shrink: 0; }
+.demo b i { margin-left: auto; font-style: normal; font-family: Inter, system-ui, sans-serif; font-size: 15px; }
+.demo span { font-size: 13px; line-height: 1.45; color: #555555; text-wrap: pretty; }
+.demo.two span { color: #CFCFCF; }
+.demo:hover, .demo.two:hover { background: #F5E642; color: #111111; }
+.demo:hover span, .demo.two:hover span { color: #333333; }
+@media (max-width: 1000px) { .demo, .demo:nth-child(n+5) { grid-column: span 6; } .demo:nth-child(7) { grid-column: span 12; } }
+@media (max-width: 560px) { .demos { gap: 8px; } .demo, .demo:nth-child(n+5), .demo.two { grid-column: span 12; padding: 14px 16px; } .demo:not(.two) span { display: none; } }
+</style>
+</head>
+<body>
+<div style="background: #F5F5F5; color: #111111; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100%">
+
+  <!-- Opening: yellow, edge to edge -->
+  <section id="top" style="background: #F5E642">
+    <header style="max-width: 1240px; margin: 0 auto; padding: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px">
+      <a href="#top" style="font-family: Recoleta, serif; font-size: 24px; color: #111111; text-decoration: none">Working Artist</a>
+      <nav aria-label="Main" style="display: flex; align-items: center; gap: 28px; flex-wrap: wrap">
+        <a href="#demos" style="font-family: Recoleta, serif; font-size: 17px; color: #111111; text-decoration: none">Demos</a>
+        <a href="#waitlist" style="font-family: Recoleta, serif; font-size: 17px; color: #111111; text-decoration: none">Waiting list</a>
+      </nav>
+    </header>
+    <div style="max-width: 1240px; margin: 0 auto; padding: 88px 24px 0; text-align: center">
+      <h1 style="margin: 0 auto; max-width: 900px; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(44px, 7vw, 92px); line-height: 1; letter-spacing: -0.015em">Your artistic career, managed <span style="background: linear-gradient(transparent 56%, #FFFFFF 56%, #FFFFFF 90%, transparent 90%); padding: 0 6px">in one place.</span></h1>
+      <p style="margin: 34px auto 0; max-width: 560px; font-size: 19px; line-height: 1.55; color: #333333">Projects, submissions, events and works, and the career they add up to.</p>
+      <div style="margin-top: 44px; display: flex; justify-content: center; flex-wrap: wrap; gap: 12px">
+        <a href="#demos" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #111111; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFFFFF; text-decoration: none">Try a demo</a>
+        <a href="#waitlist" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 28px; border-radius: 999px; background: #FFFFFF; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; text-decoration: none">Join the waiting list</a>
+      </div>
+      <div class="shot on-yellow" style="max-width: 1120px; margin: 64px auto -140px">
+        <img src="/welcome/s-01c.jpg" alt="On My Desk in the painter demo: project cards, this week's tasks and upcoming events">
+      </div>
+    </div>
+  </section>
+
+  <!-- Sample studios: light grey -->
+  <section id="demos" style="background: #F5F5F5">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 232px 24px 112px">
+      <h2 style="margin: 0; text-align: center; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: 1.05">Try a <span style="background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); padding: 0 6px">sample studio</span></h2>
+      <p style="margin: 22px auto 0; max-width: 520px; text-align: center; font-size: 17px; line-height: 1.6; color: #555555">Nine sample studios. Change anything; it stays in your browser.</p>
+      <div class="demos">
+        <a class="demo" target="_blank" rel="noopener" href="/demo/musician"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 35V8c3 4 11 5 11 13"/><ellipse cx="17.5" cy="36" rx="5.8" ry="4.2" transform="rotate(-22 17.5 36)"/></svg>Musician<i aria-hidden="true">→</i></b><span>Releases, tour dates and festival calls.</span></a>
+        <a class="demo" target="_blank" rel="noopener" href="/demo/painter"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="rotate(40 24 24)"><rect x="22.2" y="2" width="3.6" height="22" rx="1.8"/><path d="M21 24h6v7h-6z"/><path d="M21 31c0 6 2.2 11 3 15 .8-4 3-9 3-15"/></g></svg>Painter<i aria-hidden="true">→</i></b><span>Shows, commissions and open calls.</span></a>
+        <a class="demo" target="_blank" rel="noopener" href="/demo/illustrator"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="rotate(40 24 24)"><path d="M21 4h6v30h-6zM21 9h6"/><path d="M21 34l3 9 3-9"/><path d="M23.1 40.3L24 43l.9-2.7z" fill="currentColor"/></g></svg>Illustrator<i aria-hidden="true">→</i></b><span>Picture books, contracts and rights.</span></a>
+        <a class="demo" target="_blank" rel="noopener" href="/demo/writer"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 40L24 8l11.5 32M16.6 29h14.8M9 40h7M32 40h7"/></svg>Writer<i aria-hidden="true">→</i></b><span>Novels, readings and prize deadlines.</span></a>
+        <a class="demo" target="_blank" rel="noopener" href="/demo/fineart"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 7l14 8v16l-14 8-14-8V15z"/><path d="M10 15l14 8 14-8M24 23v16"/></svg>Fine art<i aria-hidden="true">→</i></b><span>Installations, biennales and public commissions.</span></a>
+        <a class="demo" target="_blank" rel="noopener" href="/demo/filmmaker"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="17" width="26" height="18" rx="2"/><path d="M32 23l10-6v18l-10-6"/><circle cx="13" cy="11" r="5"/><circle cx="25" cy="11" r="5"/></svg>Filmmaker<i aria-hidden="true">→</i></b><span>Shorts, festivals and the feature in development.</span></a>
+        <a class="demo" target="_blank" rel="noopener" href="/demo/photographer"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="15" width="36" height="24" rx="3"/><path d="M17 15l3-5h8l3 5"/><circle cx="24" cy="27" r="7"/></svg>Photographer<i aria-hidden="true">→</i></b><span>Editions, photobooks and portfolio reviews.</span></a>
+        <a class="demo two" target="_blank" rel="noopener" href="/demo/illustrator-painter"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="rotate(40 24 24)"><path d="M21 4h6v30h-6zM21 9h6"/><path d="M21 34l3 9 3-9"/><path d="M23.1 40.3L24 43l.9-2.7z" fill="currentColor"/></g></svg><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="rotate(40 24 24)"><rect x="22.2" y="2" width="3.6" height="22" rx="1.8"/><path d="M21 24h6v7h-6z"/><path d="M21 31c0 6 2.2 11 3 15 .8-4 3-9 3-15"/></g></svg>Illustrator &amp; painter<i aria-hidden="true">→</i></b><span>Picture books and paintings on one desk.</span></a>
+        <a class="demo two" target="_blank" rel="noopener" href="/demo/photographer-musician"><b><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="15" width="36" height="24" rx="3"/><path d="M17 15l3-5h8l3 5"/><circle cx="24" cy="27" r="7"/></svg><svg width="26" height="26" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 35V8c3 4 11 5 11 13"/><ellipse cx="17.5" cy="36" rx="5.8" ry="4.2" transform="rotate(-22 17.5 36)"/></svg>Photographer &amp; musician<i aria-hidden="true">→</i></b><span>Photographs and records, one practice at a time.</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Practices: yellow, its own section after the demos -->
+  <section id="practices" style="background: #F5E642">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px">
+      <h2 style="margin: 0; text-align: center; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: 1.05">Every practice, <span style="background: linear-gradient(transparent 56%, #FFFFFF 56%, #FFFFFF 90%, transparent 90%); padding: 0 6px">one studio.</span></h2>
+      <p style="margin: 22px auto 0; max-width: 580px; text-align: center; font-size: 17px; line-height: 1.6; color: #333333">Some practices belong together, some are separate careers. Working Artist does both, and you pay once for all of them.</p>
+      <div style="margin-top: 80px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 56px 32px">
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 28px">
+          <div class="shot on-yellow"><img src="/welcome/s-18.jpg" alt="The illustrator and painter demo in Together mode: one desk with picture book and painting projects side by side, each marked Illustrator or Painter and showing its tasks" loading="lazy"></div>
+          <figcaption style="max-width: 460px">
+            <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 30px; line-height: 1.12">Together</h3>
+            <p style="margin: 12px 0 0; font-size: 17px; line-height: 1.6; color: #333333">One desk and one timeline for practices that feed each other. Each project says which practice it belongs to, and Works, Events and Submissions can show one practice at a time.</p>
+            <a target="_blank" rel="noopener" href="/demo/illustrator-painter" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #111111; color: #FFFFFF; font-size: 13px; font-weight: 500; text-decoration: none">Illustrator &amp; painter demo
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </figcaption>
+        </figure>
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 28px">
+          <div class="shot on-yellow"><img src="/welcome/s-19.jpg" alt="The photographer and musician demo in Separate mode: Working Artist Photographer in the top left, with the menu open to switch to Musician, above the photographer’s desk" loading="lazy"></div>
+          <figcaption style="max-width: 460px">
+            <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 30px; line-height: 1.12">Separate</h3>
+            <p style="margin: 12px 0 0; font-size: 17px; line-height: 1.6; color: #333333">Two careers, kept apart. Each practice has its own desk, timeline and submissions. Your name in the top left says which one you’re in.</p>
+            <a target="_blank" rel="noopener" href="/demo/photographer-musician" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #111111; color: #FFFFFF; font-size: 13px; font-weight: 500; text-decoration: none">Photographer &amp; musician demo
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M8 4l3 3-3 3" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </figcaption>
+        </figure>
+      </div>
+      <p style="margin: 80px auto 0; max-width: 620px; text-align: center; font-size: 17px; line-height: 1.6; color: #333333">Contacts and Manifest are shared either way, and you can switch in Account at any time. Choose your practices, colours, light or dark, and what sits on your desk. New practices are added as Working Artist grows, at no extra cost.</p>
+    </div>
+  </section>
+
+  <!-- 1 Works: white -->
+  <section style="background: #FFFFFF">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px">
+      <h2 style="margin: 0 0 96px; text-align: center; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: 1.05">Inside <span style="background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); padding: 0 6px">Working Artist</span></h2>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 64px">
+        <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+          <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">1</span>Works</p>
+          <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">The details behind every project, from contracts to press coverage.</h3>
+          <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #555555">Every detail of each piece. For books, the contract too: advance, royalty, print run and foreign rights.</p>
+        </div>
+        <div class="shot on-white" style="flex: 999 1 560px; min-width: 0">
+          <img src="/welcome/s-04c.jpg" alt="A picture book in the illustrator demo: room for its pictures, its details, and the events where it was shown">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 4fr 9fr">
+    <img src="/welcome/photo-3.jpg" alt="An illustrator drawing on a tablet at a wooden desk" loading="lazy" style="object-position: 50% 50%">
+    <img src="/welcome/photo-4.jpg" alt="An illustrator sketching on a tablet" loading="lazy" style="object-position: 50% 40%">
+  </div>
+
+  <!-- 2 Submissions: yellow -->
+  <section style="background: #F5E642">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 64px">
+      <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+        <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #FFFFFF; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">2</span>Submissions</p>
+        <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">All your open calls and deadlines in one place.</h3>
+        <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #333333">Open calls, grants, residencies and publisher proposals, from draft to won. Sent ones stop counting down.</p>
+      </div>
+      <div class="shot on-yellow" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-02c.jpg" alt="Submissions in the musician demo, with deadlines and statuses">
+      </div>
+    </div>
+  </section>
+
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 1fr 1fr">
+    <img src="/welcome/photo-1.jpg" alt="A musician working on a laptop in a home studio" loading="lazy" style="object-position: 50% 45%">
+    <img src="/welcome/photo-7.jpg" alt="A painter choosing a tube of paint" loading="lazy" style="object-position: 50% 50%">
+  </div>
+
+  <!-- 3 Events: black -->
+  <section style="background: #111111; color: #FFFFFF">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 64px">
+      <div class="shot" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-03c.jpg" alt="Events in the musician demo: performances, a talk and a market">
+      </div>
+      <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+        <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">3</span>Events</p>
+        <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12; color: #FFFFFF">Exhibitions, book fairs, festivals and more.</h3>
+        <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #CFCFCF">Dates that span days, the works you showed, and goals for the ones still ahead.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 Career: white -->
+  <section style="background: #FFFFFF">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 64px">
+      <div style="flex: 999 1 560px; min-width: 0">
+        <div class="shot on-white" id="career-shot">
+          <img src="/welcome/s-06c.jpg" alt="The career timeline in the writer demo">
+          <img src="/welcome/s-07d.jpg" alt="The career map in the illustrator demo: every city where work was shown" hidden>
+          <img src="/welcome/s-08c.jpg" alt="Press and awards in the musician demo" hidden>
+        </div>
+      </div>
+      <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+        <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">4</span>Career</p>
+        <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">A look back at what you’ve done and where your work has taken you.</h3>
+        <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #555555">A timeline, a map and your press and awards, built from what you already entered.</p>
+        <div class="views" role="tablist" aria-label="Career views" data-for="career-shot">
+          <button role="tab" aria-selected="true" data-view="0"><span>Timeline</span><small>Every project, event and work by date</small></button>
+          <button role="tab" aria-selected="false" data-view="1"><span>Map</span><small>Every city your work has been to</small></button>
+          <button role="tab" aria-selected="false" data-view="2"><span>Recognition</span><small>Press and awards, with clippings</small></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band tall" style="grid-template-columns: 1fr">
+    <img src="/welcome/photo-5.jpg" alt="A painter working at an easel in a studio full of canvases" loading="lazy" style="object-position: 50% 40%">
+  </div>
+
+  <!-- 5 Manifest: black -->
+  <section style="background: #111111; color: #FFFFFF">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 64px">
+      <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+        <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #F5E642; color: #111111; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">5</span>Manifest</p>
+        <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12; color: #FFFFFF">A place to collect ideas and think about what you’d like to do next.</h3>
+        <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #CFCFCF">Pictures in the middle, with your quotes, goals and references around them, connected. One board per project, or one per year.</p>
+      </div>
+      <div class="shot" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-09e.jpg" alt="A Manifest board called Next five years: a picture book cover in the middle, with drawings, book covers, a poster and photos around it, joined to career goals and inspirations">
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 Contacts: yellow -->
+  <section style="background: #F5E642">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 64px">
+      <div class="shot on-yellow" style="flex: 999 1 560px; min-width: 0">
+        <img src="/welcome/s-11c.jpg" alt="Contacts in the painter demo: a Christmas Card 2026 list with postal addresses, emails and two people ticked off">
+      </div>
+      <div style="flex: 1 1 300px; min-width: 0; max-width: 400px">
+        <p style="margin: 0 0 24px; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 14px 0 6px; border-radius: 999px; background: #FFFFFF; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase"><span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: #111111; color: #F5E642; font-size: 10px; letter-spacing: 0">6</span>Contacts</p>
+        <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 34px; line-height: 1.12">Everyone you work with, in one place.</h3>
+        <p style="margin: 24px 0 0; font-size: 17px; line-height: 1.65; color: #333333">Galleries, editors, curators and collectors, with their addresses and notes. Gather them into lists, like everyone who gets a card at Christmas, and tick them off as you go.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Photos: black and white, edge to edge -->
+  <div class="band" style="grid-template-columns: 1fr 1fr">
+    <img src="/welcome/photo-9.jpg" alt="A writer working on a laptop with a marked-up manuscript" loading="lazy" style="object-position: 50% 30%">
+    <img src="/welcome/photo-8.jpg" alt="A sculptor carving a marble head" loading="lazy" style="object-position: 50% 15%">
+  </div>
+
+  <!-- Story: white, with Maria's photo in black and white -->
+  <section id="story" style="background: #FFFFFF">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 80px">
+      <img src="/welcome/maria.jpg" alt="Maria Nogueira Nössing in her studio, drawing on a tablet" style="flex: 1 1 320px; min-width: 0; max-width: 460px; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block">
+      <div style="flex: 1 1 380px; min-width: 0; max-width: 560px">
+        <p style="margin: 0 0 28px; display: inline-flex; align-items: center; min-height: 32px; padding: 0 14px; border-radius: 999px; background: #F5E642; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase">The story behind Working Artist</p>
+        <h2 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: 1.05">From making books to <span style="background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); padding: 0 6px">building a tool.</span></h2>
+        <p style="margin: 30px 0 0; font-size: 18px; line-height: 1.7; color: #444444">When designer and illustrator Maria Nogueira Nössing began making children's books in 2023, she quickly realised how much there was to keep track of: submission deadlines, award dates, press coverage and exhibition clippings, as well as the details behind each book, from contracts and publishing rights to royalty percentages.</p>
+        <p style="margin: 22px 0 0; font-size: 18px; line-height: 1.7; color: #444444">Unable to find one tool that covered all her needs, she decided to build one. Working Artist grew from that idea into a tool designed to support artists across disciplines.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pledge: yellow -->
+  <section id="pledge" style="background: #F5E642">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 144px 24px">
+      <h2 style="margin: 0 0 72px; text-align: center; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: 1.05">Yours to <span style="background: linear-gradient(transparent 56%, #FFFFFF 56%, #FFFFFF 90%, transparent 90%); padding: 0 6px">keep.</span></h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px 32px">
+        <div class="pledge">
+          <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 26px; line-height: 1.15">Pay once</h3>
+          <p style="margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: #333333">No subscription. Buy it once and it’s yours.</p>
+        </div>
+        <div class="pledge">
+          <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 26px; line-height: 1.15">On your device</h3>
+          <p style="margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: #333333">Your studio and all its files stay on your own computer. Nothing is sent to us.</p>
+        </div>
+        <div class="pledge">
+          <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 26px; line-height: 1.15">Export any time</h3>
+          <p style="margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: #333333">Your whole studio in one file, whenever you like.</p>
+        </div>
+        <div class="pledge">
+          <h3 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: 26px; line-height: 1.15">No ads, no AI</h3>
+          <p style="margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: #333333">Nothing you add is sold, shown to advertisers or used to train AI.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Waiting list: black -->
+  <section id="waitlist" style="background: #111111; color: #FFFFFF">
+    <div style="max-width: 560px; margin: 0 auto; padding: 144px 24px; text-align: center">
+      <h2 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(36px, 5vw, 60px); line-height: 1.02; color: #FFFFFF">Join the <span style="color: #F5E642">waiting list</span></h2>
+      <p style="margin: 24px auto 0; max-width: 440px; font-size: 17px; line-height: 1.6; color: #CFCFCF">Working Artist is still being made, together with a small group of artists. Leave your email and we’ll let you know when it opens.</p>
+      <form id="invite-form" style="margin: 48px 0 0; display: flex; flex-direction: column; gap: 12px; text-align: left" novalidate>
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" required autocomplete="email" placeholder="you@studio.com">
+        </label>
+        <label class="field"><span>What do you make?</span>
+          <select name="discipline" required>
+            <option value="" disabled selected>Choose one</option>
+            <option>Music</option><option>Painting</option><option>Fine art</option><option>Illustration</option><option>Writing</option><option>Film</option><option>Photography</option><option>Other</option>
+          </select>
+        </label>
+        <button type="submit" style="margin-top: 8px; min-height: 56px; border: none; border-radius: 999px; background: #F5E642; font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; cursor: pointer">Join the waiting list</button>
+        <p id="invite-msg" role="status" aria-live="polite" style="margin: 4px 0 0; min-height: 24px; text-align: center; font-size: 15px; color: #FFFFFF"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Invitation: white, with Maria's drawing -->
+  <section style="background: #FFFFFF">
+    <div style="max-width: 760px; margin: 0 auto; padding: 144px 24px 168px; text-align: center">
+      <img src="/welcome/drawing.jpg" alt="Ink drawing of an artist reading on a sofa beside a plant and a stack of books" loading="lazy" style="display: block; width: 100%; max-width: 520px; height: auto; margin: 0 auto 72px">
+      <h2 style="margin: 0; font-family: Recoleta, serif; font-weight: 400; font-size: clamp(40px, 6vw, 72px); line-height: 1.02">Make room for <span style="background: linear-gradient(transparent 56%, #F5E642 56%, #F5E642 90%, transparent 90%); padding: 0 6px">inspiration.</span></h2>
+      <p style="margin: 30px auto 0; max-width: 520px; font-size: 18px; line-height: 1.6; color: #555555">Keep track of your projects, opportunities, events and the details behind your work, all in one place. So you can slow down, explore and let new ideas find you.</p>
+      <div style="margin-top: 48px; display: flex; justify-content: center; flex-wrap: wrap; gap: 12px">
+        <a href="#demos" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 32px; border-radius: 999px; background: #111111; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #FFFFFF; text-decoration: none">Try a demo</a>
+        <a href="#waitlist" style="display: inline-flex; align-items: center; min-height: 56px; padding: 0 32px; border-radius: 999px; background: #F5E642; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #111111; text-decoration: none">Join the waiting list</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer: yellow -->
+  <footer style="background: #F5E642">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 28px 24px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 20px">
+      <span style="font-family: Recoleta, serif; font-size: 20px; line-height: 1">Working Artist</span>
+      <span style="font-size: 13px; color: #333333">A Studio Nozes project</span>
+    </div>
+  </footer>
+
+</div>
+<script>
+document.querySelectorAll('.shot').forEach(el => {
+  const img = () => el.querySelector('img:not([hidden])')
+  let touch = false
+  const aim = e => { const r = el.getBoundingClientRect(); img().style.transformOrigin = `${(e.clientX - r.left) / r.width * 100}% ${(e.clientY - r.top) / r.height * 100}%` }
+  el.addEventListener('pointerdown', e => { touch = e.pointerType !== 'mouse' })
+  el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { aim(e); el.classList.add('on') } })
+  el.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') aim(e) })
+  el.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') el.classList.remove('on') })
+  el.addEventListener('click', e => { if (!touch) return; if (!el.classList.contains('on')) aim(e); el.classList.toggle('on') })
+})
+// Career views: one large screen at a time, like the tabs in the app
+document.querySelectorAll('.views').forEach(tabs => {
+  const shot = document.getElementById(tabs.dataset.for)
+  tabs.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return
+    tabs.querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', String(x === b)))
+    shot.querySelectorAll('img').forEach((im, i) => { im.hidden = i !== Number(b.dataset.view) })
+    shot.classList.remove('on')
+  })
+})
+// Waiting list sign-ups go to the request-invite function, which saves them privately and sends the emails.
+const inviteForm = document.getElementById('invite-form')
+inviteForm?.addEventListener('submit', async e => {
+  e.preventDefault()
+  const msg = document.getElementById('invite-msg')
+  const btn = inviteForm.querySelector('button')
+  const email = inviteForm.email.value.trim()
+  const discipline = inviteForm.discipline.value
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = 'Please enter your email address.'; inviteForm.email.focus(); return }
+  if (!discipline) { msg.textContent = 'Please choose what you make.'; inviteForm.discipline.focus(); return }
+  btn.disabled = true; msg.textContent = 'Sending…'
+  try {
+    const key = 'sb_publishable_uIEfLevKCGUUi5eQKJAseA_jmgMl3GN'
+    const r = await fetch('https://ibururqeyzgvddbtrgad.supabase.co/functions/v1/request-invite', {
+      method: 'POST',
+      headers: { apikey: key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, discipline }),
+    })
+    const res = await r.json().catch(() => ({}))
+    if (r.ok) { inviteForm.reset(); msg.textContent = res.status === 'already' ? 'You’re already on the list.' : 'You’re on the list. We’ll let you know when it opens.' }
+    else msg.textContent = res.error || 'Something went wrong. Please try again.'
+  } catch { msg.textContent = 'Something went wrong. Please try again.' }
+  btn.disabled = false
+})
+</script>
+</body>
+</html>

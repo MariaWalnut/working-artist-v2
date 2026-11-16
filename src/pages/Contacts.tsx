@@ -6,7 +6,8 @@ import { useActiveDept } from '../lib/useDept'
 import { useNarrow } from '../lib/useNarrow'
 import { Shell } from '../components/layout/Shell'
 import { Hint } from '../components/Hint'
-import { AddButton, FrameTitle, pageGrid } from '../components/PageFrame'
+import { AddButton, FrameTitle, SideItem, pageGrid } from '../components/PageFrame'
+import { FilterButton, FilterSheet, SheetGroup } from '../components/FilterSheet'
 import { allTags, byName, categoriesFor, copyEmails, deleteContact, downloadCSV, setOnList, websiteHref } from '../lib/contacts'
 import { formatEventDate } from '../lib/eventDates'
 
@@ -54,14 +55,6 @@ function FilterItem({ label, count, active, onClick }: { label: string; count?: 
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: active ? 'var(--wa-fill)' : 'none', color: active ? 'var(--wa-ink)' : 'var(--wa-text)', fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
       <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
       {count != null && <span style={{ fontSize: 10, color: 'var(--wa-muted)', fontWeight: 400 }}>{count}</span>}
-    </button>
-  )
-}
-
-function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 999, border: 'none', background: active ? 'var(--wa-ink)' : 'var(--wa-surface)', color: active ? 'var(--wa-surface)' : 'var(--wa-text)', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-      {label}
     </button>
   )
 }
@@ -289,6 +282,7 @@ export function Contacts() {
   const [picking, setPicking] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [jumped, setJumped] = useState<string | null>(null)
+  const [filterOpen, setFilterOpen] = useState(false)
 
   // Links from elsewhere in the app open a contact (?c=) or a list (?list=).
   const cParam = params.get('c')
@@ -336,7 +330,7 @@ export function Contacts() {
     } catch { setToast('Copying is blocked in this browser') }
   }
 
-  const title = list ? list.name : view.kind === 'category' ? view.name : 'All contacts'
+  const title = list ? list.name : view.kind === 'category' ? view.name : 'Contacts'
 
   const select = (v: View) => { setView(v); setTag(null) }
 
@@ -352,14 +346,24 @@ export function Contacts() {
         {/* Left: people by category, then lists */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {narrow ? <>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              <FilterChip label="All" active={showingAll} onClick={() => select({ kind: 'all' })} />
-              {used.map(c => <FilterChip key={c} label={c} active={view.kind === 'category' && view.name === c} onClick={() => select({ kind: 'category', name: c })} />)}
-            </div>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '0 -20px', padding: '0 20px' }}>
-              {lists.map(l => <FilterChip key={l.id} label={l.name} active={list?.id === l.id} onClick={() => select({ kind: 'list', id: l.id! })} />)}
-              <FilterChip label="+ New list" active={false} onClick={() => setListForm('new')} />
-            </div>
+            <FilterButton count={(showingAll ? 0 : 1) + (tag ? 1 : 0)} summary={[showingAll ? null : title, tag].filter(Boolean).join(' · ')} onClick={() => setFilterOpen(true)} />
+            {filterOpen && (
+              <FilterSheet label="Filter contacts" onClose={() => setFilterOpen(false)} onClear={!showingAll || tag ? () => { select({ kind: 'all' }) } : undefined}>
+                <SheetGroup title="People">
+                  <SideItem label="All" count={contacts.length} active={showingAll} narrow onClick={() => select({ kind: 'all' })} />
+                  {used.map(c => <SideItem key={c} label={c} count={contacts.filter(x => x.category === c).length} active={view.kind === 'category' && view.name === c} narrow onClick={() => select({ kind: 'category', name: c })} />)}
+                </SheetGroup>
+                <SheetGroup title="Lists">
+                  {lists.map(l => <SideItem key={l.id} label={l.name} count={l.members.length} active={list?.id === l.id} narrow onClick={() => select({ kind: 'list', id: l.id! })} />)}
+                  <SideItem label="+ New list" active={false} narrow onClick={() => { setFilterOpen(false); setListForm('new') }} />
+                </SheetGroup>
+                {tags.length > 0 && (
+                  <SheetGroup title="Tags">
+                    {tags.map(t => <SideItem key={t} label={t} active={tag === t} narrow onClick={() => setTag(tag === t ? null : t)} />)}
+                  </SheetGroup>
+                )}
+              </FilterSheet>
+            )}
           </> : <>
             <div style={panel}>
               <p style={{ ...smallLabel, padding: '0 8px 2px' }}>People</p>
@@ -397,7 +401,7 @@ export function Contacts() {
               <button onClick={() => void copy()} style={quiet}>Copy emails</button>
               <button onClick={() => downloadCSV(title, people, list ? isDone : undefined)} style={quiet}>Download</button>
             </div>
-            {tags.length > 0 && (
+            {tags.length > 0 && !narrow && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
                 {tags.map(t => <Chip key={t} label={t} on={tag === t} onClick={() => setTag(tag === t ? null : t)} />)}
               </div>

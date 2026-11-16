@@ -81,6 +81,8 @@ export function GuidedTour() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [rect, setRect] = useState<DOMRect | null>(null)
+  // A step shows only once it knows where it goes, so the tip never stops somewhere on the way.
+  const [ready, setReady] = useState(false)
   const [tipH, setTipH] = useState(200)
   const tipRef = useRef<HTMLDivElement>(null)
   const deskFixed = useNarrow('(max-width: 900px)')
@@ -113,7 +115,7 @@ export function GuidedTour() {
       if (s.doneWhen?.route?.test(pathname)) { next(); return }
       navigate(s.path); return
     }
-    setRect(null)
+    setRect(null); setReady(false)
     let alive = true
     let tries = 0
     let el: Element | null = null
@@ -121,10 +123,11 @@ export function GuidedTour() {
     const find = () => {
       if (!alive) return
       el = document.querySelector(s.target)
-      if (!el) { if (tries++ < 40) setTimeout(find, 60); return }
+      if (!el) { if (tries++ < 40) setTimeout(find, 60); else setReady(true); return }
       const r = el.getBoundingClientRect()
-      if (r.top < 80 || r.bottom > window.innerHeight - 40) el.scrollIntoView({ block: r.height > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'smooth' })
-      setTimeout(measure, 380)
+      if (r.top < 80 || r.bottom > window.innerHeight - 40) el.scrollIntoView({ block: r.height > window.innerHeight * 0.6 ? 'start' : 'center' })
+      // Wait a frame for the page to settle after scrolling, then show the step in its place.
+      requestAnimationFrame(() => requestAnimationFrame(() => { measure(); if (alive) setReady(true) }))
     }
     find()
     window.addEventListener('resize', measure)
@@ -174,12 +177,12 @@ export function GuidedTour() {
 
   return (
     <>
-      {blockers.map((b, i) => <div key={i} aria-hidden="true" style={{ position: 'fixed', zIndex: 80, ...b, background: rect ? 'transparent' : DIM }} />)}
-      {rect && (
-        <div aria-hidden="true" style={{ position: 'fixed', zIndex: 81, pointerEvents: 'none', left: rect.left - PAD, top: rect.top - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2, borderRadius: 18, boxShadow: `0 0 0 9999px ${DIM}`, outline: '2px solid var(--accent)', transition: 'all .25s ease' }} />
+      {blockers.map((b, i) => <div key={i} aria-hidden="true" style={{ position: 'fixed', zIndex: 80, ...b, background: rect && ready ? 'transparent' : DIM }} />)}
+      {rect && ready && (
+        <div aria-hidden="true" style={{ position: 'fixed', zIndex: 81, pointerEvents: 'none', left: rect.left - PAD, top: rect.top - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2, borderRadius: 18, boxShadow: `0 0 0 9999px ${DIM}`, outline: '2px solid var(--accent)' }} />
       )}
       <div ref={tipRef} role="dialog" aria-label={`Tour, step ${step! + 1} of ${steps.length}: ${s.title}`}
-        style={{ position: 'fixed', zIndex: 82, ...pos, width: w, background: 'var(--wa-black)', color: '#FFFFFF', borderRadius: 18, padding: '18px 20px 16px', boxShadow: '0 16px 48px rgba(0,0,0,.35)' }}>
+        style={{ position: 'fixed', zIndex: 82, ...pos, visibility: ready ? 'visible' : 'hidden', width: w, background: 'var(--wa-black)', color: '#FFFFFF', borderRadius: 18, padding: '18px 20px 16px', boxShadow: '0 16px 48px rgba(0,0,0,.35)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, padding: '0 10px', borderRadius: 999, background: 'var(--accent)', color: '#111111', fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
