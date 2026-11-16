@@ -25,6 +25,14 @@ export function Shell({ children }: { children: ReactNode }) {
   const wordmark = dept?.name?.trim() || 'Working Artist'
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => applyAccent(dept?.accent), [dept?.accent])
+  useEffect(() => setMenuOpen(false), [location.pathname])
+  useEffect(() => {
+    if (!menuOpen) return
+    const wide = window.matchMedia('(min-width: 1024px)')
+    const close = () => { if (wide.matches) setMenuOpen(false) }
+    wide.addEventListener('change', close)
+    return () => wide.removeEventListener('change', close)
+  }, [menuOpen])
   const isActive = (to: string) => location.pathname === to || (to !== '/projects' && location.pathname.startsWith(to)) || (to === '/projects' && /^\/projects\/\d+/.test(location.pathname))
 
   return (
@@ -82,7 +90,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       {menuOpen && (
-        <nav className="lg:hidden" style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '8px 20px', marginTop: -16, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
+        <nav className="lg:hidden" style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: '8px 20px', marginTop: -16 }}>
           {NAV.map((item, i) => {
             const active = isActive(item.to)
             return (
@@ -99,7 +107,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
       )}
 
-      <main className="flex-1">
+      <main className="flex-1" style={menuOpen ? { display: 'none' } : undefined}>
       {children}
       <GuidedTour /></main>
     </div>
