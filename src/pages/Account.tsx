@@ -108,7 +108,10 @@ export function Account() {
 
   return (
     <Shell>
-      <AccountSection />
+      {/* Two columns on a computer, one on a phone. Danger zone runs across the bottom. */}
+      <div className="grid grid-cols-1 items-start lg:grid-cols-2" style={{ columnGap: 10 }}>
+      <div>
+      <div className="lg:hidden"><AccountSection /></div>
       <Section title="Studio">
         <Field label="Name">
           {editingName ? (
@@ -184,30 +187,10 @@ export function Account() {
         <ThemePicker />
         <AccentPicker dept={d} />
       </Section>
+      </div>
 
-      {demoField && (
-        <Section title="Tour">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>A short walk through each part of Working Artist.</span>
-            <button onClick={startTour} style={{ background: 'var(--wa-black)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '9px 18px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Take the tour</button>
-          </div>
-        </Section>
-      )}
-
-      <Section title="Danger zone">
-        {!confirmReset ? (
-          <button onClick={() => setConfirmReset(true)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 10, padding: '9px 16px', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>
-            Clear all data…
-          </button>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>This deletes everything. Continue?</span>
-            <button onClick={() => void resetAll()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete all</button>
-            <button onClick={() => setConfirmReset(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
-          </div>
-        )}
-      </Section>
-
+      <div>
+      <div className="hidden lg:block"><AccountSection /></div>
       <Section title="Backup">
         <p style={{ fontSize: 12, color: 'var(--wa-muted)', lineHeight: 1.6, marginBottom: 18 }}>
           Export a backup to keep your own copy, or to move your studio to another browser or computer. Importing replaces everything here.
@@ -238,10 +221,37 @@ export function Account() {
         {backupErr && <p style={{ fontSize: 11, color: '#E05252', marginTop: 6 }}>{backupErr}</p>}
       </Section>
 
+      {demoField && (
+        <Section title="Tour">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: 'var(--wa-text)' }}>A short walk through each part of Working Artist.</span>
+            <button onClick={startTour} style={{ background: 'var(--wa-black)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '9px 18px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Take the tour</button>
+          </div>
+        </Section>
+      )}
+
       <Section title="About">
         <Field label="Version"><span style={{ fontSize: 13, color: 'var(--wa-muted)' }}>Working Artist v2</span></Field>
         <Field label="Storage"><span style={{ fontSize: 13, color: 'var(--wa-muted)' }}>Local — stored on this device</span></Field>
       </Section>
+      </div>
+
+      <div className="lg:col-span-2">
+      <Section title="Danger zone">
+        {!confirmReset ? (
+          <button onClick={() => setConfirmReset(true)} style={{ background: 'none', border: '1px solid var(--wa-line)', borderRadius: 10, padding: '9px 16px', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>
+            Clear all data…
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 12, color: 'var(--wa-text-2)' }}>This deletes everything. Continue?</span>
+            <button onClick={() => void resetAll()} style={{ background: '#E05252', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Delete all</button>
+            <button onClick={() => setConfirmReset(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
+          </div>
+        )}
+      </Section>
+      </div>
+      </div>
     </Shell>
   )
 }
