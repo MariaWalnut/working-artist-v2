@@ -22,6 +22,9 @@ export interface Department {
   profilePhoto?: string // data URL: the portrait at the top of the profile
   basedIn?: string // the city the profile reads under the name
   profileLinks?: ProfileLink[] // website, Instagram, Spotify, press email…
+  // Printed on invoices: who sends it, and the bank and tax lines at the foot
+  invoiceFrom?: string
+  invoiceFooter?: string
 }
 
 // One line of the profile's contact block: a label and the address behind it.
@@ -137,6 +140,10 @@ export interface Work {
   contract?: BookContract
   contractFile?: string // data URL of the contract itself, a PDF
   contractFileName?: string
+  // money: what was invoiced and received for this work, and who shares it
+  currency?: string // '€', '$', '£', 'R$'; books use their contract's currency
+  payments?: Payment[]
+  splits?: Split[]
   projectId?: number // the project it grew out of
   inProgress?: boolean // still being made; missing = completed
   noProject?: boolean // its project was deleted, so it doesn't get a new one
@@ -238,6 +245,28 @@ export interface RightItem {
   royaltyRate?: number // percent
   printRun?: number
   price?: number
+}
+
+// One amount owed or paid for a work: a fee, a sale, an advance instalment, royalties.
+// No `received` date = still owed.
+export interface Payment {
+  id: string
+  label: string // what it's for: Advance, first half · Sale · Royalties 2025
+  amount?: number
+  payer?: string // publisher, gallery, client
+  rightId?: string // a translation or licence on this work; missing = the work itself
+  invoiceNo?: string
+  invoiced?: string // YYYY-MM-DD the invoice went out
+  received?: string // YYYY-MM-DD the money arrived
+  invoiceFile?: string // data URL, a PDF
+  invoiceFileName?: string
+}
+
+// Who shares the money from a work, and how much.
+export interface Split {
+  id: string
+  who: string
+  pct: number
 }
 
 // Terms of the publishing contract for a book (amounts in `currency`).
