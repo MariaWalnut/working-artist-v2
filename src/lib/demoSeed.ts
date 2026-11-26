@@ -7,7 +7,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-14b'
+export const DEMO_VERSION = '2026-11-26'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -161,7 +161,9 @@ const SEEDS: Record<DemoField, () => Seed> = {
     works: [
       { title: 'Low Tide', category: 'Albums', kind: 'Release', format: 'Album', label: 'Northbound Records', publishedDate: '2025-03-14', year: 2025, month: 3, location: 'Berlin',
         tracklist: 'Harbour Light\nLow Tide\nSalt in the Wires\nRostock, 4 am\nThe Long Field\nSmall Weather\nLanterns (Reprise)\nHome by the Water', link: 'workingartist.bandcamp.example/low-tide',
-        rights: [{ id: 'r1', language: 'Sync: coffee advert', publisher: 'Field Agency', location: 'Hamburg', year: 2026, status: 'pending', advance: 4000 }] },
+        rights: [{ id: 'r1', language: 'Sync: coffee advert', publisher: 'Field Agency', location: 'Hamburg', year: 2026, status: 'pending', advance: 4000 }] ,
+        payments: [{ id: 'p1', label: 'Label royalties 2025', amount: 2380, payer: 'Northbound Records', received: '2026-02-20' }, { id: 'p2', label: 'Sync fee', amount: 4000, payer: 'Field Agency\nHamburg', rightId: 'r1', invoiceNo: '2026-014', invoiced: inDays(-12) }],
+        splits: [{ id: 's1', who: 'You', pct: 25 }, { id: 's2', who: 'Jonas', pct: 25 }, { id: 's3', who: 'Mira', pct: 25 }, { id: 's4', who: 'Tom', pct: 25 }] },
       { title: 'Paper Lanterns', category: 'EPs', kind: 'Release', format: 'EP', label: 'Self-released', year: 2023, month: 9, location: 'Lisbon' },
       { title: 'Glass Hour', category: 'Singles', kind: 'Release', format: 'Single', label: 'Northbound Records', publishedDate: '2026-06-19', year: 2026, month: 6, location: 'Berlin', tracklist: 'Glass Hour\nGlass Hour (Piano)', link: 'spotify.example/glass-hour' },
       { title: 'Northern Lights (Live)', category: 'Live', kind: 'Release', format: 'Live album', label: 'Northbound Records', year: 2024, month: 2, location: 'Copenhagen' },
@@ -247,7 +249,9 @@ const SEEDS: Record<DemoField, () => Seed> = {
     },
     practiceNames: { visual_artist: 'Painter' },
     works: [
-      { title: 'Salt Flats I', category: 'Paintings', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection', price: '€9,500', availability: 'Sold', whereNow: 'Ines Duarte, Lisbon', soldTo: 'Ines Duarte' },
+      { title: 'Salt Flats I', category: 'Paintings', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 5, location: 'Lisbon', collection: 'Private collection', price: '€9,500', availability: 'Sold', whereNow: 'Ines Duarte, Lisbon', soldTo: 'Ines Duarte' ,
+        payments: [{ id: 'p1', label: 'Sale', amount: 9500, payer: 'Ines Duarte, via Galeria Sal', invoiceNo: '2024-007', invoiced: '2024-06-03', received: '2024-06-21' }],
+        splits: [{ id: 's1', who: 'You', pct: 50 }, { id: 's2', who: 'Galeria Sal', pct: 50 }] },
       { title: 'Salt Flats II', category: 'Paintings', kind: 'Artwork', medium: 'Oil on linen', dimensions: '120 × 90 cm', year: 2024, month: 7, location: 'Lisbon', price: '€9,500', availability: 'Available', whereNow: 'Studio' },
       { title: 'Interior with Blue Chair', category: 'Paintings', kind: 'Artwork', medium: 'Oil on canvas', dimensions: '80 × 60 cm', year: 2025, month: 2, location: 'Berlin', price: '€6,000', availability: 'Available', whereNow: 'Galerie Nordlicht' },
       { title: 'Night Garden', category: 'Works on paper', kind: 'Artwork', medium: 'Acrylic and pastel on paper', dimensions: '50 × 70 cm', year: 2025, month: 10, location: 'Berlin', price: '€2,200', availability: 'Reserved', whereNow: 'Studio' },
@@ -338,15 +342,19 @@ const SEEDS: Record<DemoField, () => Seed> = {
           { id: 'r1', language: 'German', publisher: 'Blauer Verlag', year: 2025, status: 'sold', advance: 2000, royaltyRate: 6, printRun: 3000 },
           { id: 'r2', language: 'French', publisher: 'Éditions Lune', year: 2025, status: 'live', advance: 1800 },
           { id: 'r3', language: 'Korean', status: 'pending' },
-        ] },
+        ] ,
+        payments: [{ id: 'p1', label: 'Advance, on signing', amount: 2000, payer: 'Little Lantern Books', invoiced: '2023-02-20', received: '2023-03-14' }, { id: 'p2', label: 'Advance, on publication', amount: 2000, payer: 'Little Lantern Books', invoiced: '2024-09-10', received: '2024-09-30' }, { id: 'p3', label: 'Translation advance', amount: 2000, payer: 'Blauer Verlag', rightId: 'r1', invoiceNo: '2025-004', invoiced: '2025-05-02', received: '2025-05-20' }, { id: 'p4', label: 'Translation advance', amount: 1800, payer: 'Éditions Lune\nParis', rightId: 'r2', invoiceNo: '2026-011', invoiced: inDays(-20) }],
+        splits: [{ id: 's1', who: 'Mara Holt, text', pct: 50 }, { id: 's2', who: 'You, pictures', pct: 50 }] },
       { title: 'Hush, Little Harbour', category: 'Picture books', kind: 'Book', publisher: 'Little Lantern Books', publishedDate: '2026-05', year: 2026, month: 5, language: 'English',
         credits: 'Written and illustrated by Ines Okafor', pages: 40, dimensions: '25 × 25 cm', technique: 'Gouache, coloured pencil', location: 'London',
         contract: { currency: '€', price: 17, binding: 'Hardcover', printRun: 5000, advance: 6000, advancePaid: 'part', royaltyRate: 7, royaltyBase: 'retail', territory: 'World, all languages', signed: '2024-06' },
-        rights: [{ id: 'r1', language: 'Dutch', publisher: 'Uitgeverij Zee', year: 2026, status: 'sold', advance: 1500 }] },
+        rights: [{ id: 'r1', language: 'Dutch', publisher: 'Uitgeverij Zee', year: 2026, status: 'sold', advance: 1500 }] ,
+        payments: [{ id: 'p1', label: 'Advance, on signing', amount: 3000, payer: 'Little Lantern Books', invoiced: '2024-06-20', received: '2024-07-08' }, { id: 'p2', label: 'Advance, on publication', amount: 3000, payer: 'Little Lantern Books\n12 Quay Street, London', invoiceNo: '2026-009', invoiced: inDays(-35) }] },
       { title: "Grandma's Garden", category: 'Picture books', kind: 'Book', publisher: 'Small Steps Press', publishedDate: '2022-04', year: 2022, month: 4, language: 'German',
         credits: 'Text by Ana Weiss, illustrated by Ines Okafor', pages: 28, dimensions: '22 × 28 cm', technique: 'Watercolour', location: 'Berlin' },
       { title: 'Autumn cover', category: 'Covers', kind: 'Illustration', publisher: 'City Magazine', publishedDate: '2025-10', year: 2025, month: 10, medium: 'Gouache, digital',
-        rights: [{ id: 'r1', language: 'Magazine cover, print and online, 1 year', publisher: 'City Magazine', location: 'London', year: 2025, month: 10, status: 'sold', advance: 1200 }] },
+        rights: [{ id: 'r1', language: 'Magazine cover, print and online, 1 year', publisher: 'City Magazine', location: 'London', year: 2025, month: 10, status: 'sold', advance: 1200 }] ,
+        payments: [{ id: 'p1', label: 'Cover fee', amount: 1200, payer: 'City Magazine', rightId: 'r1', invoiceNo: '2025-012', invoiced: '2025-10-08', received: '2025-11-05' }] },
       { title: 'Book festival poster', category: 'Posters', kind: 'Illustration', publisher: "Children's Book Festival", publishedDate: '2026-02', year: 2026, month: 2, medium: 'Gouache', location: 'Paris', price: '€1,400', availability: 'Available', whereNow: 'Gallery of Small Things' },
       { title: 'Reading in bed', category: 'Editorial', kind: 'Illustration', publisher: 'Weekend Books', publishedDate: '2025-03', year: 2025, month: 3, medium: 'Pencil, digital' },
       { title: 'Snow Days, character sheet', category: 'Character sheets', kind: 'Illustration', publisher: 'Little Lantern Books', publishedDate: '2026-08', year: 2026, month: 8, medium: 'Gouache' },
@@ -431,9 +439,12 @@ const SEEDS: Record<DemoField, () => Seed> = {
           { id: 'r1', language: 'German', publisher: 'Nordwind Verlag', year: 2024, status: 'sold', advance: 3500 },
           { id: 'r2', language: 'Portuguese', publisher: 'Edições Mar', year: 2025, status: 'live' },
           { id: 'r3', language: 'Danish', status: 'pending' },
-        ] },
+        ] ,
+        payments: [{ id: 'p1', label: 'Advance, on signing', amount: 4000, payer: 'Harbour Press', received: '2021-12-10' }, { id: 'p2', label: 'Advance, on publication', amount: 4000, payer: 'Harbour Press', received: '2023-05-02' }, { id: 'p3', label: 'German advance', amount: 3500, payer: 'Nordwind Verlag', rightId: 'r1', received: '2024-06-12' }, { id: 'p4', label: 'Royalties 2025', amount: 1240, payer: 'Harbour Press\nLondon', invoiceNo: '2026-006', invoiced: inDays(-8) }],
+        splits: [{ id: 's1', who: 'You', pct: 85 }, { id: 's2', who: 'Ruth Adler, agent', pct: 15 }] },
       { title: 'Small Weather', category: 'Short stories', kind: 'Book', subtitle: 'Stories', publisher: 'Harbour Press', publishedDate: '2025-09', year: 2025, month: 9, language: 'English', pages: 190, location: 'Dublin',
-        contract: { currency: '€', price: 18, binding: 'Paperback', printRun: 3000, advance: 5000, advancePaid: 'part', royaltyRate: 7.5, royaltyBase: 'retail', signed: '2024-03', agent: 'Ruth Adler', agentCommission: 15 } },
+        contract: { currency: '€', price: 18, binding: 'Paperback', printRun: 3000, advance: 5000, advancePaid: 'part', royaltyRate: 7.5, royaltyBase: 'retail', signed: '2024-03', agent: 'Ruth Adler', agentCommission: 15 } ,
+        payments: [{ id: 'p1', label: 'Advance, on signing', amount: 2500, payer: 'Harbour Press', received: '2024-04-15' }, { id: 'p2', label: 'Advance, on publication', amount: 2500, payer: 'Harbour Press', invoiceNo: '2025-019', invoiced: '2025-10-01', received: '2025-10-24' }] },
       { title: 'Das Sommerhaus', category: 'Translations', kind: 'Book', subtitle: 'Roman', publisher: 'Nordwind Verlag', publishedDate: '2024-09', year: 2024, month: 9, language: 'German', credits: 'Translated by Jonas Berg', pages: 296, location: 'Berlin' },
       { title: 'On Walking', category: 'Essays', kind: 'Text', publisher: 'City Review', publishedDate: '2024-03', year: 2024, month: 3, language: 'English' },
       { title: 'Salt', category: 'Short stories', kind: 'Text', publisher: 'Coastal Review', publishedDate: '2022-06', year: 2022, month: 6, language: 'English' },
@@ -516,7 +527,8 @@ const SEEDS: Record<DemoField, () => Seed> = {
     practiceNames: { visual_artist: 'Artist' },
     works: [
       { title: 'Tidal Archive', category: 'Installations', kind: 'Artwork', medium: 'Installation: salt, glass and sound', dimensions: 'Room, 6 × 9 m', year: 2024, month: 4, location: 'Rotterdam' },
-      { title: 'Weight of Water', category: 'Sculpture', kind: 'Artwork', medium: 'Cast bronze', dimensions: '42 × 30 × 28 cm', year: 2023, month: 9, location: 'Vienna', collection: 'Private collection', availability: 'Sold', soldTo: 'Victor Lenz', whereNow: 'Victor Lenz, Vienna', editionSize: 3, artistProofs: 1, editionsSold: 2, price: '€14,000' },
+      { title: 'Weight of Water', category: 'Sculpture', kind: 'Artwork', medium: 'Cast bronze', dimensions: '42 × 30 × 28 cm', year: 2023, month: 9, location: 'Vienna', collection: 'Private collection', availability: 'Sold', soldTo: 'Victor Lenz', whereNow: 'Victor Lenz, Vienna', editionSize: 3, artistProofs: 1, editionsSold: 2, price: '€14,000' ,
+        payments: [{ id: 'p1', label: 'Sale, edition 1 of 3', amount: 14000, payer: 'Victor Lenz', invoiceNo: '2023-011', invoiced: '2023-10-02', received: '2023-10-19' }, { id: 'p2', label: 'Sale, edition 2 of 3', amount: 14000, payer: 'Art fund, Vienna', invoiceNo: '2026-012', invoiced: inDays(-5) }] },
       { title: 'Small Monuments', category: 'Sculpture', kind: 'Artwork', medium: 'Glazed ceramic, 12 parts', dimensions: 'Variable', year: 2025, month: 3, location: 'Berlin', price: '€18,000', availability: 'Available', whereNow: 'Galerie Roth' },
       { title: 'Field Notes', category: 'Video', kind: 'Artwork', medium: 'Single-channel video, 14 min', year: 2025, month: 8, location: 'Lisbon' },
       { title: 'Cloud Index', category: 'Works on paper', kind: 'Artwork', medium: 'Graphite and ink on paper', dimensions: '70 × 100 cm', year: 2022, month: 6, location: 'Copenhagen', collection: 'Kunsthalle collection', availability: 'On loan', whereNow: 'Kunsthal Rotterdam, until March' },

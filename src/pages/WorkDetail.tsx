@@ -12,6 +12,7 @@ import { KIND_FIELDS, fieldDisplay, kindOf, shelfOf, usesPublishedDate, type Wor
 import { formatAnyDate, formatEventDate } from '../lib/eventDates'
 import { DateFields } from '../components/DateFields'
 import { ContractCard, money, parseAmount } from '../components/ContractCard'
+import { MoneyCard } from '../components/MoneyCard'
 import { fileToDataUrl, readRaw } from '../lib/images'
 import { ClippingViewer } from '../components/ClippingViewer'
 import { linkWorksInProgress } from '../lib/workProjects'
@@ -434,6 +435,7 @@ export function WorkDetail() {
 
             {showPeople && w.id != null && <PeopleCard kind="work" id={w.id} deptId={w.departmentId} startAdding={addingPeople && peopleCount === 0} style={{ ...card }} />}
             {(wKind === 'Book' || w.contract || w.contractFile) && <ContractCard key={w.id} work={w} />}
+            {!w.inProgress && <MoneyCard key={`money-${w.id}`} work={w} />}
 
             {showPress && (
               <div style={{ ...card }}>
