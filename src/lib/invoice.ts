@@ -1,4 +1,7 @@
-import type { Department, Payment, Work } from '../db/db'
+import { db, type Department, type Payment, type Work } from '../db/db'
+
+// What an invoice is for: a work (with its translations and licences), or nothing for money outside works.
+export type InvoiceFor = Pick<Work, 'title' | 'rights'>
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 const lines = (s?: string) => (s ?? '').split('\n').map(l => esc(l.trim())).filter(Boolean).join('<br>')
@@ -14,12 +17,12 @@ function amount(n: number | undefined, currency: string) {
 }
 
 // What the invoice says the money is for: the work, the instalment, and the edition or licence.
-export function invoiceDescription(work: Work, p: Payment) {
+export function invoiceDescription(work: InvoiceFor, p: Payment) {
   const right = p.rightId ? work.rights?.find(r => r.id === p.rightId) : undefined
   return [work.title, right?.language ?? '', p.label].filter(Boolean).join(' · ')
 }
 
-export function invoiceHtml(work: Work, p: Payment, dept: Department | undefined, currency: string) {
+export function invoiceHtml(work: InvoiceFor, p: Payment, dept: Department | undefined, currency: string) {
   const no = p.invoiceNo?.trim() || '—'
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Invoice ${esc(no)}</title><style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -47,7 +50,7 @@ ${dept?.invoiceFooter?.trim() ? `<div class="foot">${lines(dept.invoiceFooter)}<
 }
 
 // Prints from a hidden frame, so no new window or tab opens.
-export function printInvoice(work: Work, p: Payment, dept: Department | undefined, currency: string) {
+export function printInvoice(work: InvoiceFor, p: Payment, dept: Department | undefined, currency: string) {
   const frame = document.createElement('iframe')
   frame.setAttribute('aria-hidden', 'true')
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
@@ -61,4 +64,13 @@ export function printInvoice(work: Work, p: Payment, dept: Department | undefine
   }
   if (doc.readyState === 'complete') window.setTimeout(go, 50)
   else frame.onload = go
+}
+
+// Next invoice number after the highest one used anywhere in the studio: 2026-004 → 2026-005.
+export async function nextInvoiceNo() {
+  const [works, depts] = await Promise.all([db.works.toArray(), db.departments.toArray()])
+  const used = [...works.flatMap(w => w.payments ?? []), ...depts.flatMap(d => d.otherPayments ?? [])].map(p => p.invoiceNo ?? '').filter(Boolean)
+  const year = new Date().getFullYear()
+  const n = used.map(s => Number(s.match(/(\d+)\s*$/)?.[1] ?? 0)).reduce((a, b) => Math.max(a, b), 0)
+  return `${year}-${String(n + 1).padStart(3, '0')}`
 }

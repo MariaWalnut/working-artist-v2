@@ -25,6 +25,7 @@ export interface Department {
   // Printed on invoices: who sends it, and the bank and tax lines at the foot
   invoiceFrom?: string
   invoiceFooter?: string
+  otherPayments?: Payment[] // money not tied to a work: grants, prizes, teaching, gigs added on Finance
 }
 
 // One line of the profile's contact block: a label and the address behind it.
@@ -201,6 +202,7 @@ export interface EventEntry {
   onTimeline?: boolean // shown on the career timeline; older events have no value and count as shown
   maybe?: boolean // discussed but not confirmed: kept apart from everything else until it is
   fee?: string // what it pays, as typed: "€400"
+  feeReceived?: string // YYYY-MM-DD the fee arrived; missing = still owed
   premiere?: string // for a festival or screening: World premiere, International premiere…
 }
 
@@ -260,6 +262,7 @@ export interface Payment {
   received?: string // YYYY-MM-DD the money arrived
   invoiceFile?: string // data URL, a PDF
   invoiceFileName?: string
+  currency?: string // only on payments outside a work; a work's payments use the work's currency
 }
 
 // Who shares the money from a work, and how much.
