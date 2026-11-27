@@ -49,7 +49,7 @@ export function PaymentForm({ payment, currency, ownCurrency = false, rights = [
   const set = (k: keyof Draft, v: string) => setDraft(d => ({ ...d, [k]: v }))
 
   async function save() {
-    const p = fromDraft(id, draft, ownCurrency)
+    const p: Payment = { ...payment, ...fromDraft(id, draft, ownCurrency) } // keeps what the form doesn't show, like its invoice
     await onSave(p)
     return p
   }

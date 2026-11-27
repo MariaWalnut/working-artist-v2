@@ -9,6 +9,7 @@ import { AccentPicker } from '../components/AccentPicker'
 import { ThemePicker } from '../components/ThemePicker'
 import { startTour } from '../components/GuidedTour'
 import { demoField } from '../lib/mode'
+import { InvoiceSettingsCard } from '../components/InvoiceSettingsCard'
 
 function Section({ title, tour, children }: { title: string; tour?: string; children: React.ReactNode }) {
   return (
@@ -29,39 +30,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 // What every printed invoice carries: who sends it, and the bank and tax lines at the foot.
-function InvoiceDetails({ deptId, from, footer }: { deptId?: number; from?: string; footer?: string }) {
-  const [editing, setEditing] = useState(false)
-  const [f, setF] = useState('')
-  const [b, setB] = useState('')
-  const ta: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '8px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }
-  const lbl: React.CSSProperties = { display: 'block', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginBottom: 4 }
-  async function save() {
-    if (deptId == null) return
-    await db.departments.update(deptId, { invoiceFrom: f.trim() || undefined, invoiceFooter: b.trim() || undefined })
-    setEditing(false)
-  }
-  if (editing) return (
-    <div>
-      <label style={{ display: 'block', marginBottom: 10 }}><span style={lbl}>From</span>
-        <textarea autoFocus rows={4} value={f} onChange={e => setF(e.target.value)} placeholder={'Your name\nStreet and number\nPostcode, city\nTax number'} style={ta} /></label>
-      <label style={{ display: 'block', marginBottom: 12 }}><span style={lbl}>Bank and tax lines</span>
-        <textarea rows={3} value={b} onChange={e => setB(e.target.value)} placeholder={'IBAN, BIC\nVAT note'} style={ta} /></label>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-muted)', cursor: 'pointer' }}>Cancel</button>
-        <button onClick={() => void save()} style={{ background: 'var(--accent)', borderRadius: 8, border: 'none', padding: '7px 14px', fontSize: 10, fontWeight: 600, cursor: 'pointer', color: '#111111' }}>Save</button>
-      </div>
-    </div>
-  )
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: from ? 'var(--wa-ink)' : 'var(--wa-text-2)', whiteSpace: 'pre-wrap' }}>
-        {from ? [from, footer].filter(Boolean).join('\n') : 'Your name, address and bank details, printed on every invoice.'}
-      </p>
-      <button onClick={() => { setF(from ?? ''); setB(footer ?? ''); setEditing(true) }} style={{ flexShrink: 0, background: 'var(--wa-fill)', borderRadius: 8, border: 'none', padding: '6px 12px', fontSize: 10, color: 'var(--wa-text-2)', cursor: 'pointer' }}>{from ? 'Edit' : 'Add'}</button>
-    </div>
-  )
-}
-
 export function Account() {
   const dept = useLiveQuery(() => db.departments.toArray())
   const d = dept?.[0]
@@ -226,7 +194,7 @@ export function Account() {
       <div>
       <div className="hidden lg:block"><AccountSection /></div>
       <Section title="Invoices">
-        <InvoiceDetails deptId={d?.id} from={d?.invoiceFrom} footer={d?.invoiceFooter} />
+        <InvoiceSettingsCard dept={d} />
       </Section>
 
       <Section title="Backup">

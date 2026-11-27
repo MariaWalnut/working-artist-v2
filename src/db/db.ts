@@ -26,6 +26,71 @@ export interface Department {
   invoiceFrom?: string
   invoiceFooter?: string
   otherPayments?: Payment[] // money not tied to a work: grants, prizes, teaching, gigs added on Finance
+  invoiceSettings?: InvoiceSettings // logo, tax and bank details, defaults and designs, in Account › Invoices
+}
+
+// The sections of an invoice below its header, in the order they print.
+export type InvoiceBlock = 'parties' | 'lines' | 'totals' | 'notes' | 'payment'
+export const INVOICE_BLOCKS: InvoiceBlock[] = ['parties', 'lines', 'totals', 'notes', 'payment']
+
+export interface InvoiceDesign {
+  layout: 'classic' | 'modern' | 'minimal'
+  font: 'sans' | 'serif'
+  accent: string // hex
+  logo: 'left' | 'right' | 'center'
+  blocks: InvoiceBlock[] // order
+  hidden?: InvoiceBlock[]
+}
+
+export interface InvoiceTemplate { id: string; name: string; design: InvoiceDesign }
+
+export interface InvoiceSettings {
+  logo?: string // data URL
+  email?: string
+  website?: string
+  taxNumber?: string
+  vatId?: string
+  bankHolder?: string
+  bankName?: string
+  iban?: string
+  bic?: string
+  currency?: string
+  vatRate?: number // percent
+  taxNote?: string // e.g. reverse charge, small business exemption
+  termsDays?: number // days until due
+  prefix?: string // before the number: "WA-"
+  notes?: string // default note on new invoices
+  design?: InvoiceDesign // the default design
+  templates?: InvoiceTemplate[]
+}
+
+export interface InvoiceLine { id: string; description: string; qty: number; price: number }
+
+// An invoice made on Finance. Once sent it keeps a payment in step (on its work, or outside works),
+// so the Money card and Finance totals count it; a draft counts nowhere.
+export interface Invoice {
+  id?: number
+  departmentId?: number
+  number: string
+  issued: string // YYYY-MM-DD
+  due?: string
+  clientName?: string
+  clientAddress?: string
+  clientEmail?: string
+  contactId?: number
+  workId?: number
+  rightId?: string
+  lines: InvoiceLine[]
+  currency: string
+  vatRate?: number
+  taxNote?: string
+  notes?: string
+  sent?: string // YYYY-MM-DD; missing = draft
+  paid?: string // YYYY-MM-DD
+  design?: InvoiceDesign
+  paymentId?: string
+  createdAt: number
+  updatedAt: number
 }
 
 // One line of the profile's contact block: a label and the address behind it.
@@ -263,6 +328,7 @@ export interface Payment {
   invoiceFile?: string // data URL, a PDF
   invoiceFileName?: string
   currency?: string // only on payments outside a work; a work's payments use the work's currency
+  invoiceId?: number // the invoice made on Finance that this payment follows
 }
 
 // Who shares the money from a work, and how much.
@@ -392,6 +458,7 @@ export class AppDB extends Dexie {
   contacts!: Table<Contact>
   contactLists!: Table<ContactList>
   texts!: Table<TextEntry>
+  invoices!: Table<Invoice>
 
   constructor(name: string) {
     super(name)
@@ -546,6 +613,24 @@ export class AppDB extends Dexie {
       contacts: '++id, departmentId',
       contactLists: '++id, departmentId',
       texts: '++id, departmentId',
+    })
+    this.version(12).stores({
+      departments: '++id',
+      projects: '++id, departmentId',
+      opportunities: '++id, departmentId',
+      works: '++id, departmentId',
+      dayLogs: '++id, departmentId, date',
+      boards: '++id, departmentId',
+      boardItems: '++id, boardId',
+      books: '++id, departmentId',
+      releases: '++id, departmentId',
+      todos: '++id, departmentId, projectId',
+      pressEntries: '++id, departmentId',
+      eventEntries: '++id, departmentId',
+      contacts: '++id, departmentId',
+      contactLists: '++id, departmentId',
+      texts: '++id, departmentId',
+      invoices: '++id, departmentId',
     })
   }
 }

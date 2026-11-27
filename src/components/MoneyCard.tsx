@@ -35,6 +35,7 @@ export function MoneyCard({ work }: { work: Work }) {
 
   async function savePayment(p: Payment) {
     await save(editing === 'new' ? [...payments, p] : payments.map(x => (x.id === p.id ? p : x)))
+    if (p.invoiceId != null) await db.invoices.update(p.invoiceId, { sent: p.invoiced, paid: p.received, updatedAt: Date.now() })
     setEditing(null)
   }
 

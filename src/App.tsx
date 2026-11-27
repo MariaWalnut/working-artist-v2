@@ -22,6 +22,7 @@ import { Press } from './pages/Press'
 import { Profile } from './pages/Profile'
 import { Contacts } from './pages/Contacts'
 import { Finance } from './pages/Finance'
+import { InvoiceEditor } from './pages/InvoiceEditor'
 import { Capacitor } from '@capacitor/core'
 
 const isNative = Capacitor.isNativePlatform()
@@ -104,6 +105,7 @@ function AppRoutes() {
       <Route path="/projects/events" element={<AllEvents />} />
       <Route path="/projects/:id" element={<ProjectDetail />} />
       <Route path="/finance" element={<Finance />} />
+      <Route path="/finance/invoices/:id" element={<InvoiceEditor />} />
       <Route path="/opportunities" element={<Opportunities />} />
       <Route path="/contacts" element={<Contacts />} />
       <Route path="/manifest" element={<VisionBoard />} />
