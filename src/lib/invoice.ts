@@ -1,4 +1,4 @@
-import { db, INVOICE_BLOCKS, type Department, type Invoice, type InvoiceBlock, type InvoiceDesign, type Payment, type Work } from '../db/db'
+import { db, INVOICE_BLOCKS, type Department, type Invoice, type InvoiceBlock, type InvoiceDesign, type Payment, type Work, type WordmarkFont } from '../db/db'
 
 // What a payment's invoice is for: a work (with its translations and licences), or nothing for money outside works.
 export type InvoiceFor = Pick<Work, 'title' | 'rights'>
@@ -11,6 +11,16 @@ export const LAYOUTS: Array<{ key: InvoiceDesign['layout']; name: string; design
   { key: 'modern', name: 'Modern', design: { layout: 'modern', font: 'sans', accent: '#E8D44D', logo: 'left', blocks: [...INVOICE_BLOCKS] } },
   { key: 'minimal', name: 'Minimal', design: { layout: 'minimal', font: 'serif', accent: '#231F20', logo: 'center', blocks: [...INVOICE_BLOCKS] } },
 ]
+
+// Four faces for a name set in place of a logo.
+export const WORDMARK_FONTS: Array<{ key: WordmarkFont; name: string; family: string; css: string; size: number; weight: number }> = [
+  { key: 'playfair', name: 'Elegant', family: "'Playfair Display', Georgia, serif", css: 'Playfair+Display:ital,wght@0,600;1,600', size: 26, weight: 600 },
+  { key: 'syne', name: 'Bold', family: "'Syne', Helvetica, sans-serif", css: 'Syne:wght@700', size: 24, weight: 700 },
+  { key: 'pinyon', name: 'Script', family: "'Pinyon Script', cursive", css: 'Pinyon+Script', size: 32, weight: 400 },
+  { key: 'spacemono', name: 'Typewriter', family: "'Space Mono', monospace", css: 'Space+Mono:wght@700', size: 20, weight: 700 },
+]
+export const wordmarkFont = (k?: WordmarkFont) => WORDMARK_FONTS.find(f => f.key === k) ?? WORDMARK_FONTS[0]
+export const fontLink = (k?: WordmarkFont) => `https://fonts.googleapis.com/css2?family=${wordmarkFont(k).css}&display=swap`
 
 export const BLOCK_NAME: Record<InvoiceBlock, string> = { parties: 'From and to', lines: 'Lines', totals: 'Totals', notes: 'Notes', payment: 'Bank and tax details' }
 
@@ -92,7 +102,9 @@ export function invoiceHtml(inv: Invoice, dept: Department | null | undefined, d
   const rule = minimal ? '1px solid #d9d6d6' : `1px dotted ${ink}`
   const fromName = (dept?.invoiceFrom ?? '').split('\n')[0]?.trim() || dept?.name || ''
   const hidden = new Set(design.hidden ?? [])
-  const logo = set.logo ? `<img class="logo" src="${set.logo}" alt="">` : ''
+  const wm = !set.logo && set.wordmark?.trim() ? wordmarkFont(set.wordmarkFont) : undefined
+  const logo = set.logo ? `<img class="logo" src="${set.logo}" alt="">`
+    : wm ? `<div class="logo wordmark" style="font-family:${wm.family};font-size:${wm.size}px;font-weight:${wm.weight}">${esc(set.wordmark!.trim())}</div>` : ''
 
   const meta = `<div class="meta">
     <div><div class="label">Invoice no.</div><div>${esc(inv.number || '—')}</div></div>
@@ -130,7 +142,7 @@ export function invoiceHtml(inv: Invoice, dept: Department | null | undefined, d
 
   const body = design.blocks.filter(b => !hidden.has(b)).map(b => blocks[b]).join('\n')
 
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Invoice ${esc(inv.number)}</title><style>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Invoice ${esc(inv.number)}</title>${wm ? `<link rel="stylesheet" href="${fontLink(wm.key)}">` : ''}<style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:#fff}
 body{font-family:${FONTS[design.font]};font-size:${minimal ? 11 : 12}px;line-height:1.6;color:${ink};padding:56px 64px;max-width:794px;margin:0 auto;background:#fff}
@@ -144,6 +156,7 @@ header.center .meta{text-align:center;justify-content:center}
 .brand{display:flex;flex-direction:column;gap:14px}
 header.flip .brand{align-items:flex-end}
 .logo{max-height:56px;max-width:200px;object-fit:contain;align-self:flex-start}
+.wordmark{max-height:none;max-width:none;line-height:1.1;white-space:nowrap}
 header.center .logo{align-self:center}
 header.flip .logo{align-self:flex-end}
 h1{font-size:${minimal ? 22 : 30}px;font-weight:${modern ? 700 : 400};letter-spacing:${modern ? '.04em' : '-.01em'}${modern ? ';text-transform:uppercase' : ''}${tinted ? `;color:${accent}` : ''}}
@@ -177,13 +190,14 @@ export function printHtml(html: string) {
   document.body.appendChild(frame)
   const doc = frame.contentDocument!
   doc.open(); doc.write(html); doc.close()
-  const go = () => {
+  const go = async () => {
+    await doc.fonts?.ready.catch(() => undefined) // a name set in a web font must load before printing
     frame.contentWindow?.focus()
     frame.contentWindow?.print()
     window.setTimeout(() => frame.remove(), 1000)
   }
-  if (doc.readyState === 'complete') window.setTimeout(go, 150)
-  else frame.onload = go
+  if (doc.readyState === 'complete') window.setTimeout(() => void go(), 150)
+  else frame.onload = () => void go()
 }
 
 // A quick invoice from a Money card payment, in the studio's default design.

@@ -10,6 +10,7 @@ import { ClippingViewer } from '../components/ClippingViewer'
 import { money } from '../components/ContractCard'
 import { PaymentForm, fieldLabel, inp, quiet, saveBtn, today, useInvoicePrinter } from '../components/PaymentForm'
 import { InvoiceStatusChip, STATUS_NAME } from '../components/InvoiceStatusChip'
+import { InvoicePopup } from './InvoiceEditor'
 import { useActiveDept } from '../lib/useDept'
 import { useNarrow } from '../lib/useNarrow'
 import { practiceOf, usePractice } from '../lib/practice'
@@ -65,6 +66,7 @@ export function Finance() {
   const [newNo, setNewNo] = useState('')
   const [feeDate, setFeeDate] = useState('')
   const [viewing, setViewing] = useState<Entry | null>(null)
+  const [popup, setPopup] = useState<{ id: string; from?: string } | null>(null) // the invoice open over the list
   const printer = useInvoicePrinter(dept)
 
   const p = useMemo(() => practiceOf(acts, works), [acts, works])
@@ -85,7 +87,7 @@ export function Finance() {
           key: `i${inv.id}`, number: inv.number, client: inv.clientName ?? '', forText: w ? [w.title, right].filter(Boolean).join(' · ') : inv.lines[0]?.description.split('\n')[0] ?? '',
           issued: inv.issued, due: inv.due, total: invoiceTotals(inv).total, currency: inv.currency, status: invoiceStatus(inv),
           file: all.find(e => e.payment?.invoiceId === inv.id && e.invoiceFile),
-          open: () => navigate(`/finance/invoices/${inv.id}`),
+          open: () => setPopup({ id: String(inv.id) }),
           print: () => printHtml(invoiceHtml(inv, dept)),
         }
       })
@@ -94,7 +96,7 @@ export function Finance() {
       issued: e.invoiced, due: e.invoiced ? addDays(e.invoiced, terms) : undefined, total: e.amount, currency: e.currency,
       status: invoiceStatus({ sent: e.invoiced, paid: e.received, due: e.invoiced ? addDays(e.invoiced, terms) : undefined }),
       file: e.invoiceFile ? e : undefined,
-      open: () => navigate(`/finance/invoices/new?from=${e.source === 'work' ? e.work!.id : 'other'}:${e.payment!.id}`),
+      open: () => setPopup({ id: 'new', from: `${e.source === 'work' ? e.work!.id : 'other'}:${e.payment!.id}` }),
       print: () => printer.print(e.work ?? { title: '' }, e.payment!, e.currency),
     }))
     return [...made, ...quick].sort((a, b) => b.number.localeCompare(a.number, undefined, { numeric: true }))
@@ -127,7 +129,7 @@ export function Finance() {
     setEditing(null)
   }
   function open(e: Entry) {
-    if (e.payment?.invoiceId != null) return navigate(`/finance/invoices/${e.payment.invoiceId}`)
+    if (e.payment?.invoiceId != null) return setPopup({ id: String(e.payment.invoiceId) })
     if (e.source === 'work') return navigate(`/studio/${e.work!.id}`)
     if (e.source === 'event') setFeeDate(e.received ?? '')
     setEditing(e.key)
@@ -296,7 +298,7 @@ export function Finance() {
             <FrameHeader right={<>
               {list.length > 0 && <button onClick={exportCsv} style={{ ...quiet, fontSize: 11, color: 'var(--wa-text-2)' }}>Export CSV</button>}
               {tab === 'invoices'
-                ? <AddButton label="+ New invoice" onClick={() => navigate('/finance/invoices/new')} />
+                ? <AddButton label="+ New invoice" onClick={() => setPopup({ id: 'new' })} />
                 : !editing && <AddButton onClick={() => void startNew()} />}
             </>}>
               <FrameTabs label="Finance" active={tab} onSelect={k => { setTab(k); setEditing(null) }}
@@ -311,7 +313,7 @@ export function Finance() {
                   <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--wa-text-2)' }}>
                     {invShow === 'all' ? 'No invoices' : `No ${STATUS_NAME[invShow as InvoiceStatus].toLowerCase()} invoices`}{year === 'all' ? '' : ` in ${year}`}.
                   </p>
-                  {invShow === 'all' && <AddButton label="+ New invoice" onClick={() => navigate('/finance/invoices/new')} />}
+                  {invShow === 'all' && <AddButton label="+ New invoice" onClick={() => setPopup({ id: 'new' })} />}
                 </div>
               )}
             </>}
@@ -329,6 +331,7 @@ export function Finance() {
         </div>
       </div>
       {printer.dialog}
+      {popup && <InvoicePopup key={`${popup.id}-${popup.from ?? ''}`} invoiceId={popup.id} from={popup.from} onClose={() => setPopup(null)} />}
       {viewing?.invoiceFile && <ClippingViewer entry={{ title: viewing.title, outlet: `Invoice ${viewing.invoiceNo ?? ''}`.trim(), clipping: viewing.invoiceFile, clippingName: viewing.invoiceFileName }} onClose={() => setViewing(null)} />}
     </Shell>
   )
