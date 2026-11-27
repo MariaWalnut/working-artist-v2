@@ -35,7 +35,8 @@ function Segmented<K extends string>({ value, options, onChange, label }: { valu
 }
 
 // The invoice as it will print, scaled to the width it's given.
-function Preview({ html }: { html: string }) {
+function Preview({ html, onEdit }: { html: string; onEdit?: () => void }) {
+  const [hover, setHover] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(600)
   useEffect(() => {
@@ -47,8 +48,14 @@ function Preview({ html }: { html: string }) {
   const scale = Math.min(1, w / 794)
   return (
     <div ref={box} style={{ width: '100%' }}>
-      <div style={{ width: 794 * scale, height: 1123 * scale, overflow: 'hidden', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,.12)', background: '#fff', margin: '0 auto' }}>
-        <iframe title="Invoice preview" srcDoc={html} style={{ width: 794, height: 1123, border: 0, transform: `scale(${scale})`, transformOrigin: '0 0', background: '#fff' }} />
+      <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+        style={{ position: 'relative', width: 794 * scale, height: 1123 * scale, overflow: 'hidden', borderRadius: 6, boxShadow: hover && onEdit ? '0 0 0 3px var(--accent)' : '0 1px 3px rgba(0,0,0,.12)', background: '#fff', margin: '0 auto', transition: 'box-shadow .15s' }}>
+        <iframe title="Invoice preview" srcDoc={html} style={{ width: 794, height: 1123, border: 0, transform: `scale(${scale})`, transformOrigin: '0 0', background: '#fff', pointerEvents: 'none' }} />
+        {onEdit && (
+          <button onClick={onEdit} aria-label="Edit design" style={{ position: 'absolute', inset: 0, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
+            <span style={{ position: 'absolute', top: 12, right: 12, padding: '6px 12px', borderRadius: 999, background: 'var(--accent)', color: '#111111', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)', opacity: hover ? 1 : 0, transition: 'opacity .15s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }}>Edit design</span>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -93,6 +100,7 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
   const navigate = useNavigate()
   const [id, setId] = useState(invoiceId)
   const [askClose, setAskClose] = useState(false)
+  const formRef = useRef<HTMLDivElement>(null)
   const narrow = useNarrow('(max-width: 960px)')
   const depts = useLiveQuery(() => db.departments.toArray())
   const dept = depts === undefined ? undefined : depts[0] ?? null
@@ -162,6 +170,8 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
   const { net, tax, total } = invoiceTotals(draft)
   const status = invoiceStatus(draft)
   const templates = dept?.invoiceSettings?.templates ?? []
+  // Opens the Design tab; on a phone the form sits above the preview, so it scrolls up to it.
+  const openDesign = () => { setTab('design'); if (narrow) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
   const nameGuess = dept?.invoiceFrom?.split('\n')[0]?.trim() || dept?.name || 'Your name'
   const wordmark = wordmarkDraft ?? dept?.invoiceSettings?.wordmark ?? ''
   const setWordmark = (v: string) => { setWordmarkDraft(v); void saveSettings({ wordmark: v.trim() || undefined }) }
@@ -412,14 +422,29 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr)' : 'minmax(0, 420px) minmax(0, 1fr)', gap: 10, alignItems: 'start' }}>
-        <div style={pageFrame}>
+        <div ref={formRef} style={pageFrame}>
           <FrameHeader>
             <FrameTabs label="Invoice" active={tab} onSelect={setTab} tabs={[{ key: 'details', label: 'Details' }, { key: 'design', label: 'Design' }]} />
           </FrameHeader>
           {tab === 'details' ? details : designPanel}
         </div>
         <div style={{ ...pageFrame, padding: narrow ? 12 : 20, position: narrow ? 'static' : 'sticky', top: 16 }}>
-          <Preview html={html} />
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>Design</span>
+            <Segmented label="Layout" value={design.layout} options={LAYOUTS.map(l => [l.key, l.name] as [InvoiceDesign['layout'], string])}
+              onChange={k => update({ design: { ...LAYOUTS.find(l => l.key === k)!.design, logo: design.logo, blocks: design.blocks, hidden: design.hidden } })} />
+            <span style={{ display: 'flex', gap: 5 }}>
+              {SWATCHES.map(c => (
+                <button key={c} onClick={() => setDesign({ accent: c })} aria-label={`Colour ${c}`} aria-pressed={design.accent.toLowerCase() === c.toLowerCase()}
+                  style={{ width: 18, height: 18, borderRadius: '50%', border: 'none', background: c, cursor: 'pointer', padding: 0, boxShadow: design.accent.toLowerCase() === c.toLowerCase() ? '0 0 0 2px var(--wa-surface), 0 0 0 4px var(--accent)' : 'inset 0 0 0 1px var(--wa-line-strong)' }} />
+              ))}
+            </span>
+            <Segmented label="Type" value={design.font} options={[['sans', 'Sans'], ['serif', 'Serif']]} onChange={font => setDesign({ font })} />
+            <button onClick={openDesign} style={{ ...quiet, marginLeft: 'auto', fontSize: 11, color: tab === 'design' ? 'var(--wa-muted)' : 'var(--wa-ink)', textDecoration: tab === 'design' ? 'none' : 'underline' }}>
+              {tab === 'design' ? 'All options on the left' : 'More design options'}
+            </button>
+          </div>
+          <Preview html={html} onEdit={openDesign} />
         </div>
       </div>
     </>
