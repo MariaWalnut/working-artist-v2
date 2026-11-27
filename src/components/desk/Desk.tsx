@@ -350,12 +350,23 @@ function ListBlock({ item }: { item: BoardItem }) {
         style={{ ...bareInput, fontFamily: 'Recoleta, serif', fontSize: 15, marginBottom: 6 }} />
       {data.items.map(it => (
         <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? (data.tasks ? 'rgba(0,0,0,.62)' : 'var(--wa-muted)') : 'var(--wa-text)', textDecoration: it.done ? 'line-through' : 'none', cursor: 'pointer' }}>
-            <input type="checkbox" checked={it.done}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', fontSize: 12, color: it.done ? (data.tasks ? 'rgba(0,0,0,.62)' : 'var(--wa-muted)') : 'var(--wa-text)', textDecoration: it.done ? 'line-through' : 'none' }}>
+            <input type="checkbox" checked={it.done} aria-label={it.text}
               onChange={() => void save({ ...data, items: data.items.map(x => x.id === it.id ? { ...x, done: !x.done } : x) })}
-              style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: 0, flexShrink: 0 }} />
-            {it.text}
-          </label>
+              style={{ accentColor: 'var(--wa-ink)', width: 14, height: 14, margin: 0, flexShrink: 0, cursor: 'pointer' }} />
+            {/* The words edit in place; clearing them removes the item. */}
+            <span key={it.text} contentEditable="plaintext-only" suppressContentEditableWarning data-nodrag role="textbox" aria-label="Edit item"
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() }
+                if (e.key === 'Escape') { e.currentTarget.textContent = it.text; e.currentTarget.blur() }
+              }}
+              onBlur={e => {
+                const v = (e.currentTarget.textContent ?? '').trim()
+                if (v === it.text) return
+                void save({ ...data, items: v ? data.items.map(x => x.id === it.id ? { ...x, text: v } : x) : data.items.filter(x => x.id !== it.id) })
+              }}
+              style={{ flex: 1, minWidth: 0, outline: 'none', cursor: 'text', overflowWrap: 'anywhere' }}>{it.text}</span>
+          </div>
           <button aria-label={`Remove ${it.text}`} onClick={() => void save({ ...data, items: data.items.filter(x => x.id !== it.id) })}
             style={{ ...plainBtn, fontSize: 12, color: data.tasks ? 'rgba(0,0,0,.62)' : 'var(--wa-muted)', padding: '2px 4px' }}>×</button>
         </div>
