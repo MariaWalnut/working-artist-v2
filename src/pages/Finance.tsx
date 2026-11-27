@@ -52,6 +52,7 @@ interface InvRow {
 export function Finance() {
   const navigate = useNavigate()
   const narrow = useNarrow()
+  const compact = useNarrow('(max-width: 1100px)') // the invoice table needs room for its columns
   const dept = useActiveDept()
   const { acts, keep } = usePractice({ filter: true })
   const works = useLiveQuery(() => db.works.toArray()) ?? []
@@ -203,8 +204,8 @@ export function Finance() {
   const invRow = (r: InvRow) => (
     <div key={r.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 20px', borderBottom: '1px solid var(--wa-line)' }}>
       <button onClick={r.open}
-        style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: narrow ? 'minmax(0, 1fr) auto' : '84px minmax(0, 1fr) 92px 92px 96px 76px', alignItems: 'center', columnGap: 14, rowGap: 4, padding: '12px 0', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
-        {narrow ? <>
+        style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateColumns: compact ? 'minmax(0, 1fr) auto' : '84px minmax(0, 1fr) 92px 92px 96px 76px', alignItems: 'center', columnGap: 14, rowGap: 4, padding: '12px 0', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+        {compact ? <>
           <span style={{ minWidth: 0 }}>
             <span style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wa-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.client || 'No client'}</span>
             <span style={{ display: 'block', fontSize: 10, color: 'var(--wa-muted)', marginTop: 2 }}>{[r.number, r.forText, r.due ? `Due ${formatAnyDate(r.due)}` : ''].filter(Boolean).join(' · ')}</span>
@@ -225,7 +226,7 @@ export function Finance() {
           <span style={{ textAlign: 'right' }}><InvoiceStatusChip status={r.status} /></span>
         </>}
       </button>
-      <span style={{ display: 'flex', gap: 10, width: narrow ? 'auto' : 64, justifyContent: 'flex-end' }}>
+      <span style={{ display: 'flex', gap: 10, width: compact ? 'auto' : 64, justifyContent: 'flex-end' }}>
         {r.file && <button onClick={() => setViewing(r.file!)} style={{ ...quiet, fontSize: 10, color: 'var(--wa-ink)' }}><span style={{ borderBottom: '2px solid var(--accent)' }}>PDF</span></button>}
         <button onClick={r.print} style={{ ...quiet, fontSize: 11, color: 'var(--wa-text-2)' }}>Print</button>
       </span>
@@ -233,7 +234,7 @@ export function Finance() {
   )
 
   const head: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--wa-muted)' }
-  const invHead = !narrow && invShown.length > 0 && (
+  const invHead = !compact && invShown.length > 0 && (
     <div style={{ display: 'flex', gap: 10, padding: '10px 20px 8px', borderBottom: '1px solid var(--wa-line)' }}>
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr) 92px 92px 96px 76px', columnGap: 14 }}>
         <span style={head}>No.</span><span style={head}>Client</span><span style={head}>Date</span><span style={head}>Due</span><span style={{ ...head, textAlign: 'right' }}>Total</span><span style={{ ...head, textAlign: 'right' }}>Status</span>
