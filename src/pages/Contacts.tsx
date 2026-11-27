@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type Contact, type ContactList } from '../db/db'
@@ -21,7 +22,7 @@ const quiet: React.CSSProperties = { background: 'none', border: '1px solid var(
 
 // Closes on Escape or a click on the dim background, but never while something is unsaved,
 // and only when the click also began on the background (a text selection dragged out does not count).
-function Modal({ children, onClose, dirty = false, width = 520 }: { children: React.ReactNode; onClose: () => void; dirty?: boolean; width?: number }) {
+function Modal({ children, onClose, dirty = false, width = 520, above = false }: { children: React.ReactNode; onClose: () => void; dirty?: boolean; width?: number; above?: boolean }) {
   const downOnBackdrop = useRef(false)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -31,14 +32,16 @@ function Modal({ children, onClose, dirty = false, width = 520 }: { children: Re
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, dirty])
-  return (
+  const modal = (
     <div onPointerDown={e => { downOnBackdrop.current = e.target === e.currentTarget }}
-      onClick={e => { if (e.target === e.currentTarget && downOnBackdrop.current && !dirty) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+      onClick={e => { if (e.target === e.currentTarget && downOnBackdrop.current && !dirty) onClose() }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: above ? 70 : 50, padding: 16 }}>
       <div style={{ background: 'var(--wa-surface)', borderRadius: 20, padding: 24, width, maxWidth: '100%', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,.15)' }}>
         {children}
       </div>
     </div>
   )
+  // Over another window (an invoice), it sits on the page itself so nothing clips it.
+  return above ? createPortal(modal, document.body) : modal
 }
 
 function Chip({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
@@ -88,8 +91,10 @@ function Alphabet({ people, onJump, narrow }: { people: Contact[]; onJump: (lett
 
 // ── Contact form ─────────────────────────────────────────────────────────────
 
-function ContactForm({ contact, deptId, categories, lists, onDone }: {
-  contact: Contact | null; deptId: number; categories: string[]; lists: ContactList[]; onDone: () => void
+// Also opened from an invoice (above it), where a contact without an id starts as a new one filled in from the client.
+export function ContactForm({ contact, deptId, categories, lists, onDone, onSaved, above = false }: {
+  contact: Partial<Contact> | null; deptId: number; categories: string[]; lists: ContactList[]; onDone: () => void
+  onSaved?: (id: number) => void; above?: boolean
 }) {
   const works = useLiveQuery(() => db.works.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
   const events = useLiveQuery(() => db.eventEntries.where('departmentId').equals(deptId).toArray(), [deptId]) ?? []
@@ -97,7 +102,7 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
   const [f, setF] = useState({
     name: contact?.name ?? '', organisation: contact?.organisation ?? '', role: contact?.role ?? '',
     category: contact?.category ?? '', email: contact?.email ?? '', phone: contact?.phone ?? '',
-    website: contact?.website ?? '', address: contact?.address ?? '', note: contact?.note ?? '',
+    website: contact?.website ?? '', address: contact?.address ?? '', vatId: contact?.vatId ?? '', note: contact?.note ?? '',
   })
   const [tags, setTags] = useState<string[]>(contact?.tags ?? [])
   const [tagText, setTagText] = useState('')
@@ -130,7 +135,7 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
     const clean = (v: string) => v.trim() || undefined
     const data = {
       departmentId: deptId, name: f.name.trim(), organisation: clean(f.organisation), role: clean(f.role), category,
-      email: clean(f.email), phone: clean(f.phone), website: clean(f.website), address: clean(f.address), note: clean(f.note),
+      email: clean(f.email), phone: clean(f.phone), website: clean(f.website), address: clean(f.address), vatId: clean(f.vatId), note: clean(f.note),
       tags: pending.length ? [...new Set(pending)] : undefined,
       workIds: workIds.length ? workIds : undefined, eventIds: eventIds.length ? eventIds : undefined, projectIds: projectIds.length ? projectIds : undefined,
     }
@@ -138,6 +143,7 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
     if (id != null) await db.contacts.update(id, data)
     else id = await db.contacts.add({ ...data, createdAt: Date.now() }) as number
     for (const l of lists) await setOnList(l, id, onLists.includes(l.id!))
+    onSaved?.(id)
     onDone()
   }
 
@@ -145,8 +151,8 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
   const chipRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 96, overflowY: 'auto' }
 
   return (
-    <Modal onClose={onDone} dirty={dirty}>
-      <p style={{ ...smallLabel, marginBottom: 14 }}>{contact ? 'Edit contact' : 'New contact'}</p>
+    <Modal onClose={onDone} dirty={dirty} above={above}>
+      <p style={{ ...smallLabel, marginBottom: 14 }}>{contact?.id != null ? 'Edit contact' : 'New contact'}</p>
       <input autoFocus value={f.name} onChange={set('name')} placeholder="Name" aria-label="Name" style={{ ...inp, fontSize: 16, fontFamily: 'Recoleta, serif', marginBottom: 8 }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginBottom: 8 }}>
         <input value={f.organisation} onChange={set('organisation')} placeholder="Organisation" aria-label="Organisation" style={inp} />
@@ -163,6 +169,7 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
         <input type="email" value={f.email} onChange={set('email')} placeholder="Email" aria-label="Email" style={inp} />
         <input type="tel" value={f.phone} onChange={set('phone')} placeholder="Phone" aria-label="Phone" style={inp} />
         <input value={f.website} onChange={set('website')} placeholder="Website" aria-label="Website" style={inp} />
+        <input value={f.vatId} onChange={set('vatId')} placeholder="VAT ID, for invoices" aria-label="VAT ID" style={inp} />
       </div>
       <textarea value={f.address} onChange={set('address')} placeholder="Postal address" aria-label="Postal address" rows={3} style={{ ...inp, resize: 'vertical', marginBottom: 8 }} />
       <textarea value={f.note} onChange={set('note')} placeholder="Personal note, e.g. how you met" aria-label="Personal note" rows={2} style={{ ...inp, resize: 'vertical' }} />
@@ -184,7 +191,7 @@ function ContactForm({ contact, deptId, categories, lists, onDone }: {
       {events.length > 0 && <>{groupLabel('Events together')}<div style={chipRow}>{[...events].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).map(e => <Chip key={e.id} label={[e.title, formatEventDate(e.date, e.endDate)].filter(Boolean).join(' · ')} on={eventIds.includes(e.id!)} onClick={() => setEventIds(toggle(eventIds, e.id!))} />)}</div></>}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 20 }}>
-        <button onClick={() => void save()} style={primary}>{contact ? 'Save' : 'Add'}</button>
+        <button onClick={() => void save()} style={primary}>{contact?.id != null ? 'Save' : 'Add'}</button>
         <button onClick={onDone} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--wa-text-2)', cursor: 'pointer' }}>Cancel</button>
         {contact?.id != null && (confirmDelete
           ? <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>

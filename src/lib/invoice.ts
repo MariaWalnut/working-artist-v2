@@ -103,8 +103,9 @@ export function invoiceHtml(inv: Invoice, dept: Department | null | undefined, d
   const fromName = (dept?.invoiceFrom ?? '').split('\n')[0]?.trim() || dept?.name || ''
   const hidden = new Set(design.hidden ?? [])
   const wm = !set.logo && set.wordmark?.trim() ? wordmarkFont(set.wordmarkFont) : undefined
+  const scale = Math.min(2.5, Math.max(0.5, design.logoScale ?? 1))
   const logo = set.logo ? `<img class="logo" src="${set.logo}" alt="">`
-    : wm ? `<div class="logo wordmark" style="font-family:${wm.family};font-size:${wm.size}px;font-weight:${wm.weight}">${esc(set.wordmark!.trim())}</div>` : ''
+    : wm ? `<div class="logo wordmark" style="font-family:${wm.family};font-size:${Math.round(wm.size * scale)}px;font-weight:${wm.weight}">${esc(set.wordmark!.trim())}</div>` : ''
 
   const meta = `<div class="meta">
     <div><div class="label">Invoice no.</div><div>${esc(inv.number || '—')}</div></div>
@@ -120,7 +121,7 @@ export function invoiceHtml(inv: Invoice, dept: Department | null | undefined, d
   const blocks: Record<InvoiceBlock, string> = {
     parties: `<section class="parties">
       <div><div class="label">From</div><div>${lines(dept?.invoiceFrom) || esc(fromName)}${contact ? `<br>${contact}` : ''}</div></div>
-      <div><div class="label">To</div><div>${[esc(inv.clientName ?? ''), lines(inv.clientAddress), esc(inv.clientEmail ?? '')].filter(Boolean).join('<br>')}</div></div>
+      <div><div class="label">To</div><div>${[esc(inv.clientName ?? ''), lines(inv.clientAddress), esc(inv.clientEmail ?? ''), inv.clientVatId?.trim() ? `VAT ID ${esc(inv.clientVatId.trim())}` : ''].filter(Boolean).join('<br>')}</div></div>
     </section>`,
     lines: `<table><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody>
       ${inv.lines.map(l => `<tr><td>${lines(l.description)}</td><td class="r">${(l.qty || 0).toLocaleString('en-GB')}</td><td class="r">${fmt(l.price || 0, cur)}</td><td class="r">${fmt((l.qty || 0) * (l.price || 0), cur)}</td></tr>`).join('')}
@@ -147,20 +148,21 @@ export function invoiceHtml(inv: Invoice, dept: Department | null | undefined, d
 html{background:#fff}
 body{font-family:${FONTS[design.font]};font-size:${minimal ? 11 : 12}px;line-height:1.6;color:${ink};padding:56px 64px;max-width:794px;margin:0 auto;background:#fff}
 .label{font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#595959;margin-bottom:4px}
-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:44px}
-${modern ? `header{background:${accent};color:${onAccent(accent)};margin:-56px -64px 44px;padding:40px 64px}header .label{color:${onAccent(accent)};opacity:.8}` : ''}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:72px}
+${modern ? `header{background:${accent};color:${onAccent(accent)};margin:-56px -64px 72px;padding:44px 64px}header .label{color:${onAccent(accent)};opacity:.8}` : ''}
 header.flip{flex-direction:row-reverse}
 header.flip .meta{text-align:left}
-header.center{flex-direction:column;align-items:center;text-align:center}
+header.center{flex-direction:column;align-items:center;text-align:center;gap:32px}
 header.center .meta{text-align:center;justify-content:center}
-.brand{display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;flex-direction:column;gap:36px}
 header.flip .brand{align-items:flex-end}
-.logo{max-height:56px;max-width:200px;object-fit:contain;align-self:flex-start}
+.logo{max-height:${Math.round(56 * scale)}px;max-width:min(${Math.round(200 * scale)}px,100%);object-fit:contain;align-self:flex-start}
 .wordmark{max-height:none;max-width:none;line-height:1.1;white-space:nowrap}
 header.center .logo{align-self:center}
 header.flip .logo{align-self:flex-end}
 h1{font-size:${minimal ? 22 : 30}px;font-weight:${modern ? 700 : 400};letter-spacing:${modern ? '.04em' : '-.01em'}${modern ? ';text-transform:uppercase' : ''}${tinted ? `;color:${accent}` : ''}}
 .meta{display:flex;gap:24px;text-align:right}
+.meta>div{white-space:nowrap}
 section{margin-bottom:36px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:32px}
 table{width:100%;border-collapse:collapse;margin-bottom:24px}
@@ -175,7 +177,7 @@ th.r,td.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;
 .notes{color:#3d3a3b}
 .payment{display:flex;flex-wrap:wrap;gap:32px;border-top:${rule};padding-top:16px;color:#3d3a3b;font-size:11px}
 @page{margin:14mm}
-@media print{body{padding:0}${modern ? 'header{margin:0 0 44px;padding:28px 32px;-webkit-print-color-adjust:exact;print-color-adjust:exact}th{-webkit-print-color-adjust:exact;print-color-adjust:exact}' : ''}}
+@media print{body{padding:0}${modern ? 'header{margin:0 0 72px;padding:32px 32px;-webkit-print-color-adjust:exact;print-color-adjust:exact}th{-webkit-print-color-adjust:exact;print-color-adjust:exact}' : ''}}
 </style></head><body>
 ${header}
 ${body}
