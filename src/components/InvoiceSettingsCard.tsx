@@ -3,6 +3,9 @@ import { db, type Department, type InvoiceSettings } from '../db/db'
 import { parseAmount } from './ContractCard'
 import { CURRENCIES } from './PaymentForm'
 import { readRaw } from '../lib/images'
+import { WordmarkPicker } from './WordmarkPicker'
+import { wordmarkFont } from '../lib/invoice'
+import type { WordmarkFont } from '../db/db'
 
 const ta: React.CSSProperties = { width: '100%', boxSizing: 'border-box', borderRadius: 8, border: '1px solid var(--wa-line)', background: 'var(--wa-fill)', padding: '8px 12px', fontSize: 13, color: 'var(--wa-ink)', outline: 'none', fontFamily: 'inherit' }
 const lbl: React.CSSProperties = { display: 'block', fontSize: 9, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--wa-muted)', marginBottom: 4 }
@@ -28,12 +31,12 @@ async function logoDataUrl(file: File, max = 600): Promise<string> {
   }
 }
 
-type Draft = Record<'from' | 'footer' | 'email' | 'website' | 'taxNumber' | 'vatId' | 'bankHolder' | 'bankName' | 'iban' | 'bic' | 'currency' | 'vatRate' | 'taxNote' | 'termsDays' | 'prefix' | 'notes', string> & { logo?: string }
+type Draft = Record<'from' | 'footer' | 'email' | 'website' | 'taxNumber' | 'vatId' | 'bankHolder' | 'bankName' | 'iban' | 'bic' | 'currency' | 'vatRate' | 'taxNote' | 'termsDays' | 'prefix' | 'notes', string> & { logo?: string; wordmark: string; wordmarkFont?: WordmarkFont }
 
 const toDraft = (d?: Department | null): Draft => {
   const s = d?.invoiceSettings ?? {}
   return {
-    from: d?.invoiceFrom ?? '', footer: d?.invoiceFooter ?? '', logo: s.logo,
+    from: d?.invoiceFrom ?? '', footer: d?.invoiceFooter ?? '', logo: s.logo, wordmark: s.wordmark ?? '', wordmarkFont: s.wordmarkFont,
     email: s.email ?? '', website: s.website ?? '', taxNumber: s.taxNumber ?? '', vatId: s.vatId ?? '',
     bankHolder: s.bankHolder ?? '', bankName: s.bankName ?? '', iban: s.iban ?? '', bic: s.bic ?? '',
     currency: s.currency ?? '€', vatRate: s.vatRate != null ? String(s.vatRate) : '', taxNote: s.taxNote ?? '',
@@ -47,12 +50,13 @@ export function InvoiceSettingsCard({ dept }: { dept?: Department | null }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const s = dept?.invoiceSettings ?? {}
   const set = (k: keyof Draft, v: string | undefined) => setDraft(d => (d ? { ...d, [k]: v } : d))
+  const nameGuess = dept?.invoiceFrom?.split('\n')[0]?.trim() || dept?.name || 'Your name'
 
   async function save() {
     if (!draft || dept?.id == null) return
     const t = (v: string) => v.trim() || undefined
     const next: InvoiceSettings = {
-      ...s, logo: draft.logo, email: t(draft.email), website: t(draft.website), taxNumber: t(draft.taxNumber), vatId: t(draft.vatId),
+      ...s, logo: draft.logo, wordmark: t(draft.wordmark), wordmarkFont: draft.wordmarkFont, email: t(draft.email), website: t(draft.website), taxNumber: t(draft.taxNumber), vatId: t(draft.vatId),
       bankHolder: t(draft.bankHolder), bankName: t(draft.bankName), iban: t(draft.iban)?.toUpperCase(), bic: t(draft.bic)?.toUpperCase(),
       currency: draft.currency, vatRate: parseAmount(draft.vatRate), taxNote: t(draft.taxNote), termsDays: parseAmount(draft.termsDays),
       prefix: t(draft.prefix), notes: t(draft.notes),
@@ -77,12 +81,13 @@ export function InvoiceSettingsCard({ dept }: { dept?: Department | null }) {
     return (
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
-          {s.logo && <img src={s.logo} alt="" style={{ maxWidth: 64, maxHeight: 40, objectFit: 'contain', background: '#fff', borderRadius: 6, padding: 4 }} />}
+          {s.logo ? <img src={s.logo} alt="" style={{ maxWidth: 64, maxHeight: 40, objectFit: 'contain', background: '#fff', borderRadius: 6, padding: 4 }} />
+            : s.wordmark && <span style={{ background: '#fff', borderRadius: 6, padding: '4px 8px', color: '#231F20', fontFamily: wordmarkFont(s.wordmarkFont).family, fontWeight: wordmarkFont(s.wordmarkFont).weight, fontSize: 15, whiteSpace: 'nowrap' }}>{s.wordmark}</span>}
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: summary.length ? 'var(--wa-ink)' : 'var(--wa-text-2)', whiteSpace: 'pre-wrap' }}>
             {summary.length ? summary.join('\n') : 'Logo, address, tax and bank details, printed on every invoice.'}
           </p>
         </div>
-        <button onClick={() => setDraft(toDraft(dept))} style={chipBtn}>{summary.length || s.logo ? 'Edit' : 'Add'}</button>
+        <button onClick={() => setDraft(toDraft(dept))} style={chipBtn}>{summary.length || s.logo || s.wordmark ? 'Edit' : 'Add'}</button>
       </div>
     )
   }
@@ -105,6 +110,13 @@ export function InvoiceSettingsCard({ dept }: { dept?: Department | null }) {
         {draft.logo && <button onClick={() => set('logo', undefined)} style={{ ...chipBtn, background: 'none' }}>Remove</button>}
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden aria-label="Logo" onChange={e => { void pickLogo(e.target.files?.[0]); e.target.value = '' }} />
       </div>
+      {!draft.logo && (
+        <div style={{ gridColumn: '1 / -1' }}>
+          <span style={lbl}>Or your name, set in a typeface</span>
+          <WordmarkPicker name={draft.wordmark} font={draft.wordmarkFont} placeholder={nameGuess}
+            onName={v => set('wordmark', v)} onFont={f => setDraft(d => (d ? { ...d, wordmarkFont: f, wordmark: d.wordmark || nameGuess } : d))} />
+        </div>
+      )}
 
       <p style={group}>You</p>
       <label style={{ display: 'block', gridColumn: '1 / -1' }}>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, INVOICE_BLOCKS, type Invoice, type InvoiceBlock, type InvoiceDesign, type InvoiceLine, type InvoiceTemplate } from '../db/db'
@@ -8,6 +9,7 @@ import { pageFrame } from '../components/PageFrame'
 import { parseAmount } from '../components/ContractCard'
 import { CURRENCIES, addBtn, fieldLabel, inp, newId, quiet, saveBtn, today } from '../components/PaymentForm'
 import { InvoiceStatusChip } from '../components/InvoiceStatusChip'
+import { WordmarkPicker } from '../components/WordmarkPicker'
 import { useNarrow } from '../lib/useNarrow'
 import {
   BLOCK_NAME, LAYOUTS, addDays, deleteInvoice, designOf, fmt, invoiceDescription, invoiceHtml, invoiceStatus, invoiceTotals,
@@ -52,10 +54,45 @@ function Preview({ html }: { html: string }) {
   )
 }
 
+// The invoice page, at /finance/invoices/:id (new, or a number). ?from=<work id or "other">:<payment id> starts from a payment.
 export function InvoiceEditor() {
   const { id } = useParams()
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  return (
+    <Shell>
+      <InvoiceEditorPanel invoiceId={id ?? 'new'} from={params.get('from')} work={params.get('work')} onClose={() => navigate('/finance')} />
+    </Shell>
+  )
+}
+
+// The same editor over the Finance list, so an invoice can be changed without leaving it.
+export function InvoicePopup(props: { invoiceId: string; from?: string | null; onClose: () => void }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+  return createPortal(
+    <div role="dialog" aria-modal="true" aria-label="Invoice" style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(17,17,17,.55)', overflowY: 'auto', padding: '24px 12px' }}>
+      <div style={{ maxWidth: 1180, margin: '0 auto', background: 'var(--wa-page)', borderRadius: 20, padding: 16 }}>
+        <InvoiceEditorPanel {...props} popup />
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClose, popup = false }: {
+  invoiceId: string
+  from?: string | null
+  work?: string | null
+  onClose: () => void
+  popup?: boolean
+}) {
+  const navigate = useNavigate()
+  const [id, setId] = useState(invoiceId)
+  const [askClose, setAskClose] = useState(false)
   const narrow = useNarrow('(max-width: 960px)')
   const depts = useLiveQuery(() => db.departments.toArray())
   const dept = depts === undefined ? undefined : depts[0] ?? null
@@ -68,6 +105,7 @@ export function InvoiceEditor() {
   const [templateName, setTemplateName] = useState('')
   const [dragging, setDragging] = useState<number | null>(null)
   const [savedNote, setSavedNote] = useState('')
+  const [wordmarkDraft, setWordmarkDraft] = useState<string | null>(null) // typed but not yet saved to settings
 
   // Load the invoice, or start a new one from the studio's defaults (or from a Money card payment).
   useEffect(() => {
@@ -76,7 +114,7 @@ export function InvoiceEditor() {
     void (async () => {
       if (id && id !== 'new') {
         const inv = await db.invoices.get(Number(id))
-        if (!cancelled) inv ? setDraft(inv) : navigate('/finance', { replace: true })
+        if (!cancelled) inv ? setDraft(inv) : onClose()
         return
       }
       const s = dept?.invoiceSettings ?? {}
@@ -87,7 +125,7 @@ export function InvoiceEditor() {
         createdAt: Date.now(), updatedAt: Date.now(),
       }
       // From a payment: ?from=<workId or "other">:<paymentId>
-      const from = params.get('from')
+      const from = fromParam
       if (from) {
         const [where, pid] = from.split(':')
         const work = where === 'other' ? undefined : works.find(w => w.id === Number(where)) ?? await db.works.get(Number(where))
@@ -103,7 +141,6 @@ export function InvoiceEditor() {
           })
         }
       }
-      const workParam = params.get('work')
       if (workParam && fresh.workId == null) {
         const w = await db.works.get(Number(workParam))
         if (w) Object.assign(fresh, { workId: w.id, currency: w.contract?.currency ?? w.currency ?? fresh.currency, lines: [{ id: newId(), description: w.title, qty: 1, price: 0 }] })
@@ -111,12 +148,12 @@ export function InvoiceEditor() {
       if (!cancelled) { setDraft(fresh); setDirty(!!from) }
     })()
     return () => { cancelled = true }
-  }, [id, dept, draft, params, navigate, works])
+  }, [id, dept, draft, fromParam, workParam, onClose, works])
 
   const design = useMemo(() => (draft ? designOf(draft, dept) : LAYOUTS[0].design), [draft, dept])
   const html = useMemo(() => (draft ? invoiceHtml(draft, dept, design) : ''), [draft, dept, design])
 
-  if (!draft) return <Shell><div /></Shell>
+  if (!draft) return null
 
   const update = (patch: Partial<Draft>) => { setDraft(d => (d ? { ...d, ...patch } : d)); setDirty(true); setSavedNote('') }
   const setLine = (lid: string, patch: Partial<Draft['lines'][number]>) => update({ lines: draft.lines.map(l => (l.id === lid ? { ...l, ...patch } : l)) })
@@ -125,6 +162,9 @@ export function InvoiceEditor() {
   const { net, tax, total } = invoiceTotals(draft)
   const status = invoiceStatus(draft)
   const templates = dept?.invoiceSettings?.templates ?? []
+  const nameGuess = dept?.invoiceFrom?.split('\n')[0]?.trim() || dept?.name || 'Your name'
+  const wordmark = wordmarkDraft ?? dept?.invoiceSettings?.wordmark ?? ''
+  const setWordmark = (v: string) => { setWordmarkDraft(v); void saveSettings({ wordmark: v.trim() || undefined }) }
 
   function clean(d: Draft): Invoice {
     return { ...d, lines: d.lines.map(({ qtyText: _q, priceText: _p, ...l }) => l), updatedAt: Date.now() }
@@ -137,14 +177,18 @@ export function InvoiceEditor() {
     await db.invoices.update(newId, { paymentId })
     setDraft({ ...next, id: newId, paymentId })
     setDirty(false)
+    setAskClose(false)
     setSavedNote('Saved')
-    if (id === 'new') navigate(`/finance/invoices/${newId}`, { replace: true })
+    if (id === 'new') {
+      setId(String(newId))
+      if (!popup) navigate(`/finance/invoices/${newId}`, { replace: true })
+    }
     return newId
   }
 
   async function remove() {
     if (draft?.id != null) await deleteInvoice({ ...clean(draft), id: draft.id })
-    navigate('/finance')
+    onClose()
   }
 
   async function saveSettings(patch: Partial<NonNullable<typeof dept>['invoiceSettings']>) {
@@ -307,9 +351,14 @@ export function InvoiceEditor() {
       <p style={group}>Logo</p>
       <Segmented label="Logo" value={design.logo} options={[['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]} onChange={logo => setDesign({ logo })} />
       {!dept?.invoiceSettings?.logo && (
-        <p style={{ fontSize: 11, color: 'var(--wa-text-2)', margin: '8px 0 0' }}>
-          No logo yet. <button onClick={() => navigate('/account')} style={{ ...quiet, fontSize: 11, color: 'var(--wa-ink)', textDecoration: 'underline' }}>Add one in Account</button>
-        </p>
+        <div style={{ marginTop: 10 }}>
+          <p style={{ fontSize: 11, color: 'var(--wa-text-2)', margin: '0 0 8px' }}>
+            No logo. Set your name in a typeface instead, or <button onClick={() => navigate('/account')} style={{ ...quiet, fontSize: 11, color: 'var(--wa-ink)', textDecoration: 'underline' }}>upload one in Account</button>.
+          </p>
+          <WordmarkPicker name={wordmark} font={dept?.invoiceSettings?.wordmarkFont} placeholder={nameGuess}
+            onName={v => setWordmark(v)}
+            onFont={f => void saveSettings({ wordmarkFont: f, wordmark: wordmark.trim() || nameGuess })} />
+        </div>
       )}
 
       <p style={group}>Sections</p>
@@ -343,13 +392,20 @@ export function InvoiceEditor() {
   )
 
   return (
-    <Shell>
+    <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
-        <button onClick={() => navigate('/finance')} style={{ ...quiet, fontSize: 12, color: 'var(--wa-text-2)' }}>← Finance</button>
+        {popup
+          ? <button onClick={() => (dirty ? setAskClose(true) : onClose())} aria-label="Close" style={{ ...quiet, fontSize: 20, lineHeight: 1, color: 'var(--wa-text-2)', padding: '0 4px' }}>×</button>
+          : <button onClick={onClose} style={{ ...quiet, fontSize: 12, color: 'var(--wa-text-2)' }}>← Finance</button>}
         <span style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: 'var(--wa-ink)' }}>Invoice {draft.number}</span>
         <InvoiceStatusChip status={status} />
         <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-          {savedNote && !dirty && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{savedNote}</span>}
+          {askClose ? <>
+            <span style={{ fontSize: 11, color: 'var(--wa-ink)' }}>Not saved.</span>
+            <button onClick={onClose} style={{ ...quiet, fontSize: 11, color: '#C53030' }}>Close anyway</button>
+            <button onClick={() => setAskClose(false)} style={{ ...quiet, fontSize: 11 }}>Keep editing</button>
+          </> : savedNote && !dirty && <span style={{ fontSize: 11, color: 'var(--wa-text-2)' }}>{savedNote}</span>}
+          {popup && id !== 'new' && !dirty && <button onClick={() => navigate(`/finance/invoices/${id}`)} style={{ ...quiet, fontSize: 11, color: 'var(--wa-text-2)' }}>Full page</button>}
           <button onClick={() => printHtml(html)} style={{ ...addBtn, padding: '7px 12px', fontSize: 11 }}>Print or save PDF</button>
           <button onClick={() => void save()} disabled={!dirty && draft.id != null} style={{ ...saveBtn, padding: '8px 16px', fontSize: 11, opacity: !dirty && draft.id != null ? 0.5 : 1 }}>Save</button>
         </span>
@@ -366,6 +422,6 @@ export function InvoiceEditor() {
           <Preview html={html} />
         </div>
       </div>
-    </Shell>
+    </>
   )
 }

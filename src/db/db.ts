@@ -42,10 +42,14 @@ export interface InvoiceDesign {
   hidden?: InvoiceBlock[]
 }
 
+export type WordmarkFont = 'playfair' | 'syne' | 'pinyon' | 'spacemono'
+
 export interface InvoiceTemplate { id: string; name: string; design: InvoiceDesign }
 
 export interface InvoiceSettings {
   logo?: string // data URL
+  wordmark?: string // without a logo: the name set in one of the wordmark fonts
+  wordmarkFont?: WordmarkFont
   email?: string
   website?: string
   taxNumber?: string
