@@ -240,8 +240,25 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
     setDesign({ hidden: [...hidden] })
   }
 
+  const stage = draft.paid ? 'paid' : draft.sent ? 'sent' : 'draft'
+  const setStage = (k: typeof stage) => update(
+    k === 'draft' ? { sent: undefined, paid: undefined }
+      : k === 'sent' ? { sent: draft.sent ?? today(), paid: undefined }
+      : { sent: draft.sent ?? today(), paid: draft.paid ?? today() })
+
   const details = (
     <div style={{ padding: '6px 20px 20px' }}>
+      <p style={group}>Status</p>
+      <Segmented label="Status" value={stage} options={[['draft', 'Draft'], ['sent', 'Sent'], ['paid', 'Paid']]} onChange={setStage} />
+      {stage !== 'draft' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginTop: 10 }}>
+          <label><span style={fieldLabel}>Sent on</span>
+            <input type="date" value={draft.sent ?? ''} onChange={e => e.target.value && update({ sent: e.target.value })} style={inp} /></label>
+          {stage === 'paid' && <label><span style={fieldLabel}>Paid on</span>
+            <input type="date" value={draft.paid ?? ''} onChange={e => e.target.value && update({ paid: e.target.value })} style={inp} /></label>}
+        </div>
+      )}
+
       <p style={group}>From you</p>
       <InvoiceSettingsCard dept={dept} />
       <p style={{ fontSize: 10, color: 'var(--wa-text-2)', margin: '6px 0 0' }}>Changes here apply to every invoice.</p>
@@ -325,22 +342,6 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
 
       <p style={group}>Notes</p>
       <textarea value={draft.notes ?? ''} onChange={e => update({ notes: e.target.value || undefined })} rows={2} placeholder="Thank you. Please pay within 14 days." aria-label="Notes" style={{ ...inp, resize: 'vertical' }} />
-
-      <p style={group}>Status</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-        <label><span style={fieldLabel}>Sent</span>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input type="date" value={draft.sent ?? ''} onChange={e => update({ sent: e.target.value || undefined })} style={inp} />
-            {!draft.sent && <button onClick={() => update({ sent: today() })} style={{ ...quiet, fontSize: 10 }}>Today</button>}
-          </div>
-        </label>
-        <label><span style={fieldLabel}>Paid</span>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <input type="date" value={draft.paid ?? ''} onChange={e => update({ paid: e.target.value || undefined })} style={inp} />
-            {!draft.paid && <button onClick={() => update({ paid: today() })} style={{ ...quiet, fontSize: 10 }}>Today</button>}
-          </div>
-        </label>
-      </div>
 
       {draft.id != null && (
         <div style={{ marginTop: 22 }}>
@@ -447,6 +448,12 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
           : <button onClick={onClose} style={{ ...quiet, fontSize: 12, color: 'var(--wa-text-2)' }}>← Finance</button>}
         <span style={{ fontFamily: 'Recoleta, serif', fontSize: 20, color: 'var(--wa-ink)' }}>Invoice {draft.number}</span>
         <InvoiceStatusChip status={status} />
+        {stage !== 'paid' && (
+          <button onClick={() => void save(stage === 'draft' ? { sent: today() } : { paid: today() })}
+            style={{ ...addBtn, padding: '6px 12px', fontSize: 11, color: 'var(--wa-ink)', borderColor: 'var(--wa-line-strong)' }}>
+            {stage === 'draft' ? 'Mark as sent' : 'Mark as paid'}
+          </button>
+        )}
         <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           {askClose ? <>
             <span style={{ fontSize: 11, color: 'var(--wa-ink)' }}>Not saved.</span>
