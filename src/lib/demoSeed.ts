@@ -1,4 +1,4 @@
-import { db, type Activity, type BoardItem, type EventEntry, type Opportunity, type Payment, type PressEntry, type Project, type Work } from '../db/db'
+import { db, INVOICE_BLOCKS, type Activity, type BoardItem, type EventEntry, type InvoiceDesign, type InvoiceSettings, type Opportunity, type Payment, type PressEntry, type Project, type Work, type WordmarkFont } from '../db/db'
 import type { DemoField } from './mode'
 import { PRACTICE_NAME } from './practice'
 import { DEMO_CONTACTS } from './demoContacts'
@@ -7,7 +7,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-27b'
+export const DEMO_VERSION = '2026-11-27d'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -803,25 +803,94 @@ const OTHER_PAYMENTS: Partial<Record<DemoField, Payment[]>> = {
   ],
 }
 
-async function addDemoInvoice(departmentId: number, p: Payment, workId?: number, w?: Omit<Work, 'departmentId'>) {
+// What each sample studio prints on its invoices: address, the name set in a typeface, a design, tax and bank lines.
+// The bank and tax numbers are made up.
+type DemoInvoicing = { street: string; postcode: string; country: string; font: WordmarkFont; design: Partial<InvoiceDesign>; vatRate?: number; taxNote?: string; draft: { client: string; address: string; lines: Array<[string, number, number]> } }
+const DEMO_INVOICING: Record<string, DemoInvoicing> = {
+  musician: { street: 'Weserstraße 41', postcode: '12045', country: 'Germany', font: 'syne', design: { layout: 'modern', accent: '#E8D44D' }, vatRate: 7,
+    draft: { client: 'Harbour Booking', address: 'Keizersgracht 210\n1016 DZ Amsterdam\nNetherlands', lines: [['Spring tour 2027, guarantee, first half', 1, 4500], ['Backline hire', 3, 120]] } },
+  painter: { street: 'Rua da Rosa 88', postcode: '1200-385', country: 'Portugal', font: 'playfair', design: { layout: 'classic', font: 'serif', accent: '#6B8F71' }, vatRate: 23,
+    draft: { client: 'Hotel Linde', address: 'Lindenallee 4\n80331 Munich\nGermany', lines: [['Lobby commission, second instalment', 1, 6000]] } },
+  illustrator: { street: '14 rue des Martyrs', postcode: '75009', country: 'France', font: 'pinyon', design: { layout: 'modern', accent: '#F0655A', logo: 'center' }, taxNote: 'VAT not applicable, art. 293 B of the CGI',
+    draft: { client: 'City Magazine', address: '22 boulevard Voltaire\n75011 Paris\nFrance', lines: [['Magazine series, illustration', 3, 900], ['Usage rights, online', 1, 300]] } },
+  writer: { street: '7 Albion Mews', postcode: 'N1 1JX', country: 'United Kingdom', font: 'spacemono', design: { layout: 'minimal', font: 'serif', logo: 'left' }, taxNote: 'Not VAT registered',
+    draft: { client: 'City Review', address: '18 Bloomsbury Square\nLondon WC1A 2NS', lines: [['Essay commission, 4,000 words', 1, 1000]] } },
+  fineart: { street: 'Witte de Withstraat 50', postcode: '3012 BR', country: 'Netherlands', font: 'playfair', design: { layout: 'minimal', logo: 'center' }, vatRate: 9,
+    draft: { client: 'City of Zurich, Public Art', address: 'Stadthausquai 17\n8001 Zurich\nSwitzerland', lines: [['Common Ground, design phase', 1, 12000], ['Site visits', 2, 450]] } },
+  filmmaker: { street: 'Reichenberger Straße 120', postcode: '10999', country: 'Germany', font: 'syne', design: { layout: 'modern', accent: '#3B6E8F' }, vatRate: 19,
+    draft: { client: 'Northbound Records', address: 'Skalitzer Straße 68\n10997 Berlin\nGermany', lines: [['Music video: Glass Hour, direction', 1, 4500], ['Edit and grade', 4, 450]] } },
+  photographer: { street: 'Nieuwe Binnenweg 212', postcode: '3021 GN', country: 'Netherlands', font: 'spacemono', design: { layout: 'classic', accent: '#231F20' }, vatRate: 21,
+    draft: { client: 'Weekend Magazine', address: 'Herengracht 300\n1016 CE Amsterdam\nNetherlands', lines: [['Editorial: coastal towns, day rate', 3, 750], ['Travel expenses', 1, 380]] } },
+}
+const demoInvoicing = (field: DemoField) => DEMO_INVOICING[field] ?? DEMO_INVOICING[field.split('-')[0]]
+
+function demoInvoiceSettings(field: DemoField, s: Seed): { invoiceFrom: string; invoiceSettings: InvoiceSettings } {
+  const d = demoInvoicing(field)
+  return {
+    invoiceFrom: [s.name, d.street, `${d.postcode} ${s.profile.basedIn}`, d.country].join('\n'),
+    invoiceSettings: {
+      wordmark: s.name, wordmarkFont: d.font, email: 'studio@workingartist.example', website: 'workingartist.example',
+      taxNumber: '12/345/67890', vatId: 'XX123456789', bankHolder: s.name, bankName: 'Sample Bank', iban: 'XX00 0000 0000 0000 0000 00', bic: 'SAMPXXXX',
+      currency: '€', vatRate: d.vatRate, taxNote: d.taxNote, termsDays: 14, notes: 'Thank you. Please pay within 14 days.',
+      design: { layout: 'classic', font: 'sans', accent: '#231F20', logo: 'left', blocks: [...INVOICE_BLOCKS], ...d.design },
+    },
+  }
+}
+
+async function addDemoInvoice(departmentId: number, p: Payment, number: string, vatRate: number | undefined, taxNote: string | undefined, workId?: number, w?: Omit<Work, 'departmentId'>) {
   const [clientName, ...addr] = (p.payer ?? '').split('\n')
-  const issued = p.invoiced ?? inDays(-30)
+  const issued = p.invoiced ?? p.received ?? inDays(-30)
   const right = p.rightId ? w?.rights?.find(r => r.id === p.rightId)?.language : undefined
+  // The amount on the payment is what was paid, so the invoice's lines are worked back from it.
+  const net = vatRate ? Math.round((p.amount ?? 0) / (1 + vatRate / 100) * 100) / 100 : p.amount ?? 0
   const invoiceId = await db.invoices.add({
-    departmentId, number: p.invoiceNo!, issued, due: new Date(new Date(`${issued}T12:00:00`).getTime() + 14 * DAY).toISOString().slice(0, 10),
+    departmentId, number, issued, due: new Date(new Date(`${issued}T12:00:00`).getTime() + 14 * DAY).toISOString().slice(0, 10),
     clientName: clientName?.trim(), clientAddress: addr.join('\n'), workId, rightId: p.rightId,
-    lines: [{ id: 'l1', description: [w?.title, right, p.label].filter(Boolean).join(' · '), qty: 1, price: p.amount ?? 0 }],
-    currency: w ? w.contract?.currency ?? w.currency ?? '€' : p.currency ?? '€', sent: p.invoiced, paid: p.received, paymentId: p.id,
+    lines: [{ id: 'l1', description: [w?.title, right, p.label].filter(Boolean).join(' · '), qty: 1, price: net }],
+    currency: w ? w.contract?.currency ?? w.currency ?? '€' : p.currency ?? '€', vatRate, taxNote, sent: issued, paid: p.received, paymentId: p.id,
     notes: 'Thank you. Please pay within 14 days.', createdAt: Date.now(), updatedAt: Date.now(),
   }) as number
   // The payment follows its invoice.
+  const link = (x: Payment) => (x.id === p.id ? { ...x, invoiceId, invoiceNo: number, invoiced: issued } : x)
   if (workId != null) {
     const work = await db.works.get(workId)
-    if (work) await db.works.update(workId, { payments: work.payments?.map(x => (x.id === p.id ? { ...x, invoiceId } : x)) })
+    if (work) await db.works.update(workId, { payments: work.payments?.map(link) })
   } else {
     const d = await db.departments.get(departmentId)
-    await db.departments.update(departmentId, { otherPayments: d?.otherPayments?.map(x => (x.id === p.id ? { ...x, invoiceId } : x)) })
+    await db.departments.update(departmentId, { otherPayments: d?.otherPayments?.map(link) })
   }
+}
+
+// Invoices for every payment that went out or came in, numbered in date order, and one draft still being written.
+async function addDemoInvoices(departmentId: number, field: DemoField, s: Seed, workIds: number[]) {
+  const d = demoInvoicing(field)
+  const all: Array<{ p: Payment; i?: number }> = [
+    ...s.works.flatMap((w, i) => (w.payments ?? []).map(p => ({ p, i }))),
+    ...(OTHER_PAYMENTS[field] ?? []).map(p => ({ p })),
+  ].filter(({ p }) => p.invoiceNo || p.invoiced || p.received)
+  const when = (p: Payment) => p.invoiced ?? p.received ?? ''
+  all.sort((a, b) => when(a.p).localeCompare(when(b.p)))
+  const used = new Set(all.map(({ p }) => p.invoiceNo).filter(Boolean))
+  const counters: Record<string, number> = {}
+  for (const { p, i } of all) {
+    let number = p.invoiceNo
+    if (!number) {
+      const year = when(p).slice(0, 4) || String(new Date().getFullYear())
+      do { counters[year] = (counters[year] ?? 0) + 1; number = `${year}-${String(counters[year]).padStart(3, '0')}` } while (used.has(number))
+      used.add(number)
+    }
+    await addDemoInvoice(departmentId, p, number, d.vatRate, d.taxNote, i == null ? undefined : workIds[i], i == null ? undefined : s.works[i])
+  }
+  // The draft takes the next number after the highest one used.
+  const year = new Date().getFullYear()
+  const top = [...used].map(x => Number(String(x).match(/(\d+)$/)?.[1] ?? 0)).reduce((m, x) => Math.max(m, x), 0)
+  const number = `${year}-${String(top + 1).padStart(3, '0')}`
+  const issued = inDays(0)
+  await db.invoices.add({
+    departmentId, number, issued, due: inDays(14), clientName: d.draft.client, clientAddress: d.draft.address,
+    lines: d.draft.lines.map(([description, qty, price], k) => ({ id: `d${k}`, description, qty, price })),
+    currency: '€', vatRate: d.vatRate, taxNote: d.taxNote, notes: 'Thank you. Please pay within 14 days.', createdAt: Date.now(), updatedAt: Date.now(),
+  })
 }
 
 export async function seedDemo(field: DemoField) {
@@ -835,6 +904,7 @@ export async function seedDemo(field: DemoField) {
       basedIn: s.profile.basedIn, establishedYear: s.profile.since,
       profileLinks: s.profile.links.map(([label, value], i) => ({ id: `link-${i}`, label, value })),
       otherPayments: OTHER_PAYMENTS[field],
+      ...demoInvoiceSettings(field, s),
     }) as number
 
     // The texts on the profile, newest first in the order they are written here.
@@ -854,11 +924,7 @@ export async function seedDemo(field: DemoField) {
       }
     }
 
-    // Every payment with an invoice number gets a full invoice, so Finance › Invoices has some to open.
-    for (const [i, w] of s.works.entries()) {
-      for (const p of w.payments ?? []) if (p.invoiceNo) await addDemoInvoice(departmentId, p, workIds[i], w)
-    }
-    for (const p of OTHER_PAYMENTS[field] ?? []) if (p.invoiceNo) await addDemoInvoice(departmentId, p)
+    await addDemoInvoices(departmentId, field, s, workIds)
 
     const eventIds: number[] = []
     for (const e of s.events) eventIds.push(await db.eventEntries.add({ ...e, departmentId, workIds: e.workIds?.map(i => workIds[i]) }) as number)
