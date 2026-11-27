@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, INVOICE_BLOCKS, type Invoice, type InvoiceBlock, type InvoiceDesign, type InvoiceLine, type InvoiceTemplate } from '../db/db'
+import { db, INVOICE_BLOCKS, type Contact, type Invoice, type InvoiceBlock, type InvoiceDesign, type InvoiceLine, type InvoiceTemplate } from '../db/db'
 import { Shell } from '../components/layout/Shell'
 import { FrameHeader, FrameTabs } from '../components/FrameHeader'
 import { pageFrame } from '../components/PageFrame'
@@ -12,6 +12,8 @@ import { InvoiceStatusChip } from '../components/InvoiceStatusChip'
 import { WordmarkPicker } from '../components/WordmarkPicker'
 import { InvoiceSettingsCard } from '../components/InvoiceSettingsCard'
 import { useNarrow } from '../lib/useNarrow'
+import { categoriesFor } from '../lib/contacts'
+import { ContactForm } from './Contacts'
 import {
   BLOCK_NAME, LAYOUTS, addDays, deleteInvoice, designOf, fmt, invoiceDescription, invoiceHtml, invoiceStatus, invoiceTotals,
   nextInvoiceNo, printHtml, syncInvoicePayment,
@@ -19,6 +21,12 @@ import {
 
 const SWATCHES = ['#231F20', '#E8D44D', '#F0655A', '#3B6E8F', '#6B8F71', '#8A5A9E']
 const group: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)', margin: '18px 0 8px' }
+
+// What an invoice says about the client, taken from a contact.
+const clientFrom = (c: Contact): Partial<Invoice> => ({
+  contactId: c.id, clientName: c.organisation || c.name, clientEmail: c.email, clientVatId: c.vatId,
+  clientAddress: [c.organisation ? `Attn. ${c.name}` : '', c.address ?? ''].filter(Boolean).join('\n'),
+})
 
 type Draft = Omit<Invoice, 'lines'> & { lines: Array<InvoiceLine & { qtyText?: string; priceText?: string }> }
 
@@ -107,6 +115,8 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
   const dept = depts === undefined ? undefined : depts[0] ?? null
   const works = useLiveQuery(() => db.works.toArray()) ?? []
   const contacts = useLiveQuery(() => db.contacts.toArray()) ?? []
+  const contactLists = useLiveQuery(() => db.contactLists.toArray()) ?? []
+  const [contactForm, setContactForm] = useState<Partial<Contact> | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [tab, setTab] = useState<'details' | 'design'>('details')
   const [dirty, setDirty] = useState(false)
@@ -168,6 +178,7 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
   const setLine = (lid: string, patch: Partial<Draft['lines'][number]>) => update({ lines: draft.lines.map(l => (l.id === lid ? { ...l, ...patch } : l)) })
   const setDesign = (patch: Partial<InvoiceDesign>) => update({ design: { ...design, ...patch } })
   const work = draft.workId != null ? works.find(w => w.id === draft.workId) : undefined
+  const linked = draft.contactId != null ? contacts.find(c => c.id === draft.contactId) : undefined
   const { net, tax, total } = invoiceTotals(draft)
   const status = invoiceStatus(draft)
   const templates = dept?.invoiceSettings?.templates ?? []
@@ -236,21 +247,35 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
       <p style={{ fontSize: 10, color: 'var(--wa-text-2)', margin: '6px 0 0' }}>Changes here apply to every invoice.</p>
 
       <p style={group}>Client</p>
-      {contacts.length > 0 && (
-        <select value={draft.contactId ?? ''} aria-label="From Contacts" style={{ ...inp, marginBottom: 8 }}
-          onChange={e => {
-            const c = contacts.find(x => x.id === Number(e.target.value))
-            update(c ? { contactId: c.id, clientName: c.organisation || c.name, clientAddress: [c.organisation ? `Attn. ${c.name}` : '', c.address ?? ''].filter(Boolean).join('\n'), clientEmail: c.email } : { contactId: undefined })
-          }}>
-          <option value="">From Contacts…</option>
-          {[...contacts].sort((a, b) => a.name.localeCompare(b.name)).map(c => <option key={c.id} value={c.id}>{[c.name, c.organisation].filter(Boolean).join(' · ')}</option>)}
-        </select>
-      )}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+        {contacts.length > 0 && (
+          <select value={draft.contactId ?? ''} aria-label="From Contacts" style={{ ...inp, flex: 1, minWidth: 0 }}
+            onChange={e => {
+              const c = contacts.find(x => x.id === Number(e.target.value))
+              update(c ? clientFrom(c) : { contactId: undefined })
+            }}>
+            <option value="">From Contacts…</option>
+            {[...contacts].sort((a, b) => a.name.localeCompare(b.name)).map(c => <option key={c.id} value={c.id}>{[c.name, c.organisation].filter(Boolean).join(' · ')}</option>)}
+          </select>
+        )}
+        {dept?.id != null && (linked
+          ? <button onClick={() => setContactForm(linked)} style={{ ...addBtn, flexShrink: 0 }}>Edit contact</button>
+          : draft.clientName?.trim() && (
+            <button onClick={() => setContactForm({ name: draft.clientName!.trim(), address: draft.clientAddress?.trim(), email: draft.clientEmail?.trim(), vatId: draft.clientVatId?.trim() })}
+              style={{ ...addBtn, flexShrink: 0 }}>Add to Contacts</button>
+          ))}
+      </div>
       <div style={{ display: 'grid', gap: 8 }}>
         <input value={draft.clientName ?? ''} onChange={e => update({ clientName: e.target.value })} placeholder="Name or company" aria-label="Client name" style={inp} />
         <textarea value={draft.clientAddress ?? ''} onChange={e => update({ clientAddress: e.target.value })} rows={3} placeholder={'Street and number\nPostcode, city\nCountry'} aria-label="Client address" style={{ ...inp, resize: 'vertical' }} />
         <input value={draft.clientEmail ?? ''} onChange={e => update({ clientEmail: e.target.value })} placeholder="Email" aria-label="Client email" style={inp} />
+        <input value={draft.clientVatId ?? ''} onChange={e => update({ clientVatId: e.target.value })} placeholder="VAT ID" aria-label="Client VAT ID" style={inp} />
       </div>
+      {contactForm && dept?.id != null && (
+        <ContactForm contact={contactForm} deptId={dept.id} categories={categoriesFor(dept, contacts)} lists={contactLists} above
+          onDone={() => setContactForm(null)}
+          onSaved={async cid => { const c = await db.contacts.get(cid); if (c) update(clientFrom(c)) }} />
+      )}
 
       <p style={group}>Invoice</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
@@ -332,7 +357,7 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
       <p style={group}>Layout</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {LAYOUTS.map(l => (
-          <button key={l.key} onClick={() => update({ design: { ...l.design } })} aria-pressed={design.layout === l.key}
+          <button key={l.key} onClick={() => update({ design: { ...l.design, logoScale: design.logoScale } })} aria-pressed={design.layout === l.key}
             style={{ ...addBtn, padding: '6px 12px', fontSize: 11, background: design.layout === l.key ? 'var(--wa-fill)' : 'none', color: design.layout === l.key ? 'var(--wa-ink)' : 'var(--wa-text-2)', fontWeight: design.layout === l.key ? 600 : 400 }}>
             {l.name}
           </button>
@@ -365,6 +390,14 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
 
       <p style={group}>Logo</p>
       <Segmented label="Logo" value={design.logo} options={[['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]} onChange={logo => setDesign({ logo })} />
+      {(dept?.invoiceSettings?.logo || wordmark.trim()) && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+          <span style={{ fontSize: 11, color: 'var(--wa-text-2)', width: 32 }}>Size</span>
+          <input type="range" min={50} max={250} step={10} value={Math.round((design.logoScale ?? 1) * 100)} aria-label="Logo size"
+            onChange={e => setDesign({ logoScale: Number(e.target.value) / 100 })} style={{ flex: 1, accentColor: 'var(--wa-ink)' }} />
+          <span style={{ fontSize: 11, color: 'var(--wa-ink)', width: 40, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{Math.round((design.logoScale ?? 1) * 100)}%</span>
+        </label>
+      )}
       {!dept?.invoiceSettings?.logo && (
         <div style={{ marginTop: 10 }}>
           <p style={{ fontSize: 11, color: 'var(--wa-text-2)', margin: '0 0 8px' }}>
@@ -437,7 +470,7 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
             <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--wa-muted)' }}>Design</span>
             <Segmented label="Layout" value={design.layout} options={LAYOUTS.map(l => [l.key, l.name] as [InvoiceDesign['layout'], string])}
-              onChange={k => update({ design: { ...LAYOUTS.find(l => l.key === k)!.design, logo: design.logo, blocks: design.blocks, hidden: design.hidden } })} />
+              onChange={k => update({ design: { ...LAYOUTS.find(l => l.key === k)!.design, logo: design.logo, logoScale: design.logoScale, blocks: design.blocks, hidden: design.hidden } })} />
             <span style={{ display: 'flex', gap: 5 }}>
               {SWATCHES.map(c => (
                 <button key={c} onClick={() => setDesign({ accent: c })} aria-label={`Colour ${c}`} aria-pressed={design.accent.toLowerCase() === c.toLowerCase()}

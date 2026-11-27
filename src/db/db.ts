@@ -38,6 +38,7 @@ export interface InvoiceDesign {
   font: 'sans' | 'serif'
   accent: string // hex
   logo: 'left' | 'right' | 'center'
+  logoScale?: number // 1 = normal size
   blocks: InvoiceBlock[] // order
   hidden?: InvoiceBlock[]
 }
@@ -81,6 +82,7 @@ export interface Invoice {
   clientName?: string
   clientAddress?: string
   clientEmail?: string
+  clientVatId?: string
   contactId?: number
   workId?: number
   rightId?: string
@@ -429,6 +431,7 @@ export interface Contact {
   phone?: string
   website?: string
   address?: string // postal, one line per row
+  vatId?: string // printed on invoices to them
   note?: string
   workIds?: number[]
   eventIds?: number[]

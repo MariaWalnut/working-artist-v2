@@ -7,7 +7,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-27d'
+export const DEMO_VERSION = '2026-11-27e'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -805,22 +805,22 @@ const OTHER_PAYMENTS: Partial<Record<DemoField, Payment[]>> = {
 
 // What each sample studio prints on its invoices: address, the name set in a typeface, a design, tax and bank lines.
 // The bank and tax numbers are made up.
-type DemoInvoicing = { street: string; postcode: string; country: string; font: WordmarkFont; design: Partial<InvoiceDesign>; vatRate?: number; taxNote?: string; draft: { client: string; address: string; lines: Array<[string, number, number]> } }
+type DemoInvoicing = { street: string; postcode: string; country: string; font: WordmarkFont; design: Partial<InvoiceDesign>; vatRate?: number; taxNote?: string; draft: { client: string; address: string; vat?: string; lines: Array<[string, number, number]> } }
 const DEMO_INVOICING: Record<string, DemoInvoicing> = {
   musician: { street: 'Weserstraße 41', postcode: '12045', country: 'Germany', font: 'syne', design: { layout: 'modern', accent: '#E8D44D' }, vatRate: 7,
-    draft: { client: 'Harbour Booking', address: 'Keizersgracht 210\n1016 DZ Amsterdam\nNetherlands', lines: [['Spring tour 2027, guarantee, first half', 1, 4500], ['Backline hire', 3, 120]] } },
+    draft: { client: 'Harbour Booking', vat: 'NL000000000B01', address: 'Keizersgracht 210\n1016 DZ Amsterdam\nNetherlands', lines: [['Spring tour 2027, guarantee, first half', 1, 4500], ['Backline hire', 3, 120]] } },
   painter: { street: 'Rua da Rosa 88', postcode: '1200-385', country: 'Portugal', font: 'playfair', design: { layout: 'classic', font: 'serif', accent: '#6B8F71' }, vatRate: 23,
-    draft: { client: 'Hotel Linde', address: 'Lindenallee 4\n80331 Munich\nGermany', lines: [['Lobby commission, second instalment', 1, 6000]] } },
+    draft: { client: 'Hotel Linde', vat: 'DE000000000', address: 'Lindenallee 4\n80331 Munich\nGermany', lines: [['Lobby commission, second instalment', 1, 6000]] } },
   illustrator: { street: '14 rue des Martyrs', postcode: '75009', country: 'France', font: 'pinyon', design: { layout: 'modern', accent: '#F0655A', logo: 'center' }, taxNote: 'VAT not applicable, art. 293 B of the CGI',
-    draft: { client: 'City Magazine', address: '22 boulevard Voltaire\n75011 Paris\nFrance', lines: [['Magazine series, illustration', 3, 900], ['Usage rights, online', 1, 300]] } },
+    draft: { client: 'City Magazine', vat: 'FR00000000000', address: '22 boulevard Voltaire\n75011 Paris\nFrance', lines: [['Magazine series, illustration', 3, 900], ['Usage rights, online', 1, 300]] } },
   writer: { street: '7 Albion Mews', postcode: 'N1 1JX', country: 'United Kingdom', font: 'spacemono', design: { layout: 'minimal', font: 'serif', logo: 'left' }, taxNote: 'Not VAT registered',
-    draft: { client: 'City Review', address: '18 Bloomsbury Square\nLondon WC1A 2NS', lines: [['Essay commission, 4,000 words', 1, 1000]] } },
+    draft: { client: 'City Review', vat: 'GB000000000', address: '18 Bloomsbury Square\nLondon WC1A 2NS', lines: [['Essay commission, 4,000 words', 1, 1000]] } },
   fineart: { street: 'Witte de Withstraat 50', postcode: '3012 BR', country: 'Netherlands', font: 'playfair', design: { layout: 'minimal', logo: 'center' }, vatRate: 9,
-    draft: { client: 'City of Zurich, Public Art', address: 'Stadthausquai 17\n8001 Zurich\nSwitzerland', lines: [['Common Ground, design phase', 1, 12000], ['Site visits', 2, 450]] } },
+    draft: { client: 'City of Zurich, Public Art', vat: 'CHE-000.000.000 MWST', address: 'Stadthausquai 17\n8001 Zurich\nSwitzerland', lines: [['Common Ground, design phase', 1, 12000], ['Site visits', 2, 450]] } },
   filmmaker: { street: 'Reichenberger Straße 120', postcode: '10999', country: 'Germany', font: 'syne', design: { layout: 'modern', accent: '#3B6E8F' }, vatRate: 19,
-    draft: { client: 'Northbound Records', address: 'Skalitzer Straße 68\n10997 Berlin\nGermany', lines: [['Music video: Glass Hour, direction', 1, 4500], ['Edit and grade', 4, 450]] } },
+    draft: { client: 'Northbound Records', vat: 'DE000000001', address: 'Skalitzer Straße 68\n10997 Berlin\nGermany', lines: [['Music video: Glass Hour, direction', 1, 4500], ['Edit and grade', 4, 450]] } },
   photographer: { street: 'Nieuwe Binnenweg 212', postcode: '3021 GN', country: 'Netherlands', font: 'spacemono', design: { layout: 'classic', accent: '#231F20' }, vatRate: 21,
-    draft: { client: 'Weekend Magazine', address: 'Herengracht 300\n1016 CE Amsterdam\nNetherlands', lines: [['Editorial: coastal towns, day rate', 3, 750], ['Travel expenses', 1, 380]] } },
+    draft: { client: 'Weekend Magazine', vat: 'NL000000001B01', address: 'Herengracht 300\n1016 CE Amsterdam\nNetherlands', lines: [['Editorial: coastal towns, day rate', 3, 750], ['Travel expenses', 1, 380]] } },
 }
 const demoInvoicing = (field: DemoField) => DEMO_INVOICING[field] ?? DEMO_INVOICING[field.split('-')[0]]
 
@@ -887,7 +887,7 @@ async function addDemoInvoices(departmentId: number, field: DemoField, s: Seed, 
   const number = `${year}-${String(top + 1).padStart(3, '0')}`
   const issued = inDays(0)
   await db.invoices.add({
-    departmentId, number, issued, due: inDays(14), clientName: d.draft.client, clientAddress: d.draft.address,
+    departmentId, number, issued, due: inDays(14), clientName: d.draft.client, clientAddress: d.draft.address, clientVatId: d.draft.vat,
     lines: d.draft.lines.map(([description, qty, price], k) => ({ id: `d${k}`, description, qty, price })),
     currency: '€', vatRate: d.vatRate, taxNote: d.taxNote, notes: 'Thank you. Please pay within 14 days.', createdAt: Date.now(), updatedAt: Date.now(),
   })
