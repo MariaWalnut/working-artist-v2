@@ -10,6 +10,7 @@ import { parseAmount } from '../components/ContractCard'
 import { CURRENCIES, addBtn, fieldLabel, inp, newId, quiet, saveBtn, today } from '../components/PaymentForm'
 import { InvoiceStatusChip } from '../components/InvoiceStatusChip'
 import { WordmarkPicker } from '../components/WordmarkPicker'
+import { InvoiceSettingsCard } from '../components/InvoiceSettingsCard'
 import { useNarrow } from '../lib/useNarrow'
 import {
   BLOCK_NAME, LAYOUTS, addDays, deleteInvoice, designOf, fmt, invoiceDescription, invoiceHtml, invoiceStatus, invoiceTotals,
@@ -230,6 +231,10 @@ function InvoiceEditorPanel({ invoiceId, from: fromParam, work: workParam, onClo
 
   const details = (
     <div style={{ padding: '6px 20px 20px' }}>
+      <p style={group}>From you</p>
+      <InvoiceSettingsCard dept={dept} />
+      <p style={{ fontSize: 10, color: 'var(--wa-text-2)', margin: '6px 0 0' }}>Changes here apply to every invoice.</p>
+
       <p style={group}>Client</p>
       {contacts.length > 0 && (
         <select value={draft.contactId ?? ''} aria-label="From Contacts" style={{ ...inp, marginBottom: 8 }}
