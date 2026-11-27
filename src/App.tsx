@@ -22,6 +22,7 @@ import { Press } from './pages/Press'
 import { Profile } from './pages/Profile'
 import { Contacts } from './pages/Contacts'
 import { Finance } from './pages/Finance'
+import { InvoiceEditor } from './pages/InvoiceEditor'
 
 // Shown instead of a blank page if the local database can't be opened (e.g. an upgrade fails).
 function DataError({ detail }: { detail: string }) {
@@ -101,6 +102,7 @@ function AppRoutes() {
       <Route path="/projects/events" element={<AllEvents />} />
       <Route path="/projects/:id" element={<ProjectDetail />} />
       <Route path="/finance" element={<Finance />} />
+      <Route path="/finance/invoices/:id" element={<InvoiceEditor />} />
       <Route path="/opportunities" element={<Opportunities />} />
       <Route path="/contacts" element={<Contacts />} />
       <Route path="/manifest" element={<VisionBoard />} />

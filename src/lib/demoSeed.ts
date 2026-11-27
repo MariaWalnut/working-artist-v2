@@ -7,7 +7,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-27'
+export const DEMO_VERSION = '2026-11-27b'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -803,6 +803,27 @@ const OTHER_PAYMENTS: Partial<Record<DemoField, Payment[]>> = {
   ],
 }
 
+async function addDemoInvoice(departmentId: number, p: Payment, workId?: number, w?: Omit<Work, 'departmentId'>) {
+  const [clientName, ...addr] = (p.payer ?? '').split('\n')
+  const issued = p.invoiced ?? inDays(-30)
+  const right = p.rightId ? w?.rights?.find(r => r.id === p.rightId)?.language : undefined
+  const invoiceId = await db.invoices.add({
+    departmentId, number: p.invoiceNo!, issued, due: new Date(new Date(`${issued}T12:00:00`).getTime() + 14 * DAY).toISOString().slice(0, 10),
+    clientName: clientName?.trim(), clientAddress: addr.join('\n'), workId, rightId: p.rightId,
+    lines: [{ id: 'l1', description: [w?.title, right, p.label].filter(Boolean).join(' · '), qty: 1, price: p.amount ?? 0 }],
+    currency: w ? w.contract?.currency ?? w.currency ?? '€' : p.currency ?? '€', sent: p.invoiced, paid: p.received, paymentId: p.id,
+    notes: 'Thank you. Please pay within 14 days.', createdAt: Date.now(), updatedAt: Date.now(),
+  }) as number
+  // The payment follows its invoice.
+  if (workId != null) {
+    const work = await db.works.get(workId)
+    if (work) await db.works.update(workId, { payments: work.payments?.map(x => (x.id === p.id ? { ...x, invoiceId } : x)) })
+  } else {
+    const d = await db.departments.get(departmentId)
+    await db.departments.update(departmentId, { otherPayments: d?.otherPayments?.map(x => (x.id === p.id ? { ...x, invoiceId } : x)) })
+  }
+}
+
 export async function seedDemo(field: DemoField) {
   const s = SEEDS[field]()
   const now = Date.now()
@@ -832,6 +853,12 @@ export async function seedDemo(field: DemoField) {
         await db.todos.add({ departmentId, projectId, title, done: !!done, kanbanStatus: done ? 'done' : 'todo', dueDate: due == null ? undefined : inDays(due) })
       }
     }
+
+    // Every payment with an invoice number gets a full invoice, so Finance › Invoices has some to open.
+    for (const [i, w] of s.works.entries()) {
+      for (const p of w.payments ?? []) if (p.invoiceNo) await addDemoInvoice(departmentId, p, workIds[i], w)
+    }
+    for (const p of OTHER_PAYMENTS[field] ?? []) if (p.invoiceNo) await addDemoInvoice(departmentId, p)
 
     const eventIds: number[] = []
     for (const e of s.events) eventIds.push(await db.eventEntries.add({ ...e, departmentId, workIds: e.workIds?.map(i => workIds[i]) }) as number)

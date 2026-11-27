@@ -91,6 +91,10 @@ const csvCell = (v: string | number | undefined) => {
   return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
+export function toCsv(head: string[], rows: Array<Array<string | number | undefined>>) {
+  return '\uFEFF' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n')
+}
+
 export function entriesCsv(list: Entry[]) {
   const head = ['Received', 'Invoice sent', 'Kind', 'Title', 'What for', 'Who pays', 'Invoice no.', 'Currency', 'Amount', 'Your share', 'Status']
   const kind = { work: 'Work', event: 'Event', other: 'Other' } as const
