@@ -17,6 +17,50 @@ import { WORK_KINDS, shelfOf, workSubtitle, workYear, type WorkKind } from '../l
 
 const NARROW = '(max-width: 760px)'
 
+// Starred rows come first in their box, otherwise the order stays as it was.
+const starredFirst = <T extends { starred?: boolean }>(rows: T[]) => [...rows.filter(r => r.starred), ...rows.filter(r => !r.starred)]
+
+type Order = 'newest' | 'oldest' | 'az' | 'added'
+const ORDERS: Array<[Order, string]> = [['newest', 'Newest'], ['oldest', 'Oldest'], ['az', 'A to Z'], ['added', 'Recently added']]
+type Show = 'all' | 'starred'
+
+// Remembered in this browser only; a choice that can't be stored just lasts until the page reloads.
+function useStored<T extends string>(key: string, fallback: T, allowed: readonly T[]) {
+  const [v, setV] = useState<T>(() => {
+    try { const s = localStorage.getItem(key) as T | null; return s && allowed.includes(s) ? s : fallback } catch { return fallback }
+  })
+  const set = (next: T) => { setV(next); try { localStorage.setItem(key, next) } catch { /* private mode */ } }
+  return [v, set] as const
+}
+
+// A sortable year-month-day for a project: when it starts, comes out or was published.
+const projectDate = (p: Project) => p.dateStart ?? p.releaseDate ?? p.publishedDate ?? (p.awardYear ? `${p.awardYear}` : '')
+const workDate = (w: Work) => { const y = workYear(w); return y ? String(y) : '' }
+
+function ordered<T extends { id?: number; title: string; starred?: boolean }>(rows: T[], order: Order, date: (r: T) => string) {
+  const byTitle = (a: T, b: T) => a.title.localeCompare(b.title)
+  const sorted = [...rows].sort((a, b) => {
+    if (order === 'az') return byTitle(a, b)
+    if (order === 'added') return (b.id ?? 0) - (a.id ?? 0)
+    const da = date(a), db_ = date(b)
+    if (!da || !db_) return (da ? -1 : db_ ? 1 : 0) || byTitle(a, b) // undated last
+    return (order === 'newest' ? db_.localeCompare(da) : da.localeCompare(db_)) || byTitle(a, b)
+  })
+  return starredFirst(sorted)
+}
+
+function Star({ on, title, onToggle }: { on: boolean; title: string; onToggle: () => void }) {
+  return (
+    <button onClick={onToggle} aria-pressed={on} aria-label={on ? `Unstar ${title}` : `Star ${title}`} title={on ? 'Starred' : 'Star'}
+      style={{ flexShrink: 0, width: 40, alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"
+          fill={on ? 'var(--accent)' : 'none'} stroke={on ? 'var(--wa-ink)' : 'var(--wa-text-2)'} strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
 function useNarrow() {
   const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches)
   useEffect(() => {
@@ -94,6 +138,9 @@ export function Studio() {
   const [adding, setAdding] = useState(false)
   const [addingProject, setAddingProject] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
+  const [order, setOrder] = useStored<Order>('wa-works-order', 'newest', ORDERS.map(o => o[0]))
+  const [show, setShow] = useStored<Show>('wa-works-show', 'all', ['all', 'starred'])
+  const starOnly = show === 'starred'
 
   const allWorks = useLiveQuery(() => dept?.id == null ? [] : db.works.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   // A work is what a project becomes once it is completed, so a work still in progress waits behind its project.
@@ -103,27 +150,26 @@ export function Studio() {
   const shelves = [...new Set(works.map(shelfOf))].sort((a, b) => count(b) - count(a) || a.localeCompare(b))
   const shelf = picked && shelves.includes(picked) ? picked : null
   const shelfKind = WORK_KINDS.find(k => k === shelf)
-  const shown = works
-    .filter(w => !shelf || shelfOf(w) === shelf)
-    .sort((a, b) => (workYear(b) ?? 0) - (workYear(a) ?? 0) || a.title.localeCompare(b.title))
+  const shown = ordered(works.filter(w => (!shelf || shelfOf(w) === shelf) && (!starOnly || w.starred)), order, workDate)
 
   const makingCount = allWorks.filter(w => w.inProgress).length
   useEffect(() => { if (dept?.id != null && makingCount > 0) void linkWorksInProgress(dept.id) }, [dept?.id, makingCount])
   const allProjects = useLiveQuery(() => dept?.id == null ? [] : db.projects.where('departmentId').equals(dept.id).toArray(), [dept?.id]) ?? []
   const notYetWorks = shelf ? [] : allProjects
     .filter(p => keep(practiceOf(acts).project(p)) && !works.some(w => w.id === p.workId || w.projectId === p.id))
-    .sort((a, b) => a.title.localeCompare(b.title))
-  const ongoing = notYetWorks.filter(isActive)
-  const planned = notYetWorks.filter(isPlanned)
+  const ongoing = ordered(notYetWorks.filter(p => isActive(p) && (!starOnly || p.starred)), order, projectDate)
+  const planned = ordered(notYetWorks.filter(p => isPlanned(p) && (!starOnly || p.starred)), order, projectDate)
+  const starredCount = works.filter(w => w.starred && (!shelf || shelfOf(w) === shelf)).length + notYetWorks.filter(p => p.starred && (isActive(p) || isPlanned(p))).length
+  const allCount = works.filter(w => !shelf || shelfOf(w) === shelf).length + notYetWorks.filter(p => isActive(p) || isPlanned(p)).length
   const columns = narrow ? '44px minmax(0, 1fr) 48px' : '52px minmax(0, 1fr) 110px 150px 70px'
 
-  const rowStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: columns, width: '100%', padding: narrow ? '12px 16px' : '12px 24px', border: 'none', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }
+  const rowStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: columns, flex: 1, minWidth: 0, padding: narrow ? '12px 0 12px 16px' : '12px 4px 12px 24px', border: 'none', background: 'none', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', gap: 0 }
 
   const workRow = (w: Work, i: number, all: Work[]) => {
     const sub = workSubtitle(w)
     return (
-                  <button key={w.id} data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)}
-                    style={{ ...rowStyle, borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none' }}>
+                <div key={w.id} style={{ display: 'flex', paddingRight: narrow ? 4 : 12, borderBottom: i < all.length - 1 ? '1px solid var(--wa-line)' : 'none' }}>
+                  <button data-tour-title={w.title} onClick={() => navigate(`/studio/${w.id}`)} style={rowStyle}>
                     <div style={{ width: 34, height: 42, borderRadius: 5, background: 'linear-gradient(135deg, var(--wa-line) 0%, var(--wa-line) 100%)', overflow: 'hidden' }}>
                       {w.image && <img src={w.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     </div>
@@ -135,13 +181,15 @@ export function Studio() {
                     {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.location ?? ''}</span>}
                     <span style={{ fontSize: 10, color: 'var(--wa-muted)', textAlign: 'right' }}>{workYear(w) ?? ''}</span>
                   </button>
+                  <Star on={!!w.starred} title={w.title} onToggle={() => void db.works.update(w.id!, { starred: !w.starred || undefined })} />
+                </div>
     )
   }
 
   const typeLabel = (p: Project) => p.projectType === 'Books' || p.projectType === 'Publications' ? 'Book' : p.projectType
   const projectRow = (p: Project, i: number) => (
-    <button key={`p${p.id}`} data-tour-title={p.title} onClick={() => navigate(`/projects/${p.id}`, { state: { from: 'works' } })}
-      style={{ ...rowStyle, borderTop: i > 0 ? '1px solid var(--wa-line)' : 'none', borderBottom: 'none' }}>
+    <div key={`p${p.id}`} style={{ display: 'flex', paddingRight: narrow ? 4 : 12, borderTop: i > 0 ? '1px solid var(--wa-line)' : 'none' }}>
+    <button data-tour-title={p.title} onClick={() => navigate(`/projects/${p.id}`, { state: { from: 'works' } })} style={rowStyle}>
       <div style={{ width: 34, height: 42, borderRadius: 5, background: 'var(--wa-line)' }} />
       <div style={{ minWidth: 0 }}>
         <p style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--wa-ink)', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</p>
@@ -151,6 +199,8 @@ export function Studio() {
       {!narrow && <span style={{ fontSize: 11, color: 'var(--wa-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location ?? ''}</span>}
       <span style={{ fontSize: 10, textAlign: 'right', whiteSpace: 'nowrap', color: p.status === 'On hold' ? 'var(--wa-ink)' : 'var(--wa-muted)', fontWeight: p.status === 'On hold' ? 600 : 400 }}>{isPlanned(p) ? '' : p.status ?? 'Active'}</span>
     </button>
+    <Star on={!!p.starred} title={p.title} onToggle={() => void db.projects.update(p.id!, { starred: !p.starred || undefined })} />
+    </div>
   )
 
   // Each stage is its own box; the first one sits under the page title.
@@ -178,6 +228,13 @@ export function Studio() {
         {/* Filters */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           <PracticeFilter narrow={narrow} />
+          <SidePanel title="Show" narrow={narrow}>
+            <SideItem label="All" count={allCount} active={!starOnly} narrow={narrow} onClick={() => setShow('all')} />
+            <SideItem label="Starred" count={starredCount} active={starOnly} narrow={narrow} onClick={() => setShow('starred')} />
+          </SidePanel>
+          <SidePanel title="Order" narrow={narrow}>
+            {ORDERS.map(([k, l]) => <SideItem key={k} label={l} active={order === k} narrow={narrow} onClick={() => setOrder(k)} />)}
+          </SidePanel>
           {shelves.length > 1 && (
             <SidePanel title="Category" narrow={narrow}>
               <SideItem label="All" count={works.length} active={shelf === null} narrow={narrow} onClick={() => setPicked(null)} />
@@ -192,7 +249,7 @@ export function Studio() {
             <FrameHeader right={<AddButton onClick={() => setAdding(true)} />}>
               <FrameTitle count={shown.length + ongoing.length + planned.length}>{shelfKind ? `${shelfKind}s` : shelf ?? 'Works'}</FrameTitle>
             </FrameHeader>
-            {boxes.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No works yet</p>}
+            {boxes.length === 0 && <p style={{ textAlign: 'center', padding: '36px 0', margin: 0, fontSize: 11, color: 'var(--wa-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{starOnly ? 'Nothing starred' : 'No works yet'}</p>}
             {boxes[0] && box(boxes[0])}
           </div>
           {boxes.slice(1).map(b => <div key={b.label} style={pageFrame}>{box(b)}</div>)}

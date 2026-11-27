@@ -149,6 +149,7 @@ export interface Project {
   client?: string
   fee?: string // what it pays, as typed: "€3,000"
   workId?: number // the work it became, once finished
+  starred?: boolean // kept at the top of Works
 }
 
 export interface Opportunity {
@@ -168,6 +169,7 @@ export interface Opportunity {
 export interface Work {
   id?: number
   departmentId?: number
+  starred?: boolean // kept at the top of Works
   practice?: Activity // which of the artist's practices it belongs to; missing = guessed from its kind or type
   title: string
   kind?: string // Artwork (default) / Illustration / Book / Text / Release / Film / Show / Design / Other
