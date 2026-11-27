@@ -1,4 +1,4 @@
-import { db, type Activity, type BoardItem, type EventEntry, type Opportunity, type PressEntry, type Project, type Work } from '../db/db'
+import { db, type Activity, type BoardItem, type EventEntry, type Opportunity, type Payment, type PressEntry, type Project, type Work } from '../db/db'
 import type { DemoField } from './mode'
 import { PRACTICE_NAME } from './practice'
 import { DEMO_CONTACTS } from './demoContacts'
@@ -7,7 +7,7 @@ import { DEMO_CONTACTS } from './demoContacts'
 // Upcoming dates are relative to today, so a demo never looks stale.
 
 // Bump when the sample content changes: every visitor's demo is set up again once.
-export const DEMO_VERSION = '2026-11-26'
+export const DEMO_VERSION = '2026-11-27'
 
 const DAY = 864e5
 const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString().slice(0, 10)
@@ -191,7 +191,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
       ev('Northern Lights live recording', 'Performance', 'Copenhagen', '2024-02-10', { workIds: [3] }),
       ev('Low Tide release show', 'Performance', 'Berlin', '2025-03-14', { workIds: [0] }),
       ev('Radio session', 'Broadcast', 'London', '2025-06-02', { workIds: [0] }),
-      ev('Summer festival', 'Performance', 'Vienna', '2025-07-19', { fee: '€2,400' }),
+      ev('Summer festival', 'Performance', 'Vienna', '2025-07-19', { fee: '€2,400', feeReceived: '2025-08-04' }),
       ev('Showcase', 'Performance', 'Amsterdam', '2026-03-12'),
       ev('Glass Hour listening night', 'Performance', 'Lisbon', '2026-06-20', { workIds: [2] }),
       ev('Songwriting panel', 'Talk', 'Paris', '2026-09-24'),
@@ -717,7 +717,7 @@ const SEEDS: Record<DemoField, () => Seed> = {
       ev('Night Ferries', 'Exhibition', 'Copenhagen', '2025-02-07', { endDate: '2025-03-30', workIds: [2] }),
       ev('Borrowed Light launch', 'Launch', 'Copenhagen', '2025-05-16', { workIds: [3] }),
       ev('Photobook fair', 'Book Fair', 'Paris', '2025-11-13', { endDate: '2025-11-16', workIds: [3] }),
-      ev('Artist talk', 'Talk', 'Vienna', '2026-03-19', { fee: '€400' }),
+      ev('Artist talk', 'Talk', 'Vienna', '2026-03-19', { fee: '€400', feeReceived: '2026-04-02' }),
       ev('Tidal Studies, group show', 'Exhibition', 'Lisbon', '2026-06-12', { endDate: '2026-08-02', workIds: [5] }),
       ev('Portfolio review', 'Festival', 'Amsterdam', inDays(22)),
       ev('Glasshouse opening', 'Exhibition', 'Berlin', inDays(38), { endDate: inDays(75), workIds: [6], goals: 'Sell three editions\nMeet two museum curators' }),
@@ -776,6 +776,33 @@ const SEEDS: Record<DemoField, () => Seed> = {
 }
 
 // Replaces whatever is in the demo database with the sample studio for this field.
+// Money outside works on Finance: grants, prizes, teaching. Owed ones have no received date.
+const OTHER_PAYMENTS: Partial<Record<DemoField, Payment[]>> = {
+  musician: [
+    { id: 'op-1', label: 'Music fund, recording grant', amount: 4000, payer: 'Austrian Music Fund', received: inDays(-140) },
+    { id: 'op-2', label: 'Songwriting workshop', amount: 800, payer: 'Vienna Music School', invoiceNo: '2026-009', invoiced: inDays(-18) },
+  ],
+  writer: [
+    { id: 'op-1', label: 'Literature grant', amount: 6000, payer: 'Literature Fund', received: inDays(-95) },
+    { id: 'op-2', label: 'Essay commission', amount: 1000, payer: 'City Review', invoiceNo: '2026-011', invoiced: inDays(-21) },
+  ],
+  illustrator: [
+    { id: 'op-1', label: 'School visits, spring', amount: 1050, payer: 'Paris Library Network', invoiceNo: '2026-006', invoiced: inDays(-120), received: inDays(-100) },
+  ],
+  painter: [
+    { id: 'op-1', label: 'Studio grant', amount: 3500, payer: 'City Arts Council', received: inDays(-60) },
+  ],
+  fineart: [
+    { id: 'op-1', label: 'Artist fee, group show', amount: 1500, payer: 'Kunsthalle Basel', invoiceNo: '2026-004', invoiced: inDays(-30) },
+  ],
+  filmmaker: [
+    { id: 'op-1', label: 'Development grant', amount: 8000, payer: 'Film Fund', received: inDays(-150) },
+  ],
+  photographer: [
+    { id: 'op-1', label: 'Editorial commission: coastal towns', amount: 2800, payer: 'Weekend Magazine', invoiceNo: '2026-007', invoiced: inDays(-25) },
+  ],
+}
+
 export async function seedDemo(field: DemoField) {
   const s = SEEDS[field]()
   const now = Date.now()
@@ -786,6 +813,7 @@ export async function seedDemo(field: DemoField) {
       activities: s.activities, practiceMode: s.practiceMode, practiceNames: s.practiceNames, createdAt: now,
       basedIn: s.profile.basedIn, establishedYear: s.profile.since,
       profileLinks: s.profile.links.map(([label, value], i) => ({ id: `link-${i}`, label, value })),
+      otherPayments: OTHER_PAYMENTS[field],
     }) as number
 
     // The texts on the profile, newest first in the order they are written here.

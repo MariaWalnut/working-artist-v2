@@ -10,6 +10,7 @@ import { PracticeName } from '../Practice'
 const NAV = [
   { label: 'On My Desk', to: '/projects' },
   { label: 'Works', to: '/studio' },
+  { label: 'Finance', to: '/finance' },
   { label: 'Events', to: '/projects/events' },
   { label: 'Submissions', to: '/opportunities' },
   { label: 'Manifest', to: '/manifest' },
